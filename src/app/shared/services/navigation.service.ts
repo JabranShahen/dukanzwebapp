@@ -30,6 +30,17 @@ interface IBadge {
 export class NavigationService {
   iconMenu: IMenuItem[] = [
     {
+      name: 'Managment',
+      type: 'dropDown',
+      tooltip: 'Managment',
+      icon: 'edit',
+      sub: [
+        { name: 'Catagory', state: 'others/catagory' },
+        { name: 'Product', state: 'others/pricing' },
+        { name: 'config', state: 'others/users' }
+      ]
+    },    
+    {
       name: 'DASHBOARD',
       state: 'dashboard/analytics',
       type: 'link',
@@ -89,19 +100,6 @@ export class NavigationService {
         { name: 'USERS', state: 'others/users' },
         { name: 'BLANK', state: 'others/blank' }
       ]
-    },
-    {
-      name: 'Pro',
-      type: 'extLink',
-      icon: 'upgrade',
-      state: 'http://matx-angular.ui-lib.com/'
-    },
-    {
-      name: 'DOC',
-      type: 'extLink',
-      tooltip: 'Documentation',
-      icon: 'library_books',
-      state: 'http://demos.ui-lib.com/matx-doc/'
     }
   ];
 
