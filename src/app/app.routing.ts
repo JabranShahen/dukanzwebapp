@@ -26,7 +26,7 @@ export const rootRouterConfig: Routes = [
     canActivate: [AuthGuard],
     children: [
       {
-        path: 'Managment',
+        path: 'managment',
         loadChildren: () => import('./views/managment/managment.module').then(m => m.ManagmentModule),
         data: { title: 'Managment', breadcrumb: 'Managment'}
       },      

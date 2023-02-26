@@ -35,7 +35,7 @@ export class NavigationService {
       tooltip: 'Managment',
       icon: 'edit',
       sub: [
-        { name: 'Catagory', state: 'others/catagory' },
+        { name: 'Catagory', state: 'managment/catagory' },
         { name: 'Product', state: 'others/pricing' },
         { name: 'config', state: 'others/users' }
       ]
