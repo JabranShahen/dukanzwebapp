@@ -16,17 +16,12 @@ export class CatagoryService {
 
   getCatagories() 
   {        
-    console.log("api call start");
     this.http
       .get<ProductCategory[]>(
         'https://dukanzapinew.azurewebsites.net/api/ProductCategory'
       )
-      .subscribe(productCategories => {
-        this.productCategories = productCategories;
-      });
-      console.log("this.productCategories");
-      console.log(this.productCategories.length);
-      console.log("api call start");
+      .subscribe(productCategories => 
+        this.setCatagories(productCategories));
     // console.log("api call start");
     // this.http.get<any[]>('https://dukanzapinew.azurewebsites.net/api/ProductCategory');
     // // .subscribe(data=>console.log("values"));
