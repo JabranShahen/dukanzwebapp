@@ -1,0 +1,41 @@
+<div class="container">
+    <h3 mat-dialog-title>Add new Catagory</h3>
+  
+    <form class="mat-dialog-content" (ngSubmit)="submit" #formControl="ngForm">
+  
+      <div class="form">
+        <mat-form-field color="accent">
+          <input matInput #input class="form-control" placeholder="productCategoryName" [(ngModel)]="data.productCategoryName" name="productCategoryName" required>
+          <mat-error *ngIf="formControl.invalid">{{getErrorMessage()}}</mat-error>
+        </mat-form-field>
+      </div>
+  
+      <div class="form">
+        <mat-form-field color="accent">
+          <input matInput #input class="form-control" placeholder="productCategoryImageURL" [(ngModel)]="data.productCategoryImageURL" name="productCategoryImageURL" required>
+          <mat-error *ngIf="formControl.invalid">{{getErrorMessage()}}</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form">
+        <mat-form-field color="accent">
+          <mat-checkbox  placeholder="visible" [(ngModel)]="data.visible" name="visible" required></mat-checkbox>
+          <mat-error *ngIf="formControl.invalid">{{getErrorMessage()}}</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form">
+        <mat-form-field color="accent">
+          <input matInput #input class="form-control" placeholder="order" [(ngModel)]="data.order" name="order" required>
+          <mat-error *ngIf="formControl.invalid">{{getErrorMessage()}}</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div mat-dialog-actions>
+        <button mat-button [type]="submit" [disabled]="!formControl.valid" [mat-dialog-close]="1">Save</button>
+        <button mat-button tabindex="-1">Cancel</button>
+      </div>
+
+    </form>
+  </div>
+  

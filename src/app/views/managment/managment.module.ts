@@ -31,10 +31,12 @@ import { SharedMaterialModule } from 'app/shared/shared-material.module';
 import { PerfectScrollbarModule } from 'app/shared/components/perfect-scrollbar';
 import { CatagoryService } from './catagory/services/catagory.service';
 import { V } from '@angular/cdk/keycodes';
+import { AddCatagoryComponent } from './catagory/add/add-catagory.component';
+import { MatDialog } from '@angular/material/dialog';
 
 
 @NgModule({
-  declarations: [CatagoryComponent],
+  declarations: [CatagoryComponent, AddCatagoryComponent],
   imports: [
     CommonModule,
     FormsModule,
@@ -44,8 +46,7 @@ import { V } from '@angular/cdk/keycodes';
     FlexLayoutModule,
     PerfectScrollbarModule,
     HttpClientModule,
-    RouterModule.forChild(ManagmentRoutes),
-    
+    RouterModule.forChild(ManagmentRoutes),    
   ],  
   providers:[CatagoryService]
 })

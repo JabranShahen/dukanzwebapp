@@ -18,7 +18,7 @@ export class CatagoryService {
   {        
     this.http
       .get<ProductCategory[]>(
-        'https://dukanzapinew.azurewebsites.net/api/ProductCategory'
+        'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
       )
       .subscribe(productCategories => 
         this.setCatagories(productCategories));
