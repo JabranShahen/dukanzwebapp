@@ -1,41 +1,47 @@
-<div class="container">
-    <h3 mat-dialog-title>Add new Catagory</h3>
-  
-    <form class="mat-dialog-content" (ngSubmit)="submit" #formControl="ngForm">
-  
-      <div class="form">
-        <mat-form-field color="accent">
-          <input matInput #input class="form-control" placeholder="productCategoryName" [(ngModel)]="data.productCategoryName" name="productCategoryName" required>
-          <mat-error *ngIf="formControl.invalid">{{getErrorMessage()}}</mat-error>
-        </mat-form-field>
-      </div>
-  
-      <div class="form">
-        <mat-form-field color="accent">
-          <input matInput #input class="form-control" placeholder="productCategoryImageURL" [(ngModel)]="data.productCategoryImageURL" name="productCategoryImageURL" required>
-          <mat-error *ngIf="formControl.invalid">{{getErrorMessage()}}</mat-error>
-        </mat-form-field>
-      </div>
+<mat-card class="p-0">
+    <mat-card-title class="">
+        <div class="card-title-text">Catagory</div>
+        <mat-divider></mat-divider>
+    </mat-card-title>
+    <mat-card-content>
+        <form [formGroup]="catagoryForm">
 
-      <div class="form">
-        <mat-form-field color="accent">
-          <mat-checkbox  placeholder="visible" [(ngModel)]="data.visible" name="visible" required></mat-checkbox>
-          <mat-error *ngIf="formControl.invalid">{{getErrorMessage()}}</mat-error>
-        </mat-form-field>
-      </div>
+            <div fxLayout="row wrap">
 
-      <div class="form">
-        <mat-form-field color="accent">
-          <input matInput #input class="form-control" placeholder="order" [(ngModel)]="data.order" name="order" required>
-          <mat-error *ngIf="formControl.invalid">{{getErrorMessage()}}</mat-error>
-        </mat-form-field>
-      </div>
+                <div fxFlex="200" fxFlex.gt-xs="100" class="pr-8">
 
-      <div mat-dialog-actions>
-        <button mat-button [type]="submit" [disabled]="!formControl.valid" [mat-dialog-close]="1">Save</button>
-        <button mat-button tabindex="-1">Cancel</button>
-      </div>
+                    <div class="pb-8">
+                        <mat-form-field class="full-width">
+                            <input matInput name="productCategoryName" formControlName="productCategoryName"
+                                placeholder="Catagory Name" [(ngModel)]="catagoryData.productCategoryName">
+                        </mat-form-field>
+                        <small *ngIf="catagoryForm.controls['productCategoryName'].touched && catagoryForm.controls['productCategoryName'].hasError('required')" class="form-error-msg">
+                            Catagory Name required </small>
+                    </div>
 
-    </form>
-  </div>
-  
+                    <div class="pb-8">
+                        <mat-form-field class="full-width">
+                            <input matInput name="productCategoryImageURL" formControlName="productCategoryImageURL"
+                                placeholder="Catagory URL" [(ngModel)]="catagoryData.productCategoryImageURL">
+                        </mat-form-field>
+                        <small *ngIf="!catagoryForm.controls['productCategoryImageURL'].touched  && catagoryForm.controls['productCategoryImageURL'].hasError('required')" class="form-error-msg">
+                            URL required </small>
+                    </div>
+
+                    <div class="pb-16 pt-8">
+                        <mat-checkbox name="visible" formControlName="visible" class="pb-16" [(ngModel)]="catagoryData.visible">Visible</mat-checkbox>
+                    </div>
+
+                    <div class="pb-8">
+                        <mat-form-field class="full-width">
+                            <input matInput name="order" formControlName="order" placeholder="Order"
+                                [(ngModel)]="catagoryData.order">
+                        </mat-form-field>
+                    </div>
+
+                </div>
+            </div>
+            <button mat-raised-button color="primary" [disabled]="catagoryForm.invalid">Submit</button>
+        </form>
+    </mat-card-content>
+</mat-card>
