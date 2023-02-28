@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators } from '@angular/forms';
 import { ProductCategory } from 'app/entities/product_catagory';
+import { CatagoryService } from '../services/catagory.service';
 
 @Component({
   selector: 'app-add-catagory',
@@ -13,16 +14,19 @@ export class AddCatagoryComponent implements OnInit {
   catagoryForm: UntypedFormGroup;
   catagoryData: ProductCategory
 
-  constructor() { }
+  constructor(public catagoryService: CatagoryService) 
+  { 
+
+
+  }
 
   ngOnInit() {
 
     this.catagoryData = new ProductCategory();
-    this.catagoryData.visible =true;
-    this.catagoryData.productCategoryName="";
-    this.catagoryData.productCategoryImageURL="";
-    this.catagoryData.order=0;
-
+    this.catagoryData.visible = true;
+    this.catagoryData.productCategoryName = "";
+    this.catagoryData.productCategoryImageURL = "";
+    this.catagoryData.order = 0;
 
     this.catagoryForm = new UntypedFormGroup({
       productCategoryName: new UntypedFormControl('', [
@@ -32,8 +36,15 @@ export class AddCatagoryComponent implements OnInit {
         Validators.required
       ]),
       visible: new UntypedFormControl(''),
-      order: new UntypedFormControl(''),
+      order: new UntypedFormControl('', [
+        Validators.required
+      ]),
     }
     );
+  }
+
+  onSubmit() {
+    this.catagoryService.saveNewCatagory(this.catagoryData);
+    
   }
 }

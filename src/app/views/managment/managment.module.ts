@@ -33,10 +33,11 @@ import { CatagoryService } from './catagory/services/catagory.service';
 import { V } from '@angular/cdk/keycodes';
 import { AddCatagoryComponent } from './catagory/add/add-catagory.component';
 import { MatDialog } from '@angular/material/dialog';
+import { OnlyNumber } from './catagory/OnlyNumber';
 
 
 @NgModule({
-  declarations: [CatagoryComponent, AddCatagoryComponent],
+  declarations: [CatagoryComponent, AddCatagoryComponent, OnlyNumber],
   imports: [
     CommonModule,
     FormsModule,
