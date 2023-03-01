@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormGroup, UntypedFormControl, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material/dialog';
 import { ProductCategory } from 'app/entities/product_catagory';
 import { CatagoryService } from '../services/catagory.service';
 
@@ -14,12 +15,10 @@ export class AddCatagoryComponent implements OnInit {
   catagoryForm: UntypedFormGroup;
   catagoryData: ProductCategory
 
-  constructor(public catagoryService: CatagoryService) 
-  { 
-
-
-  }
-
+  constructor(
+    public catagoryService: CatagoryService,
+    public dialogRef: MatDialogRef<AddCatagoryComponent>
+  ) { };
   ngOnInit() {
 
     this.catagoryData = new ProductCategory();
@@ -45,6 +44,6 @@ export class AddCatagoryComponent implements OnInit {
 
   onSubmit() {
     this.catagoryService.saveNewCatagory(this.catagoryData);
-    
+    this.dialogRef.close();
   }
 }

@@ -32,7 +32,7 @@ import { PerfectScrollbarModule } from 'app/shared/components/perfect-scrollbar'
 import { CatagoryService } from './catagory/services/catagory.service';
 import { V } from '@angular/cdk/keycodes';
 import { AddCatagoryComponent } from './catagory/add/add-catagory.component';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { OnlyNumber } from './catagory/OnlyNumber';
 
 
