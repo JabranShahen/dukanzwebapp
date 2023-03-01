@@ -19,7 +19,8 @@ export class CatagoryService {
     this.http
       .get<ProductCategory[]>(
         'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
-      )
+        // 'https://localhost:7114/api/ProductCategory'
+        )
       .subscribe(productCategories => 
         this.setCatagories(productCategories));
     return this.productCategories;
@@ -43,18 +44,20 @@ export class CatagoryService {
   {
       console.log("saveNewCatagory Started");
       productCategory.id = this.newGuid();
-      productCategory.PartitionKey = productCategory.id;
+      productCategory.partitionKey = productCategory.id;
 
-      console.log(productCategory);
+      console.log(JSON.stringify(productCategory));
       
-      this.http
+      this.http   
         .post
         (
-          'https://dukanzapitest.azurewebsites.net/api/ProductCategory',
-          productCategory
+          'https://dukanzapitest.azurewebsites.net/api/ProductCategory'          
+          // "https://localhost:7114/api/ProductCategory"
+         ,productCategory
+          
         ).subscribe(
           data=>
-          console.log("saveNewCatagory Completed")
+          console.log(data)
         );
   }  
 }

@@ -1,7 +1,7 @@
 export class ProductCategory 
 {
     id: string;   
-    PartitionKey: string;
+    partitionKey: string;
     productCategoryName: string;
     productCategoryImageURL: string;
     visible: boolean;
