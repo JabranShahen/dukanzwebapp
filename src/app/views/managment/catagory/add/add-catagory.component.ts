@@ -43,7 +43,11 @@ export class AddCatagoryComponent implements OnInit {
   }
 
   onSubmit() {
-    this.catagoryService.saveNewCatagory(this.catagoryData);
-    this.dialogRef.close();
+    this.catagoryService.saveNewCatagory(this.catagoryData).subscribe
+      (
+        data =>
+          this.dialogRef.close()
+      );
+
   }
 }

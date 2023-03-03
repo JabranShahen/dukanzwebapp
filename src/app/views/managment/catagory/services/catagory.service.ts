@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { map, Observable, Subject } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { BehaviorSubject, map, Observable, Subject } from 'rxjs';
 import { ProductCategory } from 'app/entities/product_catagory';
 // import { ProductCategory } from 'app/entities/product_catagory';
 
@@ -8,8 +8,8 @@ import { ProductCategory } from 'app/entities/product_catagory';
   providedIn: 'root'
 })
 export class CatagoryService {
-  ProductCategoryChanged = new Subject<ProductCategory[]>();
-  private productCategories: ProductCategory[] = [];
+  ProductCategories = new BehaviorSubject<ProductCategory[]>(new Array<ProductCategory>());  
+  
   constructor(
     private http: HttpClient
   ) { }
@@ -21,15 +21,12 @@ export class CatagoryService {
         // 'https://localhost:7114/api/ProductCategory'
       )
       .subscribe(productCategories =>
-        this.setCatagories(productCategories));
-    return this.productCategories;
+        {
+          this.ProductCategories.next(productCategories);                    
+          console.log("this.ProductCategoryChanged.next");
+        });    
   }
-
-  setCatagories(productCategories: ProductCategory[]) {
-    this.productCategories = productCategories;
-    this.ProductCategoryChanged.next(this.productCategories);
-  }
-
+  
   newGuid() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
       var r = Math.random() * 16 | 0,
@@ -45,18 +42,30 @@ export class CatagoryService {
 
     console.log(JSON.stringify(productCategory));
 
-    this.http
+    return this.http
       .post
       (
         'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
         // "https://localhost:7114/api/ProductCategory"
-        , productCategory
+        , productCategory,
+        { responseType: 'text' }
+      );
+  }
 
-      ).subscribe(
-        data => {
-          this.productCategories.push(productCategory);
-          this.ProductCategoryChanged.next(this.productCategories);
-          console.log("saveNewCatagory Completed");
-        });
+  
+  DeleteCatagory(productCategory: ProductCategory) {       
+    console.log("Delete request started");
+    console.log(JSON.stringify(productCategory));    
+    var options = 
+    {
+      body: productCategory      
+    };
+
+    return this.http
+      .delete(
+        'https://dukanzapitest.azurewebsites.net/api/ProductCategory',
+        // "https://localhost:7114/api/ProductCategory",
+        options
+      );      
   }
 }

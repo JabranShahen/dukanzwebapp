@@ -34,6 +34,7 @@ import { V } from '@angular/cdk/keycodes';
 import { AddCatagoryComponent } from './catagory/add/add-catagory.component';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { OnlyNumber } from './catagory/OnlyNumber';
+import { MatTableDataSource } from '@angular/material/table';
 
 
 @NgModule({
@@ -49,6 +50,6 @@ import { OnlyNumber } from './catagory/OnlyNumber';
     HttpClientModule,
     RouterModule.forChild(ManagmentRoutes),    
   ],  
-  providers:[CatagoryService]
+  providers:[CatagoryService, MatTableDataSource]
 })
 export class ManagmentModule { }

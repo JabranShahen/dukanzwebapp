@@ -2,24 +2,14 @@ import {
   Component,
   OnInit,
   AfterViewInit,
-  ChangeDetectionStrategy,
-  ElementRef, ViewChild
 } from "@angular/core";
 import { matxAnimations } from "app/shared/animations/matx-animations";
-import { ThemeService } from "app/shared/services/theme.service";
-import tinyColor from "tinycolor2";
-import PerfectScrollbar from "perfect-scrollbar";
 import { CatagoryService } from "./services/catagory.service";
-import { Console } from "console";
 import { ProductCategory } from "app/entities/product_catagory";
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, map } from 'rxjs';
 import { AddCatagoryComponent } from "./add/add-catagory.component";
 import { MatDialog } from "@angular/material/dialog";
-
-import {MatPaginator} from '@angular/material/paginator';
-import {MatSort} from '@angular/material/sort';
-import { UntypedFormGroup } from "@angular/forms";
-
+import { MatTableDataSource } from "@angular/material/table";
 
 
 @Component({
@@ -45,31 +35,42 @@ export class CatagoryComponent implements OnInit, AfterViewInit {
   trafficSourcesChart: any;
   countryTrafficStats: any[];
   doughNutPieOptions: any;
-  productCategories :ProductCategory[];
-  subscription: Subscription;
-
-  // productCategoryName: string;
-  // productCategoryImageURL: string;
-  // visible: boolean;
-  // order: number;
+  // subscription: Subscription;
   
   displayedColumns: string[] = ["productCategoryName", "productCategoryImageURL", "visible", "order", "actions"];
   
-  constructor(public catagoryService: CatagoryService, public dialog: MatDialog,) 
+  productCategoriesForTable$: Observable<MatTableDataSource<ProductCategory>>;
+
+  objectCount = 0;
+  constructor(public catagoryService: CatagoryService, public dialog: MatDialog
+    , public productCategoriesData: MatTableDataSource<ProductCategory>)
+     
   {
+    this.productCategoriesForTable$  = this.catagoryService.ProductCategories.asObservable().pipe(
+      map((productCategories) => {        
+        this.productCategoriesData.data = productCategories
+        console.log("Data loaded");      
+        return this.productCategoriesData;
+      })
+    );
+
   }
 
   ngAfterViewInit() {}
   ngOnInit() 
   {
-    this.subscription = this.catagoryService.ProductCategoryChanged
-    .subscribe
-    (
-      (productCategories: ProductCategory[]) => {
-        this.productCategories = productCategories;
-      }
-    );
-    this.productCategories = this.catagoryService.getCatagories();
+    
+    console.log("Data service called");
+    // this.subscription = this.catagoryService.ProductCategoryChanged
+    // .subscribe
+    // (
+    //   (productCategories: ProductCategory[]) => {        
+    //     this.catagoryService.ProductCategories.next(productCategories);
+    //     console.log("Data returned");        
+    //   }            
+    // );
+
+    this.catagoryService.getCatagories();
   }
 
   addNew() {
@@ -78,11 +79,22 @@ export class CatagoryComponent implements OnInit, AfterViewInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      // if (result === 1) {
-      //   // After dialog is closed we're doing frontend updates
-      //   // For add we're just pushing a new row inside DataService
-      //   this.exampleDatabase.dataChange.value.push(this.dataService.getDialogData());
-      //   this.refreshTable();
+      this.catagoryService.getCatagories();
       })
+    }
+
+    deleteItem(rowIndex: number, data: any)
+    {
+      if(confirm("Are you sure to delete "+data.productCategoryName)) {
+        this.catagoryService.DeleteCatagory(data).subscribe(
+          data=>
+          {          
+            this.productCategoriesData.data.splice(rowIndex, 1);
+            this.productCategoriesData._updateChangeSubscription();          
+            // this.catagoryService.getCatagories();
+            console.log("deleted");
+          }        
+        );      
+      }
     }
   }
