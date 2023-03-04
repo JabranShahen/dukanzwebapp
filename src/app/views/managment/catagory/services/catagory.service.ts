@@ -52,6 +52,20 @@ export class CatagoryService {
       );
   }
 
+  UpdateCatagory(productCategory: ProductCategory) {
+    console.log("Update Catagory Started");
+
+    console.log(JSON.stringify(productCategory));
+
+    return this.http
+      .put
+      (
+        'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
+        // "https://localhost:7114/api/ProductCategory"
+        ,productCategory,
+        { responseType: 'text' }
+      );
+  }
   
   DeleteCatagory(productCategory: ProductCategory) {       
     console.log("Delete request started");

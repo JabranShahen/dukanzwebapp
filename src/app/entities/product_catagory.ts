@@ -1,9 +1,13 @@
 export class ProductCategory 
 {
-    id: string;   
-    partitionKey: string;
-    productCategoryName: string;
-    productCategoryImageURL: string;
-    visible: boolean;
-    order: number;
+    public id: string;   
+    public partitionKey: string;
+    public productCategoryName: string;
+    public productCategoryImageURL: string;
+    public visible: boolean;
+    public order: number;
+
+    constructor(public obj : { id: string }) {
+    }
+
 }

@@ -11,7 +11,6 @@ import { AddCatagoryComponent } from "./add/add-catagory.component";
 import { MatDialog } from "@angular/material/dialog";
 import { MatTableDataSource } from "@angular/material/table";
 
-
 @Component({
   selector: 'app-catagory',
   templateUrl: './catagory.component.html',
@@ -75,7 +74,7 @@ export class CatagoryComponent implements OnInit, AfterViewInit {
 
   addNew() {
     const dialogRef = this.dialog.open(AddCatagoryComponent, {
-      data: new ProductCategory() 
+      data: new ProductCategory({id: ''})
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -83,16 +82,23 @@ export class CatagoryComponent implements OnInit, AfterViewInit {
       })
     }
 
+    editItem(rowIndex: number, data: any) {
+      const dialogRef = this.dialog.open(AddCatagoryComponent, {
+        data: data 
+      });
+  
+      dialogRef.afterClosed().subscribe(result => {        
+        })
+      }
+
     deleteItem(rowIndex: number, data: any)
     {
-      if(confirm("Are you sure to delete "+data.productCategoryName)) {
+      if(confirm("Are you sure to delete "+ data.productCategoryName)) {
         this.catagoryService.DeleteCatagory(data).subscribe(
           data=>
           {          
             this.productCategoriesData.data.splice(rowIndex, 1);
             this.productCategoriesData._updateChangeSubscription();          
-            // this.catagoryService.getCatagories();
-            console.log("deleted");
           }        
         );      
       }

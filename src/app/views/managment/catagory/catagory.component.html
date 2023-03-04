@@ -65,8 +65,8 @@
       </mat-header-cell>
 
       <mat-cell *matCellDef="let row; let i=index;">
-        
-        <button mat-icon-button color="accent">
+
+        <button mat-icon-button color="accent" (click)="editItem(i, row)">
           <mat-icon aria-label="Edit">edit</mat-icon>
         </button>
         
@@ -80,5 +80,7 @@
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
   </table>
+  
 </mat-card>
