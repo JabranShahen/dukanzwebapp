@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AppLoaderService } from '../../../shared/services/app-loader/app-loader.service';
 import { JwtAuthService } from '../../../shared/services/auth/jwt-auth.service';
+import { DukanzAuthService } from 'app/shared/services/auth/dukanz-auth.service';
 
 @Component({
   selector: 'app-signin',
@@ -27,7 +28,8 @@ export class SigninComponent implements OnInit, AfterViewInit, OnDestroy {
     private jwtAuth: JwtAuthService,
     private matxLoader: AppLoaderService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private authService: DukanzAuthService
   ) {
     this._unsubscribeAll = new Subject();
   }
@@ -45,7 +47,7 @@ export class SigninComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.autoSignIn();
+    // this.autoSignIn();
   }
 
   ngOnDestroy() {

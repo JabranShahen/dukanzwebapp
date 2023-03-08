@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { Validators, UntypedFormGroup, UntypedFormControl } from '@angular/forms';
+import { DukanzAuthService } from 'app/shared/services/auth/dukanz-auth.service';
 
 @Component({
   selector: 'app-signup',
@@ -13,7 +14,10 @@ export class SignupComponent implements OnInit {
   @ViewChild(MatButton) submitButton: MatButton;
 
   signupForm: UntypedFormGroup
-  constructor() {}
+  constructor(private authService: DukanzAuthService) 
+  {    
+
+  }
 
   ngOnInit() {
     const password = new UntypedFormControl('', Validators.required);
@@ -34,9 +38,15 @@ export class SignupComponent implements OnInit {
   signup() {
     const signupData = this.signupForm.value;
     console.log(signupData);
-
+    this.authService.createUser(this.signupForm.value.email,this.signupForm.value.password).subscribe(
+      data=>      
+      {
+        console.log(data.email.toString());
+      }
+    );
     this.submitButton.disabled = true;
     this.progressBar.mode = 'indeterminate';
+
   }
 
 }
