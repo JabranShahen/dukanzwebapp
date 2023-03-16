@@ -17,8 +17,8 @@ export class CatagoryService {
   getCatagories() {
     this.http
       .get<ProductCategory[]>(
-        'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
-        // 'https://localhost:7114/api/ProductCategory'
+        // 'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
+        'https://localhost:7114/api/ProductCategory'
       )
       .subscribe(productCategories =>
         {
@@ -45,8 +45,8 @@ export class CatagoryService {
     return this.http
       .post
       (
-        'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
-        // "https://localhost:7114/api/ProductCategory"
+        // 'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
+        "https://localhost:7114/api/ProductCategory"
         , productCategory,
         { responseType: 'text' }
       );
@@ -60,8 +60,8 @@ export class CatagoryService {
     return this.http
       .put
       (
-        'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
-        // "https://localhost:7114/api/ProductCategory"
+        // 'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
+        "https://localhost:7114/api/ProductCategory"
         ,productCategory,
         { responseType: 'text' }
       );
@@ -77,8 +77,8 @@ export class CatagoryService {
 
     return this.http
       .delete(
-        'https://dukanzapitest.azurewebsites.net/api/ProductCategory',
-        // "https://localhost:7114/api/ProductCategory",
+        // 'https://dukanzapitest.azurewebsites.net/api/ProductCategory',
+        "https://localhost:7114/api/ProductCategory",
         options
       );      
   }

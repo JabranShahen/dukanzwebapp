@@ -20,24 +20,28 @@ export class SigninComponent implements OnInit, AfterViewInit, OnDestroy {
 
   signinForm: UntypedFormGroup;
   errorMsg = '';
-  // return: string;
+  return: string;
 
-  private _unsubscribeAll: Subject<any>;
 
-  constructor(
-    private jwtAuth: JwtAuthService,
-    private matxLoader: AppLoaderService,
-    private router: Router,
+  constructor
+  (        
+    private authService: DukanzAuthService,
     private route: ActivatedRoute,
-    private authService: DukanzAuthService
-  ) {
-    this._unsubscribeAll = new Subject();
+    private router: Router
+  ) 
+  {
+    this.route.params.subscribe(params => {      
+      if (params['return'])
+      { 
+        this.return = params['return']
+      }
+    });
   }
 
   ngOnInit() {
     this.signinForm = new UntypedFormGroup({
-      username: new UntypedFormControl('Watson', Validators.required),
-      password: new UntypedFormControl('12345678', Validators.required),
+      username: new UntypedFormControl('jabranshaheen@hotmail.com', Validators.required),
+      password: new UntypedFormControl('66J4br4n66', Validators.required),
       rememberMe: new UntypedFormControl(true)
     });
 
@@ -51,37 +55,19 @@ export class SigninComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this._unsubscribeAll.next(1);
-    this._unsubscribeAll.complete();
+
   }
 
   signin() {
-    const signinData = this.signinForm.value
-
     this.submitButton.disabled = true;
-    this.progressBar.mode = 'indeterminate';
-    
-    this.jwtAuth.signin(signinData.username, signinData.password)
-    .subscribe(response => {
-      this.router.navigateByUrl(this.jwtAuth.return);
-    }, err => {
-      this.submitButton.disabled = false;
-      this.progressBar.mode = 'determinate';
-      this.errorMsg = err.message;
-      // console.log(err);
-    })
-  }
+    this.progressBar.mode = 'indeterminate';  
+    this.authService.signInUser(this.signinForm.value.username,this.signinForm.value.password).subscribe    
+    (
 
-  autoSignIn() {    
-    if(this.jwtAuth.return === '/') {
-      return
+      data=>{
+        console.log("Loggin function")
+        this.router.navigateByUrl(this.return);
+      }
+    );
     }
-    this.matxLoader.open(`Automatically Signing you in! \n Return url: ${this.jwtAuth.return.substring(0, 20)}...`, {width: '320px'});
-    setTimeout(() => {
-      this.signin();
-      console.log('autoSignIn');
-      this.matxLoader.close()
-    }, 2000);
-  }
-
 }

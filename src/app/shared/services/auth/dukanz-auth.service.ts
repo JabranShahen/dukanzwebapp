@@ -17,10 +17,12 @@ export interface AuthResponseData
 @Injectable({providedIn: 'root'})
 export class DukanzAuthService
 {
+
+    public idToken: string = "";
+
     constructor
     (
-        private http: HttpClient,
-        private router: Router
+        private http: HttpClient
     )
     {
     }
@@ -42,16 +44,39 @@ export class DukanzAuthService
           tap(resData => {
             console.log("Create User completed");
             this.handleAuthentication(              
-              resData.email,
-              resData.localId,
-              resData.idToken,
-              +resData.expiresIn
+              resData.localId            
             );
           })
         );
     }
-    handleAuthentication(email: any, localId: any, idToken: any, arg3: number) {
-        throw new Error("Method not implemented.");
+
+    signInUser(email:string, password: string)
+    {
+      console.log("email:"+email +" - "+ "password:" +password);
+        return this.http
+        .post<AuthResponseData>(
+          'https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=AIzaSyC1FnOpxbyZLUVZDbod6CxNnfvfTCb4MtY',
+          {
+            email: email,
+            password: password,
+            returnSecureToken: true
+          }
+        )
+        .pipe(
+          catchError(this.handleError),
+          tap(resData => {
+            console.log("User logged in");
+            this.handleAuthentication(              
+              resData.idToken
+            );
+          })
+        );
+    }
+
+    handleAuthentication(idToken: string) 
+    {      
+      console.log(idToken);
+      this.idToken = idToken;      
     }
 
     private handleError(errorRes: HttpErrorResponse) {

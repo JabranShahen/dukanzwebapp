@@ -14,6 +14,9 @@ export class SignupComponent implements OnInit {
   @ViewChild(MatButton) submitButton: MatButton;
 
   signupForm: UntypedFormGroup
+  
+  public tokenID: String ="tokenID";
+
   constructor(private authService: DukanzAuthService) 
   {    
 
@@ -41,12 +44,11 @@ export class SignupComponent implements OnInit {
     this.authService.createUser(this.signupForm.value.email,this.signupForm.value.password).subscribe(
       data=>      
       {
-        console.log(data.email.toString());
+        this.tokenID = data.idToken.toString();        
+        console.log(data.idToken.toString());
       }
     );
     this.submitButton.disabled = true;
     this.progressBar.mode = 'indeterminate';
-
   }
-
 }

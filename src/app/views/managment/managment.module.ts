@@ -47,7 +47,6 @@ import { MatTableDataSource } from '@angular/material/table';
     SharedMaterialModule,
     FlexLayoutModule,
     PerfectScrollbarModule,
-    HttpClientModule,
     RouterModule.forChild(ManagmentRoutes),    
   ],  
   providers:[CatagoryService, MatTableDataSource]
