@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { UntypedFormGroup, UntypedFormControl, Validators } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ProductCategory } from 'app/entities/product_catagory';
 import { CatagoryService } from '../services/catagory.service';
@@ -10,68 +10,53 @@ import { CatagoryService } from '../services/catagory.service';
   styleUrls: ['./add-catagory.component.scss']
 })
 export class AddCatagoryComponent implements OnInit {
-  formData = {}
-  console = console;
-  catagoryForm: UntypedFormGroup;
-
-  private mode: string = "";
-
+  catagoryForm: FormGroup;
+  mode: string = '';
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public catagoryData: ProductCategory,
     public catagoryService: CatagoryService,
-    public dialogRef: MatDialogRef<AddCatagoryComponent>
-  ) { };
-  ngOnInit() {
-    
-    this.console.log( "this.catagoryData " + this.catagoryData.id);  
-    if (this.catagoryData.id==null)
-    {
-      this.mode = "New";
+    public dialogRef: MatDialogRef<AddCatagoryComponent>,
+    private formBuilder: FormBuilder
+  ) {}
+
+  ngOnInit(): void {
+    console.log('this.catagoryData ', this.catagoryData.id);  
+    if (!this.catagoryData.id) {
+      this.mode = 'New';
       this.catagoryData.visible = true;
-      this.catagoryData.productCategoryName = "";
-      this.catagoryData.productCategoryImageURL = "";
+      this.catagoryData.productCategoryName = '';
+      this.catagoryData.productCategoryImageURL = '';
       this.catagoryData.order = 0;
-    }
-    else
-    {
-      this.mode = "Edit";
+    } else {
+      this.mode = 'Edit';
     }
 
-    this.catagoryForm = new UntypedFormGroup({
-      productCategoryName: new UntypedFormControl('', [
-        Validators.required
-      ]),
-      productCategoryImageURL: new UntypedFormControl('', [
-        Validators.required
-      ]),
-      visible: new UntypedFormControl(''),
-      order: new UntypedFormControl('', [
-        Validators.required
-      ]),
-    }
-    );
+    this.catagoryForm = this.formBuilder.group({
+      productCategoryName: ['', Validators.required],
+      productCategoryImageURL: ['', Validators.required],
+      visible: [''],
+      order: ['', Validators.required],
+    });
   }
 
-  onSubmit() {
-    if(this.mode == "New")          
-    {
-      this.catagoryService.saveNewCatagory(this.catagoryData).subscribe
-      (
-        data =>
-          this.dialogRef.close()
-      );
-    }
-    else
-    {
-      this.catagoryService.UpdateCatagory(this.catagoryData).subscribe
-      (
-        data =>
-        {
-          console.log("Update Catagory Completed");
-          this.dialogRef.close();
-        }                  
-      );
+  async onSubmit(): Promise<void> {
+    if (this.mode === 'New') {
+      try {
+        await this.catagoryService.saveNewCatagory(this.catagoryData);
+        this.dialogRef.close();
+      } catch (error) {
+        console.error('Error saving category:', error);
+      }
+    } else {
+      try {
+        await this.catagoryService.updateCatagory(this.catagoryData);
+        console.log('Update Category Completed');
+        this.dialogRef.close();
+      } catch (error) {
+        console.error('Error updating category:', error);
+      }
     }
   }
+  
 }

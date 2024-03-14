@@ -35,10 +35,11 @@ import { AddCatagoryComponent } from './catagory/add/add-catagory.component';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { OnlyNumber } from './catagory/OnlyNumber';
 import { MatTableDataSource } from '@angular/material/table';
-
+import { ProductComponent } from './product/product.component';
+import { AddProductComponent } from './product/add-product/add-product.component';
 
 @NgModule({
-  declarations: [CatagoryComponent, AddCatagoryComponent, OnlyNumber],
+  declarations: [CatagoryComponent, AddCatagoryComponent, OnlyNumber, ProductComponent, AddProductComponent],
   imports: [
     CommonModule,
     FormsModule,

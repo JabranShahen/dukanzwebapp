@@ -1,33 +1,27 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, map, Observable, Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { ProductCategory } from 'app/entities/product_catagory';
-// import { ProductCategory } from 'app/entities/product_catagory';
+import { ApiService } from './apiservice';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CatagoryService {
-  ProductCategories = new BehaviorSubject<ProductCategory[]>(new Array<ProductCategory>());  
-  
-  constructor(
-    private http: HttpClient
-  ) { }
+  ProductCategories = new BehaviorSubject<ProductCategory[]>([]);
 
-  getCatagories() {
-    this.http
-      .get<ProductCategory[]>(
-        'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
-        // 'https://localhost:7114/api/ProductCategory'
-      )
-      .subscribe(productCategories =>
-        {
-          this.ProductCategories.next(productCategories);                    
-          console.log("this.ProductCategoryChanged.next");
-        });    
+  constructor(private apiService: ApiService) {}
+
+  async getCatagories(): Promise<void> {
+    try {
+      const productCategories = await this.apiService.get<ProductCategory[]>('ProductCategory').toPromise();
+      this.ProductCategories.next(productCategories);
+      console.log("this.ProductCategoryChanged.next");
+    } catch (error) {
+      console.error("Error getting categories:", error);
+    }
   }
-  
-  newGuid() {
+
+  newGuid(): string {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
       var r = Math.random() * 16 | 0,
         v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -35,51 +29,33 @@ export class CatagoryService {
     });
   }
 
-  saveNewCatagory(productCategory: ProductCategory) {
-    console.log("saveNewCatagory Started");
-    productCategory.id = this.newGuid();
-    productCategory.partitionKey = productCategory.id;
+  async saveNewCatagory(productCategory: ProductCategory): Promise<void> {
+    try {
+      productCategory.id = this.newGuid();
+      productCategory.partitionKey = productCategory.id;
 
-    console.log(JSON.stringify(productCategory));
-
-    return this.http
-      .post
-      (
-        'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
-        // "https://localhost:7114/api/ProductCategory"
-        , productCategory,
-        { responseType: 'text' }
-      );
+      await this.apiService.post<any>('ProductCategory', productCategory).toPromise();
+      console.log('New category saved successfully.');
+    } catch (error) {
+      console.error("Error saving category:", error);
+    }
   }
 
-  UpdateCatagory(productCategory: ProductCategory) {
-    console.log("Update Catagory Started");
-
-    console.log(JSON.stringify(productCategory));
-
-    return this.http
-      .put
-      (
-        'https://dukanzapitest.azurewebsites.net/api/ProductCategory'
-        // "https://localhost:7114/api/ProductCategory"
-        ,productCategory,
-        { responseType: 'text' }
-      );
+  async updateCatagory(productCategory: ProductCategory): Promise<void> {
+    try {
+      await this.apiService.put<any>('ProductCategory', productCategory).toPromise();
+      console.log('Category updated successfully.');
+    } catch (error) {
+      console.error("Error updating category:", error);
+    }
   }
-  
-  DeleteCatagory(productCategory: ProductCategory) {       
-    console.log("Delete request started");
-    console.log(JSON.stringify(productCategory));    
-    var options = 
-    {
-      body: productCategory      
-    };
 
-    return this.http
-      .delete(
-        'https://dukanzapitest.azurewebsites.net/api/ProductCategory',
-        // "https://localhost:7114/api/ProductCategory",
-        options
-      );      
+  async deleteCatagory(productCategory: ProductCategory): Promise<void> {
+    try {
+      await this.apiService.delete<any>('ProductCategory', productCategory).toPromise();
+      console.log('Category deleted successfully.');
+    } catch (error) {
+      console.error("Error deleting category:", error);
+    }
   }
 }

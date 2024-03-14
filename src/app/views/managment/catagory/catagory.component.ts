@@ -35,30 +35,27 @@ export class CatagoryComponent implements OnInit, AfterViewInit {
   countryTrafficStats: any[];
   doughNutPieOptions: any;
   // subscription: Subscription;
-  
+
   displayedColumns: string[] = ["productCategoryName", "productCategoryImageURL", "visible", "order", "actions"];
-  
+
   productCategoriesForTable$: Observable<MatTableDataSource<ProductCategory>>;
 
   objectCount = 0;
   constructor(public catagoryService: CatagoryService, public dialog: MatDialog
-    , public productCategoriesData: MatTableDataSource<ProductCategory>)
-     
-  {
-    this.productCategoriesForTable$  = this.catagoryService.ProductCategories.asObservable().pipe(
-      map((productCategories) => {        
+    , public productCategoriesData: MatTableDataSource<ProductCategory>) {
+    this.productCategoriesForTable$ = this.catagoryService.ProductCategories.asObservable().pipe(
+      map((productCategories) => {
         this.productCategoriesData.data = productCategories
-        console.log("Data loaded");      
+        console.log("Data loaded");
         return this.productCategoriesData;
       })
     );
 
   }
 
-  ngAfterViewInit() {}
-  ngOnInit() 
-  {
-    
+  ngAfterViewInit() { }
+  ngOnInit() {
+
     console.log("Data service called");
     // this.subscription = this.catagoryService.ProductCategoryChanged
     // .subscribe
@@ -74,33 +71,46 @@ export class CatagoryComponent implements OnInit, AfterViewInit {
 
   addNew() {
     const dialogRef = this.dialog.open(AddCatagoryComponent, {
-      data: new ProductCategory({id: ''})
+      data: new ProductCategory({ id: '' })
     });
 
     dialogRef.afterClosed().subscribe(result => {
       this.catagoryService.getCatagories();
-      })
-    }
+    })
+  }
 
-    editItem(rowIndex: number, data: any) {
-      const dialogRef = this.dialog.open(AddCatagoryComponent, {
-        data: data 
-      });
+  editItem(rowIndex: number, data: any) {
+    const dialogRef = this.dialog.open(AddCatagoryComponent, {
+      data: data
+    });
   
-      dialogRef.afterClosed().subscribe(result => {        
-        })
+    dialogRef.afterClosed().subscribe(async result => {
+      if (result) {
+        try {
+          await this.catagoryService.updateCatagory(result);
+          this.catagoryService.getCatagories();
+        } catch (error) {
+          console.error('Error updating category:', error);
+        }
       }
+    });
+  }
+  
 
-    deleteItem(rowIndex: number, data: any)
-    {
-      if(confirm("Are you sure to delete "+ data.productCategoryName)) {
-        this.catagoryService.DeleteCatagory(data).subscribe(
-          data=>
-          {          
-            this.productCategoriesData.data.splice(rowIndex, 1);
-            this.productCategoriesData._updateChangeSubscription();          
-          }        
-        );      
+  async deleteItem(rowIndex: number, data: any): Promise<void> {
+    if (confirm("Are you sure to delete " + data.productCategoryName)) {
+      try {
+        await this.catagoryService.deleteCatagory(data);
+        // Remove the item from the local array
+        this.productCategoriesData.data.splice(rowIndex, 1);
+        // Notify the MatTableDataSource that the data has changed
+        this.productCategoriesData._updateChangeSubscription();
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        // Handle error if necessary
       }
     }
   }
+
+
+}
