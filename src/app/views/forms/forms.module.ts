@@ -15,7 +15,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatStepperModule } from '@angular/material/stepper';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { QuillModule } from 'ngx-quill';
-import { FileUploadModule } from 'ng2-file-upload';
+// import { FileUploadModule } from 'ng2-file-upload';
 
 import { BasicFormComponent } from './basic-form/basic-form.component';
 import { RichTextEditorComponent } from './rich-text-editor/rich-text-editor.component';
@@ -42,7 +42,7 @@ import { WizardComponent } from './wizard/wizard.component';
     MatStepperModule,
     FlexLayoutModule,
     QuillModule.forRoot(),
-    FileUploadModule,
+    // FileUploadModule,
     RouterModule.forChild(FormsRoutes),
   ],
   declarations: [RichTextEditorComponent, FileUploadComponent, WizardComponent, BasicFormComponent],

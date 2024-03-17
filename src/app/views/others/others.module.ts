@@ -17,7 +17,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { NgChartsModule } from 'ng2-charts';
-import { FileUploadModule } from 'ng2-file-upload';
+// import { FileUploadModule } from 'ng2-file-upload';
 import { SharedModule } from './../../shared/shared.module';
 
 import { AppGalleryComponent } from './app-gallery/app-gallery.component';
@@ -48,7 +48,7 @@ import { Nested3Component } from './nested3/nested3.component';
     MatProgressBarModule,
     FlexLayoutModule,
     NgChartsModule,
-    FileUploadModule,
+    // FileUploadModule,
     SharedModule,
     RouterModule.forChild(OthersRoutes)
   ],

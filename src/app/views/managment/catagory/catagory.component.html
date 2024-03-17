@@ -1,0 +1,86 @@
+<mat-card class="p-0 overflow-x-auto" fxLayout="row wrap">
+  <table mat-table fxFlex [dataSource]="productCategoriesForTable$ | async" class="mat-elevation-z1 min-w-600">
+    <!-- image Column --> 
+
+    <ng-container matColumnDef="productCategoryName">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td class="py-12" mat-cell *matCellDef="let element">
+        <div fxLayout="row wrap" fxLayoutAlign="start center">
+          <!-- <img class="avatar-sm rounded-circle" src="{{ element.imgUrl }}" alt="{{ element.name }}" /> -->
+          <p class="m-0 ml-12 text-capitalize">
+            {{ element.productCategoryName }}
+          </p>
+        </div>
+      </td>
+    </ng-container>
+
+    <!-- Name Column -->
+    <ng-container matColumnDef="productCategoryImageURL">
+      <th mat-header-cell *matHeaderCellDef>URL</th>
+      <td class="py-12" mat-cell *matCellDef="let element">
+        <div fxLayout="row wrap" fxLayoutAlign="start center">
+          <img class="avatar-sm rounded-circle" src="{{ element.productCategoryImageURL }}" />
+        </div>
+      </td>
+      <!-- <td mat-cell *matCellDef="let element">${{ element.productCategoryImageURL }}</td> -->
+    </ng-container>
+
+    <!-- Weight Column -->
+    <ng-container matColumnDef="visible">
+      <th mat-header-cell *matHeaderCellDef>Visible</th>
+      <td mat-cell *matCellDef="let element">
+        <mat-chip class="align-middle py-4 px-8" >
+          {{ element.visible }}
+        </mat-chip>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="order">
+      <th mat-header-cell *matHeaderCellDef>Order</th>
+      <td mat-cell *matCellDef="let element">
+        <mat-chip class="align-middle py-4 px-8" >
+          {{ element.order }}
+        </mat-chip>
+      </td>
+    </ng-container>
+
+    <!-- Symbol Column -->
+    <ng-container matColumnDef="Order">
+      <th mat-header-cell *matHeaderCellDef>Order</th>
+      <td mat-cell *matCellDef="let element">
+        <button mat-icon-button>
+          <mat-icon class="mat-18 mat-color-primary">
+            edit
+          </mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+
+      <mat-header-cell *matHeaderCellDef>
+        <button mat-icon-button color="primary" (click)="addNew()">
+          <mat-icon aria-label="Example icon-button with a heart icon">add</mat-icon>
+        </button>
+      </mat-header-cell>
+
+      <mat-cell *matCellDef="let row; let i=index;">
+
+        <button mat-icon-button color="accent" (click)="editItem(i, row)">
+          <mat-icon aria-label="Edit">edit</mat-icon>
+        </button>
+        
+        <button mat-icon-button color="accent" (click)="deleteItem(i, row)">
+          <mat-icon aria-label="Delete">delete</mat-icon>
+        </button>
+
+      </mat-cell>
+
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+  </table>
+  
+</mat-card>

@@ -26,6 +26,11 @@ export const rootRouterConfig: Routes = [
     canActivate: [AuthGuard],
     children: [
       {
+        path: 'managment',
+        loadChildren: () => import('./views/managment/managment.module').then(m => m.ManagmentModule),
+        data: { title: 'Managment', breadcrumb: 'Managment'}
+      },      
+      {
         path: 'dashboard',
         loadChildren: () => import('./views/dashboard/dashboard.module').then(m => m.DashboardModule),
         data: { title: 'Dashboard', breadcrumb: 'DASHBOARD'}
@@ -39,13 +44,11 @@ export const rootRouterConfig: Routes = [
         path: 'forms',
         loadChildren: () => import('./views/forms/forms.module').then(m => m.AppFormsModule),
         data: { title: 'Forms', breadcrumb: 'FORMS'}
-      },
-      
+      },      
       {
         path: 'search',
         loadChildren: () => import('./views/search-view/search-view.module').then(m => m.SearchViewModule)
-      },
-      
+      },    
     ]
   },
   {
@@ -53,4 +56,3 @@ export const rootRouterConfig: Routes = [
     redirectTo: 'sessions/404'
   }
 ];
-
