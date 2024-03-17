@@ -40,14 +40,13 @@ export class ProductService {
 
   async updateProduct(product: Product): Promise<void> {
     try {
-      await this.apiService.put<Product>(`product/${product.id}`, product).toPromise(); // Corrected endpoint
-      const updatedProducts = this.products.value.map(p => (p.id === product.id ? product : p));
-      this.products.next(updatedProducts);
+      await this.apiService.put<Product>('product', product).toPromise(); // Corrected endpoint
       console.log('Product updated successfully.');
     } catch (error) {
       console.error("Error updating product:", error);
     }
   }
+  
 
   async deleteProduct(product: Product): Promise<void> {
     try {

@@ -6,7 +6,10 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  baseUrl: string = 'https://dukanzapinew.azurewebsites.net/api/';
+  
+  // baseUrl: string = 'https://dukanzapinew.azurewebsites.net/api/';
+  baseUrl: string = 'https://localhost:7114/api/';
+
 
   constructor(private http: HttpClient) {}
 

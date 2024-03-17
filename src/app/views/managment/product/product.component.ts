@@ -5,6 +5,7 @@ import { Product } from "app/entities/product";
 import { BehaviorSubject, Observable, map } from 'rxjs';
 import { MatDialog } from "@angular/material/dialog";
 import { MatTableDataSource } from "@angular/material/table";
+import { AddProductComponent } from "./add-product/add-product.component"; // Import the AddProductComponent
 
 @Component({
   selector: 'app-product',
@@ -35,7 +36,6 @@ export class ProductComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() { }
   
   ngOnInit() {
-    
     this.productService.loadProducts().then(() => {
       this.productsDataSource$ = this.productService.getProducts().pipe(
         map(products => {
@@ -45,19 +45,74 @@ export class ProductComponent implements OnInit, AfterViewInit {
       );
     });
   }
-
+  
   addNew() {
-    // Implement the addNew functionality here
+    const dialogRef = this.dialog.open(AddProductComponent, {
+      data: new Product(
+        '', // id (empty string for a new product)
+        '', // productName
+        0, // orignalPrice
+        0, // currentPrice
+        0, // currentCost
+        '', // unitName
+        0, // displayPercentage
+        '', // imageURL
+        true, // visible
+        0, // order
+        '' // productCategoryId (optional, provide value if necessary)
+      )
+    });
+  
+    dialogRef.afterClosed().subscribe(result => {
+      // Reload products data after adding
+      if (result) {
+        this.productService.loadProducts();
+      }
+    });
   }
+  
 
-  editItem(rowIndex: number, data: any) {
-    // Implement the editItem functionality here
+  // editItem(rowIndex: number, data: Product) {
+  //   console.log("data " + data.id.toString());
+  //   const dialogRef = this.dialog.open(AddProductComponent, {
+  //     data: data // Pass the selected product data for editing
+  //   });
+      
+    
+  //   dialogRef.afterClosed().subscribe(result => {
+  //     // Reload products data after editing
+  //     if (result) {
+  //       this.productService.loadProducts();
+  //     }
+  //   });
+  // }
+
+  editItem(row: any) {
+    console.log("data " + row.id.toString());
+
+    const dialogRef = this.dialog.open(AddProductComponent, {
+      data: row
+    });
+  
+    dialogRef.afterClosed().subscribe(async result => {
+      if (result) {
+        try {
+          await this.productService.updateProduct(result);
+          this.productService.loadProducts(); // Reload products after editing
+        } catch (error) {
+          console.error('Error updating product:', error);
+        }
+      }
+    });
   }
+  
 
-  async deleteItem(rowIndex: number, data: any): Promise<void> {
+  async deleteItem(rowIndex: number, data: Product): Promise<void> {
     if (confirm("Are you sure to delete " + data.productName)) {
       try {
         await this.productService.deleteProduct(data);
+        // Reload products data after deletion
+        this.productService.loadProducts();
       } catch (error) {
         console.error("Error deleting product:", error);
       }

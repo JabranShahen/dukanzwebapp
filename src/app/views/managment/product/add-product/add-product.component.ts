@@ -21,41 +21,56 @@ export class AddProductComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    console.log('this.productData ', this.productData.id);  
     if (!this.productData.id) {
+      // If id is not present, it means it's a new product
       this.mode = 'New';
       // Initialize other properties of Product entity if needed
     } else {
+      // If id is present, it means it's an existing product
       this.mode = 'Edit';
     }
-
+  
     this.productForm = this.formBuilder.group({
-      productName: ['', Validators.required],
-      productDescription: ['', Validators.required],
-      orignalPrice: ['', Validators.required],
-      currentPrice: ['', Validators.required],
-      currentCost: ['', Validators.required],
-      unitName: ['', Validators.required],
-      displayPercentage: ['', Validators.required],
-      displayUnitName: ['', Validators.required],
-      imageURL: ['', Validators.required],
-      visible: [''],
-      order: ['', Validators.required],
+      id: [this.productData.id],
+      productName: [this.productData.productName],
+      productDescription: [this.productData.productDescription],
+      orignalPrice: [this.productData.orignalPrice],
+      currentPrice: [this.productData.currentPrice],
+      currentCost: [this.productData.currentCost],
+      unitName: [this.productData.unitName],
+      displayPercentage: [this.productData.displayPercentage],
+      displayUnitName: [this.productData.displayUnitName],
+      imageURL: [this.productData.imageURL],
+      visible: [this.productData.visible],
+      order: [this.productData.order],
+      productCategoryId: [this.productData.productCategoryId], // Add productCategoryId field
+      // Include any other fields of Product entity here
     });
   }
+  
 
   async onSubmit(): Promise<void> {
-    const product: Product = this.productForm.value as Product;
+    const productFormValue = this.productForm.value as Product;
+    
+    // Check if productFormValue is null or undefined
+    if (!productFormValue) {
+      console.error('Product form value is undefined.');
+      return;
+    }
+  
+    // Log the JSON representation of productFormValue
+    console.log('Product Form Value:', JSON.stringify(productFormValue));
+  
     if (this.mode === 'New') {
       try {
-        await this.productService.addProduct(product);
+        await this.productService.addProduct(productFormValue);
         this.dialogRef.close();
       } catch (error) {
         console.error('Error adding product:', error);
       }
     } else {
       try {
-        await this.productService.updateProduct(product);
+        await this.productService.updateProduct(productFormValue);
         console.log('Product updated successfully.');
         this.dialogRef.close();
       } catch (error) {
@@ -63,4 +78,7 @@ export class AddProductComponent implements OnInit {
       }
     }
   }
+  
+  
+  
 }
