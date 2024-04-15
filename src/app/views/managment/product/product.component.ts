@@ -6,6 +6,9 @@ import { BehaviorSubject, Observable, map } from 'rxjs';
 import { MatDialog } from "@angular/material/dialog";
 import { MatTableDataSource } from "@angular/material/table";
 import { AddProductComponent } from "./add-product/add-product.component"; // Import the AddProductComponent
+import { ProductCategory } from "app/entities/product_catagory";
+import { CategoryService } from "../catagory/services/product_category";
+
 
 @Component({
   selector: 'app-product',
@@ -14,6 +17,22 @@ import { AddProductComponent } from "./add-product/add-product.component"; // Im
   animations: matxAnimations
 })
 export class ProductComponent implements OnInit, AfterViewInit {
+
+  productCategories: ProductCategory[] = [];
+
+  selectedCategory: string = '';
+
+  showAddProduct: boolean = false;
+
+  onSelectCategory(category: string): void {
+    this.selectedCategory = category;
+    console.log('Selected category:', this.selectedCategory);
+  }
+
+  showAddProductForm() {
+    this.showAddProduct = true;
+  }
+
   displayedColumns: string[] = [
     "productName",
     "productDescription",
@@ -28,14 +47,20 @@ export class ProductComponent implements OnInit, AfterViewInit {
     "order",
     "action" // Changed from "actions" to "action"
   ];
-  
+
   productsDataSource$: Observable<MatTableDataSource<Product>>;
 
-  constructor(public productService: ProductService, public dialog: MatDialog) {}
+  constructor(
+    public productService: ProductService,
+    public dialog: MatDialog,
+    private categoryService: CategoryService
+  ) {}
 
-  ngAfterViewInit() { }
-  
+  ngAfterViewInit() {}
+
   ngOnInit() {
+    this.loadProductCategories();
+
     this.productService.loadProducts().then(() => {
       this.productsDataSource$ = this.productService.getProducts().pipe(
         map(products => {
@@ -45,24 +70,26 @@ export class ProductComponent implements OnInit, AfterViewInit {
       );
     });
   }
-  
+
+  loadProductCategories(): void {
+    this.categoryService.getCategories().subscribe(
+      (categories: ProductCategory[]) => {
+        this.productCategories = categories;
+      },
+      (error: any) => {
+        console.error('Error fetching product categories:', error);
+      }
+    );
+  }
+
   addNew() {
     const dialogRef = this.dialog.open(AddProductComponent, {
-      data: new Product(
-        '', // id (empty string for a new product)
-        '', // productName
-        0, // orignalPrice
-        0, // currentPrice
-        0, // currentCost
-        '', // unitName
-        0, // displayPercentage
-        '', // imageURL
-        true, // visible
-        0, // order
-        '' // productCategoryId (optional, provide value if necessary)
-      )
+      data: {
+        mode: 'New', // Pass the mode as 'New'
+        categories: this.productCategories
+      }
     });
-  
+
     dialogRef.afterClosed().subscribe(result => {
       // Reload products data after adding
       if (result) {
@@ -70,30 +97,16 @@ export class ProductComponent implements OnInit, AfterViewInit {
       }
     });
   }
-  
-
-  // editItem(rowIndex: number, data: Product) {
-  //   console.log("data " + data.id.toString());
-  //   const dialogRef = this.dialog.open(AddProductComponent, {
-  //     data: data // Pass the selected product data for editing
-  //   });
-      
-    
-  //   dialogRef.afterClosed().subscribe(result => {
-  //     // Reload products data after editing
-  //     if (result) {
-  //       this.productService.loadProducts();
-  //     }
-  //   });
-  // }
 
   editItem(row: any) {
-    console.log("data " + row.id.toString());
-
     const dialogRef = this.dialog.open(AddProductComponent, {
-      data: row
+      data: {
+        mode: 'Existing', // Pass the mode as 'Existing'
+        selectedProduct: row, // Pass the selected product
+        categories: this.productCategories
+      }
     });
-  
+
     dialogRef.afterClosed().subscribe(async result => {
       if (result) {
         try {
@@ -105,14 +118,16 @@ export class ProductComponent implements OnInit, AfterViewInit {
       }
     });
   }
-  
 
   async deleteItem(rowIndex: number, data: Product): Promise<void> {
     if (confirm("Are you sure to delete " + data.productName)) {
       try {
         await this.productService.deleteProduct(data);
-        // Reload products data after deletion
-        this.productService.loadProducts();
+        // Remove the item from the local array
+        const productsDataSource = (await this.productsDataSource$.toPromise()).data;
+        productsDataSource.splice(rowIndex, 1);
+        // Notify the MatTableDataSource that the data has changed
+        this.productsDataSource$ = new BehaviorSubject(new MatTableDataSource(productsDataSource));
       } catch (error) {
         console.error("Error deleting product:", error);
       }

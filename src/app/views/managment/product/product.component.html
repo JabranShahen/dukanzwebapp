@@ -1,6 +1,6 @@
 <mat-card class="p-0 overflow-x-auto" fxLayout="row wrap">
+
   <table mat-table fxFlex [dataSource]="productsDataSource$ | async" class="mat-elevation-z1 min-w-600">
-    
     <!-- Product Name Column -->
     <ng-container matColumnDef="productName">
       <th mat-header-cell *matHeaderCellDef>Product Name</th>
@@ -69,28 +69,29 @@
       <td mat-cell *matCellDef="let element">{{ element.order }}</td>
     </ng-container>
 
-
     <!-- Actions Column -->
     <ng-container matColumnDef="actions">
       <mat-header-cell *matHeaderCellDef>
         <button mat-icon-button color="primary" (click)="addNew()">
-          <mat-icon aria-label="Example icon-button with a heart icon">add</mat-icon>
+          <mat-icon aria-label="Add">add</mat-icon>
         </button>
       </mat-header-cell>
-      <td mat-cell *matCellDef="let row">
+      <mat-cell *matCellDef="let row">
         <button mat-icon-button color="accent" (click)="editItem(row)">
           <mat-icon aria-label="Edit">edit</mat-icon>
         </button>
-        <button mat-icon-button color="accent" (click)="deleteItem(row)">
+        <button mat-icon-button color="accent" (click)="deleteItem(i, row)">
           <mat-icon aria-label="Delete">delete</mat-icon>
-        </button>
-      </td>
+        </button>        
+      </mat-cell>
     </ng-container>
 
     <!-- Header Row -->
-    <tr mat-header-row *matHeaderRowDef="[ 'productName', 'productDescription', 'orignalPrice', 'currentPrice', 'currentCost', 'unitName', 'displayPercentage', 'displayUnitName', 'imageURL', 'visible', 'order', 'actions']"></tr>
+    <tr mat-header-row *matHeaderRowDef="     ['productName', 'productDescription', 'orignalPrice', 'currentPrice', 'currentCost', 'unitName', 'displayPercentage', 'displayUnitName', 'imageURL', 'visible', 'order', 'actions']"></tr>
 
     <!-- Data Rows -->
-    <tr mat-row *matRowDef="let row; columns: [ 'productName', 'productDescription', 'orignalPrice', 'currentPrice', 'currentCost', 'unitName', 'displayPercentage', 'displayUnitName', 'imageURL', 'visible', 'order', 'actions']"></tr>
+    <tr mat-row *matRowDef="let row; columns: ['productName', 'productDescription', 'orignalPrice', 'currentPrice', 'currentCost', 'unitName', 'displayPercentage', 'displayUnitName', 'imageURL', 'visible', 'order', 'actions']"></tr>
   </table>
+
+
 </mat-card>
