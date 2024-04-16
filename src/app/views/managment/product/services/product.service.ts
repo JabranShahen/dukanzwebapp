@@ -30,14 +30,14 @@ export class ProductService {
 
   async addProduct(product: Product): Promise<void> {
     try {
-      const newProduct = await this.apiService.post<Product>('product', product).toPromise(); // Corrected endpoint
-      this.products.next([...this.products.value, newProduct]);
-      console.log('New product added successfully.');
+      await this.apiService.post('product', product).toPromise();      
+      this.products.next([...this.products.value, product]);
+      console.log('New product added successfully:', product);
     } catch (error) {
       console.error("Error adding product:", error);
     }
-  }
-
+  } 
+    
   async updateProduct(product: Product): Promise<void> {
     try {
       await this.apiService.put<Product>('product', product).toPromise(); // Corrected endpoint
@@ -46,7 +46,6 @@ export class ProductService {
       console.error("Error updating product:", error);
     }
   }
-  
 
   async deleteProduct(product: Product): Promise<void> {
     try {

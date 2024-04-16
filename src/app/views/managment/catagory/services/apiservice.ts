@@ -7,8 +7,8 @@ import { Observable } from 'rxjs';
 })
 export class ApiService {
   
-  baseUrl: string = 'https://dukanzapi.azurewebsites.net/api/';
-  // baseUrl: string = 'https://localhost:7114/api/';
+  // baseUrl: string = 'https://dukanzapi.azurewebsites.net/api/';
+  baseUrl: string = 'https://localhost:7114/api/';
 
   constructor(private http: HttpClient) {}
 
@@ -17,12 +17,12 @@ export class ApiService {
     return this.http.get<T>(this.baseUrl + url);
   }
 
-  post<T>(url: string, data: any): Observable<T> {
-    return this.http.post<T>(this.baseUrl + url, data);
-  }
+  post(url: string, data: any): Observable<string> {
+    return this.http.post(this.baseUrl + url, data, { responseType: 'text' });
+  }  
 
-  put<T>(url: string, data: any): Observable<T> {
-    return this.http.put<T>(this.baseUrl + url, data);
+  put<T>(url: string, data: any): Observable<string> {
+    return this.http.put(this.baseUrl + url, data, { responseType: 'text' });
   }
 
   delete<T>(url: string, data: any): Observable<T> {

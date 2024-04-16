@@ -48,7 +48,7 @@ export class CategoryService {
       productCategory.id = this.newGuid();
       productCategory.partitionKey = productCategory.id;
 
-      await this.apiService.post<any>('ProductCategory', productCategory).toPromise();
+      await this.apiService.post('ProductCategory', productCategory).toPromise();
       console.log('New category saved successfully.');
     } catch (error) {
       console.error('Error saving category:', error);

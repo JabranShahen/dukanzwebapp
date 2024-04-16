@@ -5,6 +5,7 @@ import { Product } from 'app/entities/product';
 import { ProductCategory } from 'app/entities/product_catagory';
 import { CategoryService } from '../../catagory/services/product_category';
 import { ProductService } from '../services/product.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Component({
   selector: 'app-add-product',
@@ -30,7 +31,9 @@ export class AddProductComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.productData = new Product('', '', 0, 0, 0, '', 0, '', false, 0);
+
+    this.productData = new Product('', '', undefined, 0, 0, 0, '', 0, undefined, '', false, 0, undefined);
+
     this.selectedCategory = '';
 
     this.productForm = this.formBuilder.group({
@@ -45,7 +48,7 @@ export class AddProductComponent implements OnInit {
       imageURL: [this.productData.imageURL, Validators.required],
       visible: [this.productData.visible, Validators.required],
       order: [this.productData.order, Validators.required],
-      productCategoryId: [this.selectedCategory, Validators.required]
+      productCategoryId: ["", Validators.required]
     });
 
     this.loadProductCategories();
@@ -54,7 +57,7 @@ export class AddProductComponent implements OnInit {
     if (this.mode === 'Existing') {
       // Set the product data from the selected product
       this.productData = this.data.selectedProduct;
-      this.selectedCategory = this.productData.productCategoryId;
+      // this.selectedCategory = this.productData.productCategoryId;
     }
   }
 
@@ -76,10 +79,12 @@ export class AddProductComponent implements OnInit {
   async saveProduct(): Promise<void> {
     try {
       if (this.mode === 'New') {
-        console.log("this.productService.addProduct(this.productForm.value)");
-        await this.productService.addProduct(this.productForm.value);
+        // Generate a new GUID for the id property
+        const newProduct = { ...this.productForm.value, id: uuidv4() };
+        console.log("New product data:", JSON.stringify(newProduct));
+        await this.productService.addProduct(newProduct);
       } else if (this.mode === 'Existing') {
-        console.log("this.productService.updateProduct({...this.productForm.value, id: this.productData.id})");
+        console.log("Updated product data:", JSON.stringify({...this.productForm.value, id: this.productData.id}));
         await this.productService.updateProduct({...this.productForm.value, id: this.productData.id});
       }
       // Close the dialog after saving

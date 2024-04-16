@@ -4,7 +4,6 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ProductCategory } from 'app/entities/product_catagory';
 import { CategoryService } from '../services/product_category';
 
-
 @Component({
   selector: 'app-add-catagory',
   templateUrl: './add-catagory.component.html',
@@ -58,7 +57,5 @@ export class AddCatagoryComponent implements OnInit {
         console.error('Error updating category:', error);
       }
     }
-    
-  }
-  
+  } 
 }
