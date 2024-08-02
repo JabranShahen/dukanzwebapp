@@ -1,5 +1,15 @@
-<mat-card class="p-0 overflow-x-auto" fxLayout="row wrap">
+<mat-card class="p-0 overflow-x-auto" fxLayout="column" fxLayoutGap="16px">
 
+  <!-- Category Dropdown -->
+  <mat-form-field appearance="fill">
+    <mat-label>Filter by Category</mat-label>
+    <mat-select [(ngModel)]="selectedCategory" (selectionChange)="onSelectCategory($event.value)">
+      <mat-option value="">All Categories</mat-option>
+      <mat-option *ngFor="let category of productCategories" [value]="category.id">{{ category.productCategoryName }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <!-- Product Table -->
   <table mat-table fxFlex [dataSource]="productsDataSource$ | async" class="mat-elevation-z1 min-w-600">
     <!-- Product Name Column -->
     <ng-container matColumnDef="productName">

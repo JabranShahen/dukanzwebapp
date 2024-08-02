@@ -19,20 +19,8 @@ import { CategoryService } from "../catagory/services/product_category";
 export class ProductComponent implements OnInit, AfterViewInit {
 
   productCategories: ProductCategory[] = [];
-
   selectedCategory: string = '';
-
   showAddProduct: boolean = false;
-
-  onSelectCategory(category: string): void {
-    this.selectedCategory = category;
-    console.log('Selected category:', this.selectedCategory);
-  }
-
-  showAddProductForm() {
-    this.showAddProduct = true;
-  }
-
   displayedColumns: string[] = [
     "productName",
     "productDescription",
@@ -45,9 +33,8 @@ export class ProductComponent implements OnInit, AfterViewInit {
     "imageURL",
     "visible",
     "order",
-    "action" // Changed from "actions" to "action"
+    "actions" // Changed from "actions" to "action"
   ];
-
   productsDataSource$: Observable<MatTableDataSource<Product>>;
 
   constructor(
@@ -60,15 +47,7 @@ export class ProductComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.loadProductCategories();
-
-    this.productService.loadProducts().then(() => {
-      this.productsDataSource$ = this.productService.getProducts().pipe(
-        map(products => {
-          const dataSource = new MatTableDataSource<Product>(products);
-          return dataSource;
-        })
-      );
-    });
+    this.loadProducts();
   }
 
   loadProductCategories(): void {
@@ -80,6 +59,33 @@ export class ProductComponent implements OnInit, AfterViewInit {
         console.error('Error fetching product categories:', error);
       }
     );
+  }
+
+  loadProducts(): void {
+    this.productService.loadProducts().then(() => {
+      this.filterProducts();
+    });
+  }
+
+  filterProducts(): void {
+    this.productsDataSource$ = this.productService.getProducts().pipe(
+      map(products => {
+        if (this.selectedCategory) {
+          products = products.filter(product => product.productCategoryId === this.selectedCategory);
+        }
+        return new MatTableDataSource<Product>(products);
+      })
+    );
+  }
+
+  onSelectCategory(categoryId: string): void {
+    this.selectedCategory = categoryId;
+    this.filterProducts();
+    console.log('Selected category:', this.selectedCategory);
+  }
+
+  showAddProductForm() {
+    this.showAddProduct = true;
   }
 
   addNew() {

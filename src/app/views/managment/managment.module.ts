@@ -38,9 +38,10 @@ import { MatTableDataSource } from '@angular/material/table';
 import { ProductComponent } from './product/product.component';
 import { AddProductComponent } from './product/add-product/add-product.component';
 import { CategoryService } from './catagory/services/product_category';
+import { DriverComponent } from './driver/driver/driver.component';
 
 @NgModule({
-  declarations: [CatagoryComponent, AddCatagoryComponent, OnlyNumber, ProductComponent, AddProductComponent],
+  declarations: [CatagoryComponent, AddCatagoryComponent, OnlyNumber, ProductComponent, AddProductComponent, DriverComponent],
   imports: [
     CommonModule,
     FormsModule,
