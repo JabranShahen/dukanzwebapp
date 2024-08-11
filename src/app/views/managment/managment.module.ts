@@ -37,8 +37,8 @@ import { OnlyNumber } from './catagory/OnlyNumber';
 import { MatTableDataSource } from '@angular/material/table';
 import { ProductComponent } from './product/product.component';
 import { AddProductComponent } from './product/add-product/add-product.component';
-import { CategoryService } from './catagory/services/product_category';
 import { DriverComponent } from './driver/driver/driver.component';
+import { CategoryService } from 'app/shared/services/Dukanz/product_category';
 
 @NgModule({
   declarations: [CatagoryComponent, AddCatagoryComponent, OnlyNumber, ProductComponent, AddProductComponent, DriverComponent],

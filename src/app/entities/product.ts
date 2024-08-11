@@ -1,5 +1,4 @@
 export class Product {
-  // Properties
   id: string;
   productName: string;
   productDescription?: string;
@@ -13,8 +12,8 @@ export class Product {
   visible: boolean;
   order: number;
   productCategoryId?: string;
-
-  // Constructor
+  partitionKey: string; // Add this line
+  
   constructor(
     id: string,
     productName: string,
@@ -29,6 +28,7 @@ export class Product {
     visible: boolean,
     order: number,
     productCategoryId: string | undefined,
+    partitionKey: string,  // Add this line in the constructor
   ) {
     this.id = id;
     this.productName = productName;
@@ -43,5 +43,6 @@ export class Product {
     this.visible = visible;
     this.order = order;
     this.productCategoryId = productCategoryId;
+    this.partitionKey = partitionKey;  // Set this.partitionKey
   }
 }

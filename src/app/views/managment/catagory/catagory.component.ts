@@ -9,7 +9,7 @@ import { AddCatagoryComponent } from "./add/add-catagory.component";
 import { MatDialog } from "@angular/material/dialog";
 import { MatTableDataSource } from "@angular/material/table";
 import { ProductCategory } from "app/entities/product_catagory";
-import { CategoryService } from "./services/product_category";
+import { CategoryService } from "app/shared/services/Dukanz/product_category";
 
 @Component({
   selector: 'app-catagory',

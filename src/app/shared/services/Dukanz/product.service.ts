@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Product } from 'app/entities/product';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ApiService } from '../../catagory/services/apiservice';
+import { ApiService } from './apiservice';
 
 @Injectable({
   providedIn: 'root'
@@ -30,13 +30,17 @@ export class ProductService {
 
   async addProduct(product: Product): Promise<void> {
     try {
+      // Log the product object as a JSON string
+      console.log('Attempting to add product:', JSON.stringify(product));
+  
       await this.apiService.post('product', product).toPromise();      
       this.products.next([...this.products.value, product]);
-      console.log('New product added successfully:', product);
+      console.log('New product added successfully:', JSON.stringify(product));
     } catch (error) {
       console.error("Error adding product:", error);
     }
-  } 
+  }
+  
     
   async updateProduct(product: Product): Promise<void> {
     try {

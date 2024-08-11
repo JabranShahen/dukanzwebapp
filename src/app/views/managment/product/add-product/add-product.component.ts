@@ -3,8 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Product } from 'app/entities/product';
 import { ProductCategory } from 'app/entities/product_catagory';
-import { CategoryService } from '../../catagory/services/product_category';
-import { ProductService } from '../services/product.service';
+import { ProductService } from 'app/shared/services/Dukanz/product.service';
+import { CategoryService } from 'app/shared/services/Dukanz/product_category';
 import { v4 as uuidv4 } from 'uuid';
 
 @Component({
@@ -32,7 +32,7 @@ export class AddProductComponent implements OnInit {
 
   ngOnInit(): void {
 
-    this.productData = new Product('', '', undefined, 0, 0, 0, '', 0, undefined, '', false, 0, undefined);
+    this.productData = new Product('', '', undefined, 0, 0, 0, '', 0, undefined, '', false, 0, undefined,'');
 
     this.selectedCategory = '';
 
@@ -75,17 +75,26 @@ export class AddProductComponent implements OnInit {
   onSelectCategory(categoryId: string): void {
     this.selectedCategory = categoryId;
   }
-
   async saveProduct(): Promise<void> {
     try {
       if (this.mode === 'New') {
-        // Generate a new GUID for the id property
-        const newProduct = { ...this.productForm.value, id: uuidv4() };
-        console.log("New product data:", JSON.stringify(newProduct));
+        // Generate a new GUID for the id and partitionKey properties
+        const newProduct = { 
+          ...this.productForm.value, 
+          id: uuidv4(), 
+          partitionKey: uuidv4() // Ensure partitionKey is set here for a new product
+        };
+        console.log("New product data with partitionKey:", JSON.stringify(newProduct));
         await this.productService.addProduct(newProduct);
       } else if (this.mode === 'Existing') {
-        console.log("Updated product data:", JSON.stringify({...this.productForm.value, id: this.productData.id}));
-        await this.productService.updateProduct({...this.productForm.value, id: this.productData.id});
+        // Ensure the partitionKey is retained when updating the product
+        const updatedProduct = { 
+          ...this.productForm.value, 
+          id: this.productData.id, 
+          partitionKey: this.productData.partitionKey // Retain existing partitionKey
+        };
+        console.log("Updated product data with partitionKey:", JSON.stringify(updatedProduct));
+        await this.productService.updateProduct(updatedProduct);
       }
       // Close the dialog after saving
       this.dialogRef.close();
@@ -93,7 +102,7 @@ export class AddProductComponent implements OnInit {
       console.error('Error saving product:', error);
     }
   }
-
+  
   async deleteProduct(): Promise<void> {
     try {
       await this.productService.deleteProduct(this.productData);

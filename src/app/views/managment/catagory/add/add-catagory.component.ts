@@ -2,7 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ProductCategory } from 'app/entities/product_catagory';
-import { CategoryService } from '../services/product_category';
+import { CategoryService } from 'app/shared/services/Dukanz/product_category';
 
 @Component({
   selector: 'app-add-catagory',

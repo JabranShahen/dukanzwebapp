@@ -1,13 +1,13 @@
 import { Component, OnInit, AfterViewInit } from "@angular/core";
 import { matxAnimations } from "app/shared/animations/matx-animations";
-import { ProductService } from "./services/product.service";
 import { Product } from "app/entities/product";
 import { BehaviorSubject, Observable, map } from 'rxjs';
 import { MatDialog } from "@angular/material/dialog";
 import { MatTableDataSource } from "@angular/material/table";
 import { AddProductComponent } from "./add-product/add-product.component"; // Import the AddProductComponent
 import { ProductCategory } from "app/entities/product_catagory";
-import { CategoryService } from "../catagory/services/product_category";
+import { ProductService } from "app/shared/services/Dukanz/product.service";
+import { CategoryService } from "app/shared/services/Dukanz/product_category";
 
 
 @Component({
