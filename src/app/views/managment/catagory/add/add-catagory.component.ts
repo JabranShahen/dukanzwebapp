@@ -2,7 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ProductCategory } from 'app/entities/product_catagory';
-import { CatagoryService } from '../services/catagory.service';
+import { CategoryService } from 'app/shared/services/Dukanz/product_category';
 
 @Component({
   selector: 'app-add-catagory',
@@ -15,7 +15,7 @@ export class AddCatagoryComponent implements OnInit {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public catagoryData: ProductCategory,
-    public catagoryService: CatagoryService,
+    public catagoryService: CategoryService,
     public dialogRef: MatDialogRef<AddCatagoryComponent>,
     private formBuilder: FormBuilder
   ) {}
@@ -43,20 +43,19 @@ export class AddCatagoryComponent implements OnInit {
   async onSubmit(): Promise<void> {
     if (this.mode === 'New') {
       try {
-        await this.catagoryService.saveNewCatagory(this.catagoryData);
+        await this.catagoryService.saveNewCategory(this.catagoryData);
         this.dialogRef.close();
       } catch (error) {
         console.error('Error saving category:', error);
       }
     } else {
       try {
-        await this.catagoryService.updateCatagory(this.catagoryData);
+        await this.catagoryService.updateCategory(this.catagoryData);
         console.log('Update Category Completed');
         this.dialogRef.close();
       } catch (error) {
         console.error('Error updating category:', error);
       }
     }
-  }
-  
+  } 
 }

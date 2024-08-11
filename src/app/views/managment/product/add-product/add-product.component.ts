@@ -1,8 +1,11 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Product } from 'app/entities/product';
-import { ProductService } from '../services/product.service';
+import { ProductCategory } from 'app/entities/product_catagory';
+import { ProductService } from 'app/shared/services/Dukanz/product.service';
+import { CategoryService } from 'app/shared/services/Dukanz/product_category';
+import { v4 as uuidv4 } from 'uuid';
 
 @Component({
   selector: 'app-add-product',
@@ -10,75 +13,118 @@ import { ProductService } from '../services/product.service';
   styleUrls: ['./add-product.component.scss']
 })
 export class AddProductComponent implements OnInit {
+
+  productData: Product;
+  productCategories: ProductCategory[] = [];
   productForm: FormGroup;
-  mode: string = '';
+  selectedCategory: string;
+  mode: string;
 
   constructor(
-    @Inject(MAT_DIALOG_DATA) public productData: Product,
-    public productService: ProductService,
-    public dialogRef: MatDialogRef<AddProductComponent>,
-    private formBuilder: FormBuilder
-  ) {}
+    private formBuilder: FormBuilder,
+    private categoryService: CategoryService,
+    private productService: ProductService,
+    private dialogRef: MatDialogRef<AddProductComponent>,
+    @Inject(MAT_DIALOG_DATA) private data: any // Inject MAT_DIALOG_DATA
+  ) {
+    this.mode = data.mode; // Assign the mode value
+  }
 
   ngOnInit(): void {
-    if (!this.productData.id) {
-      // If id is not present, it means it's a new product
-      this.mode = 'New';
-      // Initialize other properties of Product entity if needed
-    } else {
-      // If id is present, it means it's an existing product
-      this.mode = 'Edit';
-    }
-  
+
+    this.productData = new Product('', '', undefined, 0, 0, 0, '', 0, undefined, '', false, 0, undefined,'');
+
+    this.selectedCategory = '';
+
     this.productForm = this.formBuilder.group({
-      id: [this.productData.id],
-      productName: [this.productData.productName],
-      productDescription: [this.productData.productDescription],
-      orignalPrice: [this.productData.orignalPrice],
-      currentPrice: [this.productData.currentPrice],
-      currentCost: [this.productData.currentCost],
-      unitName: [this.productData.unitName],
-      displayPercentage: [this.productData.displayPercentage],
-      displayUnitName: [this.productData.displayUnitName],
-      imageURL: [this.productData.imageURL],
-      visible: [this.productData.visible],
-      order: [this.productData.order],
-      productCategoryId: [this.productData.productCategoryId], // Add productCategoryId field
-      // Include any other fields of Product entity here
+      productName: [this.productData.productName, Validators.required],
+      productDescription: [this.productData.productDescription, Validators.required],
+      orignalPrice: [this.productData.orignalPrice, Validators.required],
+      currentPrice: [this.productData.currentPrice, Validators.required],
+      currentCost: [this.productData.currentCost, Validators.required],
+      unitName: [this.productData.unitName, Validators.required],
+      displayPercentage: [this.productData.displayPercentage, Validators.required],
+      displayUnitName: [this.productData.displayUnitName, Validators.required],
+      imageURL: [this.productData.imageURL, Validators.required],
+      visible: [this.productData.visible, Validators.required],
+      order: [this.productData.order, Validators.required],
+      productCategoryId: ["", Validators.required]
     });
+
+    this.loadProductCategories();
+
+    // Check the mode and set the product data accordingly
+    if (this.mode === 'Existing') {
+      // Set the product data from the selected product
+      this.productData = this.data.selectedProduct;
+      // this.selectedCategory = this.productData.productCategoryId;
+    }
+  }
+
+  loadProductCategories(): void {
+    this.categoryService.getCategories().subscribe(
+      (categories: ProductCategory[]) => {
+        this.productCategories = categories;
+      },
+      (error: any) => {
+        console.error('Error fetching product categories:', error);
+      }
+    );
+  }
+
+  onSelectCategory(categoryId: string): void {
+    this.selectedCategory = categoryId;
+  }
+  async saveProduct(): Promise<void> {
+    try {
+      if (this.mode === 'New') {
+        // Generate a new GUID for the id and partitionKey properties
+        const newProduct = { 
+          ...this.productForm.value, 
+          id: uuidv4(), 
+          partitionKey: uuidv4() // Ensure partitionKey is set here for a new product
+        };
+        console.log("New product data with partitionKey:", JSON.stringify(newProduct));
+        await this.productService.addProduct(newProduct);
+      } else if (this.mode === 'Existing') {
+        // Ensure the partitionKey is retained when updating the product
+        const updatedProduct = { 
+          ...this.productForm.value, 
+          id: this.productData.id, 
+          partitionKey: this.productData.partitionKey // Retain existing partitionKey
+        };
+        console.log("Updated product data with partitionKey:", JSON.stringify(updatedProduct));
+        await this.productService.updateProduct(updatedProduct);
+      }
+      // Close the dialog after saving
+      this.dialogRef.close();
+    } catch (error) {
+      console.error('Error saving product:', error);
+    }
   }
   
+  async deleteProduct(): Promise<void> {
+    try {
+      await this.productService.deleteProduct(this.productData);
+      // Close the dialog after deleting
+      this.dialogRef.close();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
+  }
 
-  async onSubmit(): Promise<void> {
-    const productFormValue = this.productForm.value as Product;
-    
-    // Check if productFormValue is null or undefined
-    if (!productFormValue) {
-      console.error('Product form value is undefined.');
+  closeDialog(): void {
+    // Close the dialog without saving
+    this.dialogRef.close();
+  }
+
+  onSubmit(): void {
+    if (this.productForm.invalid) {
       return;
     }
-  
-    // Log the JSON representation of productFormValue
-    console.log('Product Form Value:', JSON.stringify(productFormValue));
-  
-    if (this.mode === 'New') {
-      try {
-        await this.productService.addProduct(productFormValue);
-        this.dialogRef.close();
-      } catch (error) {
-        console.error('Error adding product:', error);
-      }
-    } else {
-      try {
-        await this.productService.updateProduct(productFormValue);
-        console.log('Product updated successfully.');
-        this.dialogRef.close();
-      } catch (error) {
-        console.error('Error updating product:', error);
-      }
-    }
+
+    // Perform any additional actions on form submission if needed
+
+    this.saveProduct();
   }
-  
-  
-  
 }

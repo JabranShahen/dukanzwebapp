@@ -36,8 +36,8 @@ export class NavigationService {
       icon: 'edit',
       sub: [
         { name: 'Catagory', state: 'managment/catagory' },
-        { name: 'Product', state: 'managment/product' },
-        { name: 'config', state: 'others/users' }
+        { name: 'Product', state: 'managment/product' },        
+        { name: 'Driver', state: 'managment/driver' },        
       ]
     },    
     {

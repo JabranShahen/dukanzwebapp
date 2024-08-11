@@ -1,110 +1,126 @@
 <mat-card class="p-0">
-    <mat-card-title class="">
-      <div class="card-title-text">Product</div>
-      <mat-divider></mat-divider>
-    </mat-card-title>
-    <mat-card-content>
-      <form [formGroup]="productForm">
-        <div fxLayout="row wrap">
-          <div fxFlex="200" fxFlex.gt-xs="100" class="pr-8">
-            <div class="pb-8">
-              <mat-form-field class="full-width">
-                <input matInput name="productName" formControlName="productName" placeholder="Product Name"
-                  [(ngModel)]="productData.productName">
-              </mat-form-field>
-              <small *ngIf="productForm.controls['productName'].touched && productForm.controls['productName'].hasError('required')"
-                class="form-error-msg">Product Name required </small>
-            </div>
-  
-            <div class="pb-8">
-              <mat-form-field class="full-width">
-                <input matInput name="productDescription" formControlName="productDescription"
-                  placeholder="Product Description" [(ngModel)]="productData.productDescription">
-              </mat-form-field>
-              <small *ngIf="productForm.controls['productDescription'].touched && productForm.controls['productDescription'].hasError('required')"
-                class="form-error-msg">Product Description required </small>
-            </div>
-  
-            <div class="pb-8">
-              <mat-form-field class="full-width">
-                <input matInput name="orignalPrice" formControlName="orignalPrice" placeholder="Original Price"
-                  [(ngModel)]="productData.orignalPrice">
-              </mat-form-field>
-              <small *ngIf="productForm.controls['orignalPrice'].touched && productForm.controls['orignalPrice'].hasError('required')"
-                class="form-error-msg">Original Price required </small>
-            </div>
-  
-            <div class="pb-8">
-              <mat-form-field class="full-width">
-                <input matInput name="currentPrice" formControlName="currentPrice" placeholder="Current Price"
-                  [(ngModel)]="productData.currentPrice">
-              </mat-form-field>
-              <small *ngIf="productForm.controls['currentPrice'].touched && productForm.controls['currentPrice'].hasError('required')"
-                class="form-error-msg">Current Price required </small>
-            </div>
-  
-            <div class="pb-8">
-              <mat-form-field class="full-width">
-                <input matInput name="currentCost" formControlName="currentCost" placeholder="Current Cost"
-                  [(ngModel)]="productData.currentCost">
-              </mat-form-field>
-              <small *ngIf="productForm.controls['currentCost'].touched && productForm.controls['currentCost'].hasError('required')"
-                class="form-error-msg">Current Cost required </small>
-            </div>
-  
-            <div class="pb-8">
-              <mat-form-field class="full-width">
-                <input matInput name="unitName" formControlName="unitName" placeholder="Unit Name"
-                  [(ngModel)]="productData.unitName">
-              </mat-form-field>
-              <small *ngIf="productForm.controls['unitName'].touched && productForm.controls['unitName'].hasError('required')"
-                class="form-error-msg">Unit Name required </small>
-            </div>
-  
-            <div class="pb-8">
-              <mat-form-field class="full-width">
-                <input matInput name="displayPercentage" formControlName="displayPercentage" placeholder="Display Percentage"
-                  [(ngModel)]="productData.displayPercentage">
-              </mat-form-field>
-              <small *ngIf="productForm.controls['displayPercentage'].touched && productForm.controls['displayPercentage'].hasError('required')"
-                class="form-error-msg">Display Percentage required </small>
-            </div>
-  
-            <div class="pb-8">
-              <mat-form-field class="full-width">
-                <input matInput name="displayUnitName" formControlName="displayUnitName" placeholder="Display Unit Name"
-                  [(ngModel)]="productData.displayUnitName">
-              </mat-form-field>
-              <small *ngIf="productForm.controls['displayUnitName'].touched && productForm.controls['displayUnitName'].hasError('required')"
-                class="form-error-msg">Display Unit Name required </small>
-            </div>
-  
-            <div class="pb-8">
-              <mat-form-field class="full-width">
-                <input matInput name="imageURL" formControlName="imageURL" placeholder="Image URL"
-                  [(ngModel)]="productData.imageURL">
-              </mat-form-field>
-              <small *ngIf="productForm.controls['imageURL'].touched && productForm.controls['imageURL'].hasError('required')"
-                class="form-error-msg">Image URL required </small>
-            </div>
-  
-            <div class="pb-8">
-              <mat-checkbox name="visible" formControlName="visible" class="pb-16" [(ngModel)]="productData.visible">Visible</mat-checkbox>
-            </div>
-  
-            <div class="pb-8">
-              <mat-form-field class="full-width">
-                <input OnlyNumber="true" matInput name="order" formControlName="order" placeholder="Order"
-                  [(ngModel)]="productData.order">
-              </mat-form-field>
-              <small *ngIf="productForm.controls['order'].touched && productForm.controls['order'].hasError('required')"
-                class="form-error-msg">Order required </small>
-            </div>
-  
+  <mat-card-title>
+    <div class="card-title-text">Product</div>
+    <mat-divider></mat-divider>
+  </mat-card-title>
+  <mat-card-content>
+    <form [formGroup]="productForm">
+      <div fxLayout="row wrap" fxLayoutGap="24px">
+        
+        <!-- Left Column -->
+        <div fxFlex="45" fxFlex.gt-sm="45" fxFlex.lt-sm="100">
+          <div class="pb-8">
+            <mat-form-field class="full-width">
+              <input matInput name="productName" formControlName="productName" placeholder="Product Name"
+                [(ngModel)]="productData.productName">
+            </mat-form-field>
+            <small *ngIf="productForm.controls['productName'].touched && productForm.controls['productName'].hasError('required')"
+              class="form-error-msg">Product Name required </small>
+          </div>
+
+          <div class="pb-8">
+            <mat-form-field class="full-width">
+              <mat-label>Product Category</mat-label>
+              <mat-select formControlName="productCategoryId" [(ngModel)]="productData.productCategoryId" (selectionChange)="onSelectCategory(productData.productCategoryId)">
+                <mat-option>-- Select Category --</mat-option>
+                <mat-option *ngFor="let category of productCategories" [value]="category.id">{{ category.productCategoryName }}</mat-option>
+              </mat-select>
+            </mat-form-field>              
+            <small *ngIf="productForm.controls['productCategoryId'].touched && productForm.controls['productCategoryId'].hasError('required')"
+              class="form-error-msg">Product Category required</small>
+          </div>
+
+          <div class="pb-8">
+            <mat-form-field class="full-width">
+              <input matInput name="productDescription" formControlName="productDescription"
+                placeholder="Product Description" [(ngModel)]="productData.productDescription">
+            </mat-form-field>
+            <small *ngIf="productForm.controls['productDescription'].touched && productForm.controls['productDescription'].hasError('required')"
+              class="form-error-msg">Product Description required </small>
+          </div>
+
+          <div class="pb-8">
+            <mat-form-field class="full-width">
+              <input matInput name="orignalPrice" formControlName="orignalPrice" placeholder="Original Price"
+                [(ngModel)]="productData.orignalPrice">
+            </mat-form-field>
+            <small *ngIf="productForm.controls['orignalPrice'].touched && productForm.controls['orignalPrice'].hasError('required')"
+              class="form-error-msg">Original Price required </small>
+          </div>
+
+          <div class="pb-8">
+            <mat-form-field class="full-width">
+              <input matInput name="currentPrice" formControlName="currentPrice" placeholder="Current Price"
+                [(ngModel)]="productData.currentPrice">
+            </mat-form-field>
+            <small *ngIf="productForm.controls['currentPrice'].touched && productForm.controls['currentPrice'].hasError('required')"
+              class="form-error-msg">Current Price required </small>
           </div>
         </div>
-        <button mat-raised-button color="primary" [disabled]="productForm.invalid" (click)="onSubmit()">Submit</button>
-      </form>
-    </mat-card-content>
-  </mat-card>
-  
+
+        <!-- Right Column -->
+        <div fxFlex="45" fxFlex.gt-sm="45" fxFlex.lt-sm="100">
+          <div class="pb-8">
+            <mat-form-field class="full-width">
+              <input matInput name="currentCost" formControlName="currentCost" placeholder="Current Cost"
+                [(ngModel)]="productData.currentCost">
+            </mat-form-field>
+            <small *ngIf="productForm.controls['currentCost'].touched && productForm.controls['currentCost'].hasError('required')"
+              class="form-error-msg">Current Cost required </small>
+          </div>
+
+          <div class="pb-8">
+            <mat-form-field class="full-width">
+              <input matInput name="unitName" formControlName="unitName" placeholder="Unit Name"
+                [(ngModel)]="productData.unitName">
+            </mat-form-field>
+            <small *ngIf="productForm.controls['unitName'].touched && productForm.controls['unitName'].hasError('required')"
+              class="form-error-msg">Unit Name required </small>
+          </div>
+
+          <div class="pb-8">
+            <mat-form-field class="full-width">
+              <input matInput name="displayPercentage" formControlName="displayPercentage" placeholder="Display Percentage"
+                [(ngModel)]="productData.displayPercentage">
+            </mat-form-field>
+            <small *ngIf="productForm.controls['displayPercentage'].touched && productForm.controls['displayPercentage'].hasError('required')"
+              class="form-error-msg">Display Percentage required </small>
+          </div>
+
+          <div class="pb-8">
+            <mat-form-field class="full-width">
+              <input matInput name="displayUnitName" formControlName="displayUnitName" placeholder="Display Unit Name"
+                [(ngModel)]="productData.displayUnitName">
+            </mat-form-field>
+            <small *ngIf="productForm.controls['displayUnitName'].touched && productForm.controls['displayUnitName'].hasError('required')"
+              class="form-error-msg">Display Unit Name required </small>
+          </div>
+
+          <div class="pb-8">
+            <mat-form-field class="full-width">
+              <input matInput name="imageURL" formControlName="imageURL" placeholder="Image URL"
+                [(ngModel)]="productData.imageURL">
+            </mat-form-field>
+            <small *ngIf="productForm.controls['imageURL'].touched && productForm.controls['imageURL'].hasError('required')"
+              class="form-error-msg">Image URL required </small>
+          </div>
+          
+          <div class="pb-8">
+            <mat-checkbox name="visible" formControlName="visible" class="pb-16" [(ngModel)]="productData.visible">Visible</mat-checkbox>
+          </div>
+
+          <div class="pb-8">
+            <mat-form-field class="full-width">
+              <input OnlyNumber="true" matInput name="order" formControlName="order" placeholder="Order"
+                [(ngModel)]="productData.order">
+            </mat-form-field>
+            <small *ngIf="productForm.controls['order'].touched && productForm.controls['order'].hasError('required')"
+              class="form-error-msg">Order required </small>
+          </div>
+        </div> 
+
+      </div>
+      <button mat-raised-button color="primary" [disabled]="!productForm.dirty" (click)="onSubmit()">Submit</button>
+    </form>
+  </mat-card-content>      
+</mat-card>

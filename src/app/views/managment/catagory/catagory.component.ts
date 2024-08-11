@@ -4,12 +4,12 @@ import {
   AfterViewInit,
 } from "@angular/core";
 import { matxAnimations } from "app/shared/animations/matx-animations";
-import { CatagoryService } from "./services/catagory.service";
-import { ProductCategory } from "app/entities/product_catagory";
 import { BehaviorSubject, Observable, Subscription, map } from 'rxjs';
 import { AddCatagoryComponent } from "./add/add-catagory.component";
 import { MatDialog } from "@angular/material/dialog";
 import { MatTableDataSource } from "@angular/material/table";
+import { ProductCategory } from "app/entities/product_catagory";
+import { CategoryService } from "app/shared/services/Dukanz/product_category";
 
 @Component({
   selector: 'app-catagory',
@@ -41,11 +41,14 @@ export class CatagoryComponent implements OnInit, AfterViewInit {
   productCategoriesForTable$: Observable<MatTableDataSource<ProductCategory>>;
 
   objectCount = 0;
-  constructor(public catagoryService: CatagoryService, public dialog: MatDialog
-    , public productCategoriesData: MatTableDataSource<ProductCategory>) {
-    this.productCategoriesForTable$ = this.catagoryService.ProductCategories.asObservable().pipe(
+  constructor(
+    public catagoryService: CategoryService,
+    public dialog: MatDialog,
+    public productCategoriesData: MatTableDataSource<ProductCategory>
+  ) {
+    this.productCategoriesForTable$ = this.catagoryService.productCategories.asObservable().pipe(
       map((productCategories) => {
-        this.productCategoriesData.data = productCategories
+        this.productCategoriesData.data = productCategories;
         console.log("Data loaded");
         return this.productCategoriesData;
       })
@@ -60,22 +63,22 @@ export class CatagoryComponent implements OnInit, AfterViewInit {
     // this.subscription = this.catagoryService.ProductCategoryChanged
     // .subscribe
     // (
-    //   (productCategories: ProductCategory[]) => {        
+    //   (productCategories: ProductCategory[]) => {
     //     this.catagoryService.ProductCategories.next(productCategories);
-    //     console.log("Data returned");        
-    //   }            
+    //     console.log("Data returned");
+    //   }
     // );
 
-    this.catagoryService.getCatagories();
+    this.catagoryService.getCategories();
   }
 
   addNew() {
     const dialogRef = this.dialog.open(AddCatagoryComponent, {
-      data: new ProductCategory({ id: '' })
+      data: new ProductCategory({ id: '', partitionKey: '', productCategoryName: '', productCategoryImageURL: '', visible: false, order: 0 })
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      this.catagoryService.getCatagories();
+      this.catagoryService.getCategories();
     })
   }
 
@@ -83,24 +86,24 @@ export class CatagoryComponent implements OnInit, AfterViewInit {
     const dialogRef = this.dialog.open(AddCatagoryComponent, {
       data: data
     });
-  
+
     dialogRef.afterClosed().subscribe(async result => {
       if (result) {
         try {
-          await this.catagoryService.updateCatagory(result);
-          this.catagoryService.getCatagories();
+          await this.catagoryService.updateCategory(result);
+          this.catagoryService.getCategories();
         } catch (error) {
           console.error('Error updating category:', error);
         }
       }
     });
   }
-  
+
 
   async deleteItem(rowIndex: number, data: any): Promise<void> {
     if (confirm("Are you sure to delete " + data.productCategoryName)) {
       try {
-        await this.catagoryService.deleteCatagory(data);
+        await this.catagoryService.deleteCategory(data);
         // Remove the item from the local array
         this.productCategoriesData.data.splice(rowIndex, 1);
         // Notify the MatTableDataSource that the data has changed
@@ -111,6 +114,4 @@ export class CatagoryComponent implements OnInit, AfterViewInit {
       }
     }
   }
-
-
 }

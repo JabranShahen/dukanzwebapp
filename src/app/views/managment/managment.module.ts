@@ -29,7 +29,7 @@ import { Nested3Component } from '../others/nested3/nested3.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedMaterialModule } from 'app/shared/shared-material.module';
 import { PerfectScrollbarModule } from 'app/shared/components/perfect-scrollbar';
-import { CatagoryService } from './catagory/services/catagory.service';
+
 import { V } from '@angular/cdk/keycodes';
 import { AddCatagoryComponent } from './catagory/add/add-catagory.component';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -37,9 +37,11 @@ import { OnlyNumber } from './catagory/OnlyNumber';
 import { MatTableDataSource } from '@angular/material/table';
 import { ProductComponent } from './product/product.component';
 import { AddProductComponent } from './product/add-product/add-product.component';
+import { DriverComponent } from './driver/driver/driver.component';
+import { CategoryService } from 'app/shared/services/Dukanz/product_category';
 
 @NgModule({
-  declarations: [CatagoryComponent, AddCatagoryComponent, OnlyNumber, ProductComponent, AddProductComponent],
+  declarations: [CatagoryComponent, AddCatagoryComponent, OnlyNumber, ProductComponent, AddProductComponent, DriverComponent],
   imports: [
     CommonModule,
     FormsModule,
@@ -51,6 +53,6 @@ import { AddProductComponent } from './product/add-product/add-product.component
     HttpClientModule,
     RouterModule.forChild(ManagmentRoutes),    
   ],  
-  providers:[CatagoryService, MatTableDataSource]
+  providers:[CategoryService, MatTableDataSource]
 })
 export class ManagmentModule { }
