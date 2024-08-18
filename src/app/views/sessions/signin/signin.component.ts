@@ -19,7 +19,6 @@ export class SigninComponent implements OnInit, AfterViewInit, OnDestroy {
 
   signinForm: UntypedFormGroup;
   errorMsg = '';
-  // return: string;
 
   private _unsubscribeAll: Subject<any>;
 
@@ -33,15 +32,11 @@ export class SigninComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.signinForm = new UntypedFormGroup({
-      username: new UntypedFormControl('Watson', Validators.required),
-      password: new UntypedFormControl('12345678', Validators.required),
-      rememberMe: new UntypedFormControl(true)
-    });
-
-    // this.route.queryParams
-    //   .pipe(takeUntil(this._unsubscribeAll))
-    //   .subscribe(params => this.return = params['return'] || '/');
+    // this.signinForm = new UntypedFormGroup({
+    //   username: new UntypedFormControl('Watson', Validators.required),
+    //   password: new UntypedFormControl('12345678', Validators.required),
+    //   rememberMe: new UntypedFormControl(true)
+    // });
   }
 
   ngAfterViewInit() {
@@ -66,7 +61,6 @@ export class SigninComponent implements OnInit, AfterViewInit, OnDestroy {
       this.submitButton.disabled = false;
       this.progressBar.mode = 'determinate';
       this.errorMsg = err.message;
-      // console.log(err);
     })
   }
 

@@ -9,7 +9,6 @@ import {
   PerfectScrollbarConfigInterface
 } from './shared/components/perfect-scrollbar';
 
-
 import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
 import { InMemoryDataService } from './shared/inmemory-db/inmemory-db.service';
 
@@ -22,6 +21,10 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ErrorHandlerService } from './shared/services/error-handler.service';
 import { TokenInterceptor } from './shared/interceptors/token.interceptor';
+
+import { AngularFireModule } from '@angular/fire';
+import { AngularFireAuthModule } from '@angular/fire/auth';
+import { environment } from '../environments/environment';
 
 // AoT requires an exported function for factories
 export function HttpLoaderFactory(httpClient: HttpClient) {
@@ -47,7 +50,9 @@ const DEFAULT_PERFECT_SCROLLBAR_CONFIG: PerfectScrollbarConfigInterface = {
       }
     }),
     InMemoryWebApiModule.forRoot(InMemoryDataService, { passThruUnknownUrl: true}),
-    RouterModule.forRoot(rootRouterConfig, { useHash: false, relativeLinkResolution: 'legacy' })
+    RouterModule.forRoot(rootRouterConfig, { useHash: false, relativeLinkResolution: 'legacy' }),
+    AngularFireModule.initializeApp(environment.firebaseConfig), // Firebase initialization
+    AngularFireAuthModule // Firebase Authentication module
   ],
   declarations: [AppComponent],
   providers: [

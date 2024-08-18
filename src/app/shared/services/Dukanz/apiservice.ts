@@ -14,7 +14,6 @@ export class ApiService {
   constructor(private http: HttpClient) {}
 
   get<T>(url: string): Observable<T> {
-    console.log("api called " + this.baseUrl + url);
     return this.http.get<T>(this.baseUrl + url);
   }
 
