@@ -1,0 +1,134 @@
+<div>
+  <h2>Product Categories</h2>
+  <ul class="list-group">
+    <li *ngFor="let category of productCategories" class="list-group-item">
+      <div class="d-flex justify-content-between align-items-center">
+        <!-- Display the Fruit Name -->
+        <span>{{ category.productCategoryName }}</span>
+
+        <!-- Show Details Button -->
+        <button 
+          class="btn btn-info btn-sm me-2" 
+          type="button" 
+          data-bs-toggle="collapse" 
+          [attr.data-bs-target]="'#collapse' + category.id"
+          aria-expanded="false" 
+          [attr.aria-controls]="'collapse' + category.id"
+        >
+          Show Details
+        </button>
+
+        <!-- Edit Button -->
+        <button 
+          class="btn btn-primary btn-sm" 
+          (click)="editCategory(category)" 
+          data-bs-toggle="modal" 
+          data-bs-target="#editCategoryModal"
+        >
+          Edit
+        </button>
+      </div>
+
+      <!-- Details Section -->
+      <div 
+        [id]="'collapse' + category.id" 
+        class="collapse mt-2"
+      >
+        <p><strong>Image:</strong></p>
+        <img 
+          [src]="category.productCategoryImageURL || 'default-image-url.jpg'" 
+          alt="{{ category.productCategoryName }}" 
+          width="100" 
+          height="100"
+        >
+        <p><strong>Visible:</strong> {{ category.visible ? 'Yes' : 'No' }}</p>
+        <p><strong>Order:</strong> {{ category.order }}</p>
+        <p><strong>ID:</strong> {{ category.id }}</p>
+        <p><strong>Partition Key:</strong> {{ category.partitionKey }}</p>
+      </div>
+    </li>
+  </ul>
+
+  <!-- Edit Category Modal -->
+  <div 
+    class="modal fade" 
+    id="editCategoryModal" 
+    tabindex="-1" 
+    aria-labelledby="editCategoryModalLabel" 
+    aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content" *ngIf="selectedCategory">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editCategoryModalLabel">Edit Category</h5>
+          <button 
+            type="button" 
+            class="btn-close" 
+            data-bs-dismiss="modal" 
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <form (ngSubmit)="saveCategory()">
+            <div class="mb-3">
+              <label for="categoryName" class="form-label">Category Name:</label>
+              <input 
+                id="categoryName" 
+                [(ngModel)]="selectedCategory.productCategoryName" 
+                name="categoryName" 
+                class="form-control" 
+                required
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="productCategoryImageURL" class="form-label">Image URL:</label>
+              <input 
+                id="productCategoryImageURL" 
+                [(ngModel)]="selectedCategory.productCategoryImageURL" 
+                name="productCategoryImageURL" 
+                class="form-control" 
+                required
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="visible" class="form-label">Visible:</label>
+              <input 
+                id="visible" 
+                type="checkbox" 
+                [(ngModel)]="selectedCategory.visible" 
+                name="visible" 
+                class="form-check-input"
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="order" class="form-label">Order:</label>
+              <input 
+                id="order" 
+                type="number" 
+                [(ngModel)]="selectedCategory.order" 
+                name="order" 
+                class="form-control" 
+                required
+              >
+            </div>
+
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-success">Save</button>
+              <button 
+                type="button" 
+                class="btn btn-secondary" 
+                data-bs-dismiss="modal" 
+                (click)="cancelEdit()"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
