@@ -1,1 +1,312 @@
-<p>product works!</p>
+<div class="container">
+  <h2>Products</h2>
+
+  <!-- Add New Product Button -->
+  <button 
+    class="btn btn-success mb-3" 
+    (click)="addNewProduct()" 
+    data-bs-toggle="modal" 
+    data-bs-target="#editProductModal"
+  >
+    Add New Product
+  </button>
+
+  <!-- Category Filter -->
+  <div class="mb-3">
+    <label for="categorySelect" class="form-label">Filter by Category</label>
+    <select 
+      id="categorySelect" 
+      class="form-select" 
+      (change)="onSelectCategory($event)">
+      <option value="">All</option>
+      <option 
+        *ngFor="let category of productCategories" 
+        [value]="category.id"
+        [selected]="selectedCategory?.id === category.id">
+        {{ category.productCategoryName }}
+      </option>
+    </select>
+  </div>
+
+  <!-- Product Table -->
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>Description</th>
+        <th>Original Price</th>
+        <th>Current Price</th>
+        <th>Current Cost</th>
+        <th>Unit</th>
+        <th>Display %</th>
+        <th>Display Unit</th>
+        <th>Image</th>
+        <th>Visible</th>
+        <th>Order</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let product of filteredProducts">
+        <td>{{ product.productName }}</td>
+        <td>{{ product.productDescription }}</td>
+        <td>{{ product.orignalPrice | currency }}</td>
+        <td>{{ product.currentPrice | currency }}</td>
+        <td>{{ product.currentCost | currency }}</td>
+        <td>{{ product.unitName }}</td>
+        <td>{{ product.displayPercentage }}%</td>
+        <td>{{ product.displayUnitName }}</td>
+        <td>
+          <img [src]="product.imageURL || 'default-image-url.jpg'" alt="{{ product.productName }}" width="50">
+        </td>
+        <td>{{ product.visible ? 'Yes' : 'No' }}</td>
+        <td>{{ product.order }}</td>
+        <td class="d-flex justify-content-start">
+          <!-- Edit Button -->
+          <button 
+            class="btn btn-sm btn-primary me-2" 
+            (click)="editProduct(product)" 
+            data-bs-toggle="modal" 
+            data-bs-target="#editProductModal"
+          >
+            Edit
+          </button>
+          <!-- Delete Button -->
+          <button 
+            class="btn btn-sm btn-danger" 
+            (click)="confirmDeleteProduct(product)" 
+            data-bs-toggle="modal" 
+            data-bs-target="#deleteProductModal"
+          >
+            Delete
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Edit Product Modal -->
+  <div 
+    class="modal fade" 
+    id="editProductModal" 
+    tabindex="-1" 
+    aria-labelledby="editProductModalLabel" 
+    aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content" *ngIf="selectedProduct">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editProductModalLabel">
+            {{ selectedProduct.id ? 'Edit Product' : 'Add New Product' }}
+          </h5>
+          <button 
+            type="button" 
+            class="btn-close" 
+            data-bs-dismiss="modal" 
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <form (ngSubmit)="saveProduct()">
+            <div class="mb-3">
+              <label for="productName" class="form-label">Product Name:</label>
+              <input 
+                id="productName" 
+                [(ngModel)]="selectedProduct.productName" 
+                name="productName" 
+                class="form-control" 
+                required
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="productDescription" class="form-label">Description:</label>
+              <textarea 
+                id="productDescription" 
+                [(ngModel)]="selectedProduct.productDescription" 
+                name="productDescription" 
+                class="form-control"
+              ></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="productPrice" class="form-label">Original Price:</label>
+              <input 
+                id="productPrice" 
+                type="number" 
+                [(ngModel)]="selectedProduct.orignalPrice" 
+                name="productPrice" 
+                class="form-control" 
+                required
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="currentPrice" class="form-label">Current Price:</label>
+              <input 
+                id="currentPrice" 
+                type="number" 
+                [(ngModel)]="selectedProduct.currentPrice" 
+                name="currentPrice" 
+                class="form-control" 
+                required
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="currentCost" class="form-label">Current Cost:</label>
+              <input 
+                id="currentCost" 
+                type="number" 
+                [(ngModel)]="selectedProduct.currentCost" 
+                name="currentCost" 
+                class="form-control"
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="unitName" class="form-label">Unit:</label>
+              <input 
+                id="unitName" 
+                [(ngModel)]="selectedProduct.unitName" 
+                name="unitName" 
+                class="form-control"
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="displayPercentage" class="form-label">Display %:</label>
+              <input 
+                id="displayPercentage" 
+                type="number" 
+                [(ngModel)]="selectedProduct.displayPercentage" 
+                name="displayPercentage" 
+                class="form-control"
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="displayUnitName" class="form-label">Display Unit:</label>
+              <input 
+                id="displayUnitName" 
+                [(ngModel)]="selectedProduct.displayUnitName" 
+                name="displayUnitName" 
+                class="form-control"
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="imageURL" class="form-label">Image URL:</label>
+              <input 
+                id="imageURL" 
+                [(ngModel)]="selectedProduct.imageURL" 
+                name="imageURL" 
+                class="form-control"
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="visible" class="form-label">Visible:</label>
+              <input 
+                id="visible" 
+                type="checkbox" 
+                [(ngModel)]="selectedProduct.visible" 
+                name="visible" 
+                class="form-check-input"
+              >
+            </div>
+
+            <!-- Product Category Selection -->
+            <div class="mb-3">
+              <label for="productCategory" class="form-label">Product Category:</label>
+              <select 
+                id="productCategory" 
+                [(ngModel)]="selectedProduct.productCategoryId" 
+                name="productCategoryId" 
+                class="form-select" 
+                required
+              >
+                <option value="" disabled>Select a category</option>
+                <option 
+                  *ngFor="let category of productCategories" 
+                  [value]="category.id"
+                >
+                  {{ category.productCategoryName }}
+                </option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="order" class="form-label">Order:</label>
+              <input 
+                id="order" 
+                type="number" 
+                [(ngModel)]="selectedProduct.order" 
+                name="order" 
+                class="form-control" 
+                required
+              >
+            </div>
+
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-success">
+                {{ selectedProduct.id ? 'Save Changes' : 'Add Product' }}
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-secondary" 
+                data-bs-dismiss="modal" 
+                (click)="cancelEdit()"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Product Modal -->
+  <div 
+    class="modal fade" 
+    id="deleteProductModal" 
+    tabindex="-1" 
+    aria-labelledby="deleteProductModalLabel" 
+    aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteProductModalLabel">Confirm Deletion</h5>
+          <button 
+            type="button" 
+            class="btn-close" 
+            data-bs-dismiss="modal" 
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this product?
+        </div>
+        <div class="modal-footer">
+          <button 
+            type="button" 
+            class="btn btn-danger" 
+            (click)="deleteConfirmed()" 
+            data-bs-dismiss="modal"
+          >
+            Delete
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
