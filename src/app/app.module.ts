@@ -13,6 +13,7 @@ import { environment } from '../environments/environment';
 import { AuthInterceptor } from './auth/auth-interceptor.service';
 import { ProductCategoryComponent } from './product-category/product-category.component';
 import { ProductComponent } from './product/product.component';
+import { OrderComponent } from './order/order.component';
 
 
 @NgModule({
@@ -21,7 +22,8 @@ import { ProductComponent } from './product/product.component';
     LoginComponent,
     DashboardComponent,
     ProductCategoryComponent,
-    ProductComponent
+    ProductComponent,
+    OrderComponent
   ],
   imports: [
     BrowserModule,
