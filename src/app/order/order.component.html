@@ -1,4 +1,5 @@
-<div class="order-list">
+<div class="order-container" style="display: flex;">
+  <div class="order-list" style="flex: 1; border-right: 1px solid #ccc; max-height: 1000px; overflow-y: auto; background-color: #e5e7eb; max-width: 300px;">
     <h2>Orders</h2>
     <table class="table">
       <thead>
@@ -7,17 +8,58 @@
           <th>Total Price</th>
           <th>Status</th>
           <th>Customer</th>
-          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let order of orders$ | async">
-          <td>{{ order.id }}</td>
-          <td>{{ order.orderTotalPrice }}</td>
-          <td>{{ order.status }}</td>
-          <td>{{ order.user?.name }}</td>
+        <tr *ngFor="let order of orders$ | async" (click)="selectOrder(order)" [ngClass]="{'selected-order': selectedOrder?.id == order.id}">
+          <td>{{ order?.id?.slice(-5) ?? 'N/A' }}</td>
+          <td>{{ order?.orderTotalPrice }}</td>
+          <td>{{ order?.status }}</td>
+          <td>{{ order?.user?.name }}</td>
         </tr>
       </tbody>
     </table>
   </div>
-  
+
+  <div class="order-details" style="flex: 1; padding: 10px; max-width: 400px; background-color: #f3f4f6;">
+    <ng-container *ngIf="selectedOrder">
+      <h3>Order Items</h3>
+      <ul>
+        <li *ngFor="let item of selectedOrder?.orderItems">
+          {{ item?.product?.productName }} - ${{ item?.product?.currentPrice }} x{{ item?.quantity }}
+        </li>
+      </ul>
+    </ng-container>
+  </div>
+
+  <div style="flex: 1; display: flex; flex-direction: column;">
+    <div class="user-details" style="padding: 10px; max-width: 400px; background-color: #edf2f7; height: 200px; overflow-y: auto;">
+      <ng-container *ngIf="selectedOrder && selectedOrder.user">
+        <h3>User Details</h3>
+        <p><strong>Name:</strong> {{ selectedOrder.user.name }}</p>
+        <p><strong>Phone Number:</strong> {{ selectedOrder.user.phoneNumber }}</p>
+        <p><strong>Address:</strong> {{ selectedOrder.user.address }}</p>
+      </ng-container>
+    </div>
+
+    <div class="order-status" style="padding: 10px; max-width: 400px; background-color: #f8fafc; height: 100px;">
+      <h3>Order Status</h3>
+      <select [(ngModel)]="temporaryStatus" (change)="updateOrderStatus()">
+        <option value="Approved">Approved</option>
+        <option value="Processing">Processing</option>
+        <option value="Packed">Packed</option>
+        <option value="Dispatched">Dispatched</option>
+        <option value="Out for Delivery">Out for Delivery</option>
+        <option value="Delivered">Delivered</option>
+        <option value="Canceled">Canceled</option>
+        <option value="Returned">Returned</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<style>
+.selected-order {
+  background-color: #37579c; /* Highlight color for selected rows */
+}
+</style>

@@ -86,27 +86,17 @@ export class OrderService {
 
   async updateOrder(order: Order): Promise<void> {
     try {
-      const updatedOrder = await this.apiService.put<Order>(`Order/${order.id}`, order).toPromise();
-      if (updatedOrder) {
-        const updatedOrders = this.orders.value.map(o => o.id === order.id ? updatedOrder : o);
-        this.orders.next(updatedOrders);
-        console.log('Order updated successfully:', updatedOrder);
-      }
+        const updatedOrder = await this.apiService.put<Order>(`Order`, order).toPromise(); // Adjust the endpoint as needed
+        if (updatedOrder) {
+            const updatedOrders = this.orders.value.map(o => o.id === order.id ? updatedOrder : o);
+            this.orders.next(updatedOrders);
+            console.log('Order updated successfully:', updatedOrder);
+        }
     } catch (error) {
-      console.error('Error updating order:', error);
+        console.error('Error updating order:', error);
     }
-  }
+}
 
-  async deleteOrder(order: Order): Promise<void> {
-    try {
-      await this.apiService.delete(`Order`, order.id).toPromise();
-      const updatedOrders = this.orders.value.filter(o => o.id !== order.id);
-      this.orders.next(updatedOrders);
-      console.log('Order deleted successfully.');
-    } catch (error) {
-      console.error('Error deleting order:', error);
-    }
-  }
 
   async getOrder(id: string): Promise<Order | null> {
     try {

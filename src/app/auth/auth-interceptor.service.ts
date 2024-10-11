@@ -12,6 +12,8 @@ export class AuthInterceptor implements HttpInterceptor {
   constructor(private afAuth: AngularFireAuth) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    console.log('HTTP Request intercepted:', req.url); // Log the request URL or any other details you need
+
     return from(this.afAuth.idToken).pipe(
       switchMap(token => {
         if (token) {
@@ -21,6 +23,7 @@ export class AuthInterceptor implements HttpInterceptor {
               Authorization: `Bearer ${token}`
             }
           });
+          console.log('Token added to request:', authReq.url);
           return next.handle(authReq);
         }
         // If no token is available, just pass the original request
