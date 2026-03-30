@@ -6,7 +6,6 @@
 
 # dependencies
 node_modules
-package-lock.json
 
 # IDEs and editors
 /.idea
@@ -40,3 +39,11 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# local release/signing secrets
+key.properties
+*.jks
+*.jsk
+
+# local host shell build output
+dist/dukanzwebapp-next-host/
