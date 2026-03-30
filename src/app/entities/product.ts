@@ -1,4 +1,47 @@
-export class Product {
+﻿export interface ProductCategoryReference {
+  id: string;
+  PartitionKey?: string;
+  partitionKey?: string;
+  productCategoryName?: string;
+}
+
+export interface Product {
+  id: string;
+  PartitionKey?: string;
+  partitionKey?: string;
+  productName: string;
+  productDescription?: string;
+  orignalPrice: number;
+  currentPrice: number;
+  currentCost: number;
+  unitName: string;
+  displayPercentage: number;
+  displayUnitName?: string;
+  imageURL?: string;
+  visible: boolean;
+  order: number;
+  productCategoryId?: string;
+  productCategory?: ProductCategoryReference | null;
+}
+
+export interface CreateProductRequest {
+  id?: string;
+  productName: string;
+  productDescription?: string;
+  orignalPrice: number;
+  currentPrice: number;
+  currentCost: number;
+  unitName: string;
+  displayPercentage: number;
+  displayUnitName?: string;
+  imageURL?: string;
+  visible: boolean;
+  order: number;
+  productCategoryId: string;
+  productCategoryName?: string;
+}
+
+export interface UpdateProductRequest {
   id: string;
   productName: string;
   productDescription?: string;
@@ -8,38 +51,9 @@ export class Product {
   unitName: string;
   displayPercentage: number;
   displayUnitName?: string;
-  imageURL: string;
+  imageURL?: string;
   visible: boolean;
   order: number;
-  productCategoryId?: string;
-
-  constructor(
-    id: string,
-    productName: string,
-    orignalPrice: number,
-    currentPrice: number,
-    currentCost: number,
-    unitName: string,
-    displayPercentage: number,
-    imageURL: string,
-    visible: boolean,
-    order: number,
-    productCategoryId?: string,
-    productDescription?: string,
-    displayUnitName?: string,
-  ) {
-    this.id = id;
-    this.productName = productName;
-    this.orignalPrice = orignalPrice;
-    this.currentPrice = currentPrice;
-    this.currentCost = currentCost;
-    this.unitName = unitName;
-    this.displayPercentage = displayPercentage;
-    this.imageURL = imageURL;
-    this.visible = visible;
-    this.order = order;
-    this.productCategoryId = productCategoryId;
-    this.productDescription = productDescription;
-    this.displayUnitName = displayUnitName;
-  }
+  productCategoryId: string;
+  productCategoryName?: string;
 }
