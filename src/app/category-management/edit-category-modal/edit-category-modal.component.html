@@ -1,0 +1,34 @@
+<div class="modal-backdrop" role="presentation">
+  <form class="modal-card" [formGroup]="categoryForm" (ngSubmit)="onSubmit()" novalidate>
+    <h3>Edit category</h3>
+
+    <label>
+      Name
+      <input type="text" formControlName="productCategoryName" placeholder="Category name" />
+      <span class="error" *ngIf="categoryForm.controls.productCategoryName.touched && categoryForm.controls.productCategoryName.invalid">
+        Name is required.
+      </span>
+      <span class="error" *ngIf="nameError">{{ nameError }}</span>
+    </label>
+
+    <label>
+      Image URL
+      <input type="text" formControlName="productCategoryImageURL" placeholder="https://..." />
+    </label>
+
+    <label>
+      Order
+      <input type="number" min="0" step="1" formControlName="order" />
+    </label>
+
+    <label class="check-row">
+      <input type="checkbox" formControlName="visible" />
+      Visible
+    </label>
+
+    <div class="actions">
+      <app-ui-button variant="ghost" (clicked)="onCancel()">Cancel</app-ui-button>
+      <app-ui-button buttonType="submit" [disabled]="pending">Save</app-ui-button>
+    </div>
+  </form>
+</div>

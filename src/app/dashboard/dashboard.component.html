@@ -1,0 +1,30 @@
+<div class="shell" [class.shell--open]="navOpen">
+  <aside class="sidebar">
+    <div class="brand">DUKANZ OPS</div>
+    <nav>
+      <a
+        *ngFor="let item of navItems"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: item.key === 'overview' }"
+        (click)="closeNav()"
+      >
+        {{ item.label }}
+      </a>
+    </nav>
+    <button type="button" class="logout logout--sidebar" (click)="logout()">Logout</button>
+  </aside>
+
+  <div class="content-wrap">
+    <header class="topbar">
+      <button type="button" class="toggle" (click)="navOpen = !navOpen">☰</button>
+      <span>Dukanz Dashboard</span>
+      <button type="button" class="logout logout--topbar" (click)="logout()">Logout</button>
+    </header>
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+
+  <button class="overlay" type="button" *ngIf="navOpen" (click)="closeNav()"></button>
+</div>

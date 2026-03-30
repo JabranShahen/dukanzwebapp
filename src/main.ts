@@ -1,2 +1,7 @@
-// Host shell for the prebuilt Dukanzwebapp Next bundle.
-console.log('Serving Dukanzwebapp Next prebuilt bundle.');
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+
+import { AppModule } from './app/app.module';
+
+platformBrowserDynamic()
+  .bootstrapModule(AppModule)
+  .catch((error) => console.error(error));

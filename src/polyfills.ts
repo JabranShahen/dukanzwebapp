@@ -1,1 +1,1 @@
-// No Angular polyfills required for the prebuilt app host.
+import 'zone.js';

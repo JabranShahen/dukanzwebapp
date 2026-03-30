@@ -1,0 +1,15 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  background: #e9eceb;
+  color: var(--tone-ink);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.pill--success {
+  background: #dff1e8;
+  color: #22684f;
+}

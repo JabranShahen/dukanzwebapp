@@ -1,0 +1,53 @@
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { DashboardOverviewComponent } from './dashboard/dashboard-overview/dashboard-overview.component';
+import { LoginComponent } from './login/login.component';
+import { CategoryManagementComponent } from './category-management/category-management.component';
+import { AddCategoryModalComponent } from './category-management/add-category-modal/add-category-modal.component';
+import { EditCategoryModalComponent } from './category-management/edit-category-modal/edit-category-modal.component';
+import { ProductManagementComponent } from './products/product-management.component';
+import { SettingsComponent } from './settings/settings.component';
+import { AccountComponent } from './account/account.component';
+import { ManagementHeaderComponent } from './shared/management-header/management-header.component';
+import { ManagementPanelComponent } from './shared/management-panel/management-panel.component';
+import { UiButtonComponent } from './shared/ui/ui-button/ui-button.component';
+import { ConfirmDialogComponent } from './shared/ui/confirm-dialog/confirm-dialog.component';
+import { UiEmptyStateComponent } from './shared/ui/ui-empty-state/ui-empty-state.component';
+import { UiStatusPillComponent } from './shared/ui/ui-status-pill/ui-status-pill.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    DashboardComponent,
+    DashboardOverviewComponent,
+    LoginComponent,
+    CategoryManagementComponent,
+    AddCategoryModalComponent,
+    EditCategoryModalComponent,
+    ProductManagementComponent,
+    SettingsComponent,
+    AccountComponent,
+    ManagementHeaderComponent,
+    ManagementPanelComponent,
+    UiButtonComponent,
+    ConfirmDialogComponent,
+    UiEmptyStateComponent,
+    UiStatusPillComponent
+  ],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule,
+    AppRoutingModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule {}

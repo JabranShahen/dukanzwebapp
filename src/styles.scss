@@ -1,0 +1,36 @@
+/* Global Dukanz web app styles */
+:root {
+  --tone-ink: #16322d;
+  --tone-muted: #526964;
+  --tone-accent: #1f6f62;
+  --tone-surface: #f7f4eb;
+  --tone-panel: #ffffff;
+  --tone-border: rgba(20, 50, 46, 0.12);
+  --tone-sidebar: #163f72;
+  --tone-sidebar-hover: #225188;
+  --tone-sidebar-active: #2c6aa8;
+  --tone-danger: #a23f3a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+  background: var(--tone-surface);
+  color: var(--tone-ink);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
