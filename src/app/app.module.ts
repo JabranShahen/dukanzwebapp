@@ -12,6 +12,8 @@ import { CategoryManagementComponent } from './category-management/category-mana
 import { AddCategoryModalComponent } from './category-management/add-category-modal/add-category-modal.component';
 import { EditCategoryModalComponent } from './category-management/edit-category-modal/edit-category-modal.component';
 import { ProductManagementComponent } from './products/product-management.component';
+import { AddProductModalComponent } from './products/add-product-modal/add-product-modal.component';
+import { EditProductModalComponent } from './products/edit-product-modal/edit-product-modal.component';
 import { SettingsComponent } from './settings/settings.component';
 import { AccountComponent } from './account/account.component';
 import { ManagementHeaderComponent } from './shared/management-header/management-header.component';
@@ -31,6 +33,8 @@ import { UiStatusPillComponent } from './shared/ui/ui-status-pill/ui-status-pill
     AddCategoryModalComponent,
     EditCategoryModalComponent,
     ProductManagementComponent,
+    AddProductModalComponent,
+    EditProductModalComponent,
     SettingsComponent,
     AccountComponent,
     ManagementHeaderComponent,

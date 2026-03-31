@@ -1,9 +1,99 @@
 <div class="page">
-  <app-management-header eyebrow="Dukanz" title="Products"></app-management-header>
+  <app-management-header
+    eyebrow="Master Catalog"
+    title="Master Products"
+    subtext="Manage reusable master products while keeping optional legacy category compatibility for current consumers."
+    ctaLabel="Create master product"
+    (ctaClick)="openAddModal()"
+  ></app-management-header>
+
   <app-management-panel>
+    <div class="panel-actions">
+      <app-ui-button variant="secondary" (clicked)="reload()">Refresh</app-ui-button>
+      <span class="count" *ngIf="!loading">{{ productCountLabel() }}</span>
+    </div>
+
+    <div *ngIf="feedbackMessage" class="feedback" [class.feedback--error]="feedbackTone === 'error'">
+      {{ feedbackMessage }}
+    </div>
+
+    <div *ngIf="error" class="error">{{ error }}</div>
+
+    <div class="table-wrap" *ngIf="!loading && !error && products.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Compatibility Category</th>
+            <th>Pricing</th>
+            <th>Lifecycle</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of products; trackBy: trackById">
+            <td>
+              <div class="cell-title">{{ product.productName }}</div>
+              <div class="cell-copy">{{ product.productDescription || 'No description set.' }}</div>
+            </td>
+            <td>
+              <div class="cell-title">{{ categoryLabel(product) }}</div>
+              <div class="cell-copy">{{ compatibilityCopy(product) }}</div>
+            </td>
+            <td>
+              <div class="cell-title">{{ priceSummary(product) }}</div>
+              <div class="cell-copy">{{ unitSummary(product) }}</div>
+            </td>
+            <td>
+              <app-ui-status-pill
+                [label]="statusLabel(product)"
+                [tone]="statusTone(product)"
+              ></app-ui-status-pill>
+            </td>
+            <td>
+              <div class="actions">
+                <app-ui-button variant="ghost" [disabled]="mutationPending" (clicked)="openEditModal(product)">Edit</app-ui-button>
+                <app-ui-button variant="danger" [disabled]="mutationPending" (clicked)="openDeleteDialog(product)">Remove</app-ui-button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <app-ui-empty-state
-      title="Product view is ready"
-      body="Implement product forms and actions here in source components."
+      *ngIf="!loading && !error && products.length === 0"
+      title="No master products yet"
+      body="Create the first reusable master product to seed the catalog without binding it permanently to one storefront category."
     ></app-ui-empty-state>
+
+    <div class="loading" *ngIf="loading">Loading master products...</div>
   </app-management-panel>
+
+  <app-add-product-modal
+    *ngIf="addModalOpen"
+    [pending]="mutationPending"
+    (cancelled)="closeAddModal()"
+    (saved)="onAddProduct($event)"
+  ></app-add-product-modal>
+
+  <app-edit-product-modal
+    *ngIf="editModalOpen && selectedProduct"
+    [product]="selectedProduct"
+    [pending]="mutationPending"
+    (cancelled)="closeEditModal()"
+    (saved)="onEditProduct($event)"
+  ></app-edit-product-modal>
+
+  <app-confirm-dialog
+    *ngIf="deleteDialogOpen && pendingDeleteProduct"
+    title="Remove master product?"
+    [message]="deleteDialogMessage()"
+    confirmLabel="Remove product"
+    cancelLabel="Keep product"
+    [destructive]="true"
+    [pending]="mutationPending"
+    (cancelled)="closeDeleteDialog()"
+    (confirmed)="confirmDeleteProduct()"
+  ></app-confirm-dialog>
 </div>

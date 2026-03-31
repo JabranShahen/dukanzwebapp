@@ -40,7 +40,7 @@ export class ProductCategoryService {
             productCategoryName: (payload.productCategoryName || '').trim(),
             productCategoryImageURL: (payload.productCategoryImageURL || '').trim(),
             visible: !!payload.visible,
-            order: Number(payload.order || 0)
+            ...(typeof payload.order === 'number' ? { order: payload.order } : {})
           };
         })
       );
@@ -66,7 +66,7 @@ export class ProductCategoryService {
             productCategoryName: (payload.productCategoryName || '').trim(),
             productCategoryImageURL: (payload.productCategoryImageURL || '').trim(),
             visible: !!payload.visible,
-            order: Number(payload.order || 0)
+            ...(typeof payload.order === 'number' ? { order: payload.order } : {})
           };
         })
       );
@@ -97,9 +97,12 @@ export class ProductCategoryService {
     const requestPayload: Record<string, unknown> = {
       productCategoryName: (payload.productCategoryName || '').trim(),
       productCategoryImageURL: (payload.productCategoryImageURL || '').trim(),
-      visible: !!payload.visible,
-      order: Number(payload.order || 0)
+      visible: !!payload.visible
     };
+
+    if (typeof payload.order === 'number') {
+      requestPayload['order'] = payload.order;
+    }
 
     if (id) {
       requestPayload['id'] = id;

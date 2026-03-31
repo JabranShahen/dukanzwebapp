@@ -5,7 +5,7 @@ export interface ProductCategory {
   productCategoryName: string;
   productCategoryImageURL?: string;
   visible: boolean;
-  order: number;
+  order?: number;
 }
 
 export interface ProductCategoryMutation {
@@ -13,5 +13,5 @@ export interface ProductCategoryMutation {
   productCategoryName: string;
   productCategoryImageURL?: string;
   visible: boolean;
-  order: number;
+  order?: number;
 }

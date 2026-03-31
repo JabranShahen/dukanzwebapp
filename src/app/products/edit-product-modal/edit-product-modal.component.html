@@ -1,0 +1,63 @@
+<div class="modal-backdrop" role="presentation">
+  <form class="modal-card" [formGroup]="productForm" (ngSubmit)="onSubmit()" novalidate>
+    <h3>Edit master product</h3>
+
+    <div class="field-grid">
+      <label class="field-span">
+        Master product name
+        <input type="text" formControlName="productName" placeholder="Product name" />
+        <span class="error" *ngIf="productForm.controls.productName.touched && productForm.controls.productName.invalid">
+          Name is required.
+        </span>
+        <span class="error" *ngIf="nameError">{{ nameError }}</span>
+      </label>
+
+      <label class="field-span">
+        Description
+        <textarea rows="3" formControlName="productDescription" placeholder="Optional admin-facing description"></textarea>
+      </label>
+
+      <label>
+        Original price
+        <input type="number" min="0" step="0.01" formControlName="orignalPrice" />
+        <span class="error" *ngIf="productForm.controls.orignalPrice.touched && productForm.controls.orignalPrice.invalid">
+          Use zero or a positive number.
+        </span>
+      </label>
+
+      <label>
+        Current price
+        <input type="number" min="0" step="0.01" formControlName="currentPrice" />
+        <span class="error" *ngIf="productForm.controls.currentPrice.touched && productForm.controls.currentPrice.invalid">
+          Use zero or a positive number.
+        </span>
+      </label>
+
+      <label>
+        Current cost
+        <input type="number" min="0" step="0.01" formControlName="currentCost" />
+        <span class="error" *ngIf="productForm.controls.currentCost.touched && productForm.controls.currentCost.invalid">
+          Use zero or a positive number.
+        </span>
+      </label>
+
+      <label>
+        Unit
+        <input type="text" formControlName="unitName" placeholder="bag, item, box" />
+        <span class="error" *ngIf="productForm.controls.unitName.touched && productForm.controls.unitName.invalid">
+          Unit is required.
+        </span>
+      </label>
+
+      <label class="field-span">
+        Image URL
+        <input type="text" formControlName="imageURL" placeholder="https://..." />
+      </label>
+    </div>
+
+    <div class="actions">
+      <app-ui-button variant="ghost" (clicked)="onCancel()">Cancel</app-ui-button>
+      <app-ui-button buttonType="submit" [disabled]="pending">Save changes</app-ui-button>
+    </div>
+  </form>
+</div>

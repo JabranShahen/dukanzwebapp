@@ -21,7 +21,6 @@ export class EditCategoryModalComponent implements OnChanges {
   readonly categoryForm = this.formBuilder.nonNullable.group({
     productCategoryName: ['', [Validators.required, Validators.maxLength(80)]],
     productCategoryImageURL: ['', [Validators.maxLength(400)]],
-    order: [0, [Validators.required, Validators.min(0)]],
     visible: [true]
   });
 
@@ -33,7 +32,6 @@ export class EditCategoryModalComponent implements OnChanges {
       this.categoryForm.reset({
         productCategoryName: this.category.productCategoryName || '',
         productCategoryImageURL: this.category.productCategoryImageURL || '',
-        order: Number(this.category.order || 0),
         visible: !!this.category.visible
       });
       this.nameError = '';
@@ -59,13 +57,18 @@ export class EditCategoryModalComponent implements OnChanges {
     const value = this.categoryForm.getRawValue();
     const normalizedName = this.normalize(value.productCategoryName);
 
+    if (!normalizedName) {
+      this.nameError = 'Master category name is required.';
+      return;
+    }
+
     const duplicateExists = this.existingNames
       .map((name) => this.normalize(name))
       .filter((name) => name !== this.normalize(this.currentName))
       .some((name) => name === normalizedName);
 
     if (duplicateExists) {
-      this.nameError = 'Category name must be unique.';
+      this.nameError = 'Master category name must be unique.';
       return;
     }
 
@@ -73,7 +76,6 @@ export class EditCategoryModalComponent implements OnChanges {
       id: this.category.id,
       productCategoryName: value.productCategoryName.trim(),
       productCategoryImageURL: value.productCategoryImageURL.trim(),
-      order: Number(value.order),
       visible: !!value.visible
     });
   }

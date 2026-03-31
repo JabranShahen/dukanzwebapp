@@ -9,7 +9,7 @@
 }
 
 .modal-card {
-  width: min(520px, 100%);
+  width: min(760px, 100%);
   background: #fff;
   border: 1px solid var(--tone-border);
   border-radius: 1rem;
@@ -23,6 +23,16 @@ h3 {
   margin: 0;
 }
 
+.field-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-span {
+  grid-column: 1 / -1;
+}
+
 label {
   display: grid;
   gap: 0.35rem;
@@ -30,10 +40,17 @@ label {
 }
 
 input[type='text'],
-input[type='number'] {
+input[type='number'],
+textarea,
+select {
   border: 1px solid var(--tone-border);
   border-radius: 0.65rem;
   padding: 0.56rem 0.65rem;
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
 }
 
 .check-row {
@@ -59,4 +76,14 @@ input[type='number'] {
   color: var(--tone-muted);
   font-size: 0.82rem;
   font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field-span {
+    grid-column: auto;
+  }
 }

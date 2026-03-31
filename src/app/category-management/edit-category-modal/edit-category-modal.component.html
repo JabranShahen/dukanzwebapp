@@ -1,9 +1,9 @@
 <div class="modal-backdrop" role="presentation">
   <form class="modal-card" [formGroup]="categoryForm" (ngSubmit)="onSubmit()" novalidate>
-    <h3>Edit category</h3>
+    <h3>Edit master category</h3>
 
     <label>
-      Name
+      Master category name
       <input type="text" formControlName="productCategoryName" placeholder="Category name" />
       <span class="error" *ngIf="categoryForm.controls.productCategoryName.touched && categoryForm.controls.productCategoryName.invalid">
         Name is required.
@@ -16,19 +16,15 @@
       <input type="text" formControlName="productCategoryImageURL" placeholder="https://..." />
     </label>
 
-    <label>
-      Order
-      <input type="number" min="0" step="1" formControlName="order" />
-    </label>
-
     <label class="check-row">
       <input type="checkbox" formControlName="visible" />
-      Visible
+      Active master category
     </label>
+    <p class="hint">Turn this off to retire the category while keeping the master record available.</p>
 
     <div class="actions">
       <app-ui-button variant="ghost" (clicked)="onCancel()">Cancel</app-ui-button>
-      <app-ui-button buttonType="submit" [disabled]="pending">Save</app-ui-button>
+      <app-ui-button buttonType="submit" [disabled]="pending">Save changes</app-ui-button>
     </div>
   </form>
 </div>
