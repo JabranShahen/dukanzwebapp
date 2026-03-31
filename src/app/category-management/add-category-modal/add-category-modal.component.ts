@@ -15,10 +15,11 @@ export class AddCategoryModalComponent {
   @Output() saved = new EventEmitter<ProductCategoryMutation>();
 
   nameError = '';
+  imageError = '';
+  selectedImageFile: File | null = null;
 
   readonly categoryForm = this.formBuilder.nonNullable.group({
     productCategoryName: ['', [Validators.required, Validators.maxLength(80)]],
-    productCategoryImageURL: ['', [Validators.maxLength(400)]],
     visible: [true]
   });
 
@@ -28,8 +29,31 @@ export class AddCategoryModalComponent {
     this.cancelled.emit();
   }
 
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] || null;
+    this.imageError = '';
+
+    if (!file) {
+      this.selectedImageFile = null;
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.selectedImageFile = null;
+      this.imageError = 'Select a valid image file.';
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    this.selectedImageFile = file;
+  }
+
   onSubmit(): void {
     this.nameError = '';
+    this.imageError = '';
     this.categoryForm.markAllAsTouched();
 
     if (this.categoryForm.invalid) {
@@ -55,7 +79,8 @@ export class AddCategoryModalComponent {
 
     this.saved.emit({
       productCategoryName: value.productCategoryName.trim(),
-      productCategoryImageURL: value.productCategoryImageURL.trim(),
+      productCategoryImageURL: '',
+      imageFile: this.selectedImageFile,
       visible: !!value.visible
     });
   }

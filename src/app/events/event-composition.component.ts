@@ -1,7 +1,8 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, Subscription } from 'rxjs';
+import { forkJoin, Observable, of, Subscription } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 import { EventCategoryMutation, EventCategoryRecord } from '../models/event-category.model';
 import { EventProductMutation, EventProductRecord } from '../models/event-product.model';
@@ -11,6 +12,7 @@ import { Product } from '../models/product.model';
 import { EventCategoryService } from '../services/event-category.service';
 import { EventProductService } from '../services/event-product.service';
 import { EventService } from '../services/event.service';
+import { BlobStorageService } from '../services/blob-storage.service';
 import { ProductCategoryService } from '../services/product-category.service';
 import { ProductService } from '../services/product.service';
 
@@ -40,6 +42,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
   feedbackTone: 'success' | 'error' = 'success';
   eventMutationPending = false;
   addEventModalOpen = false;
+  eventImageUrls: Record<string, string> = {};
+  masterCategoryImageUrls: Record<string, string> = {};
+  eventCategoryImageUrls: Record<string, string> = {};
+  masterProductImageUrls: Record<string, string> = {};
+  eventProductImageUrls: Record<string, string> = {};
 
   categoryModalOpen = false;
   categoryModalMode: 'add' | 'edit' = 'add';
@@ -73,6 +80,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     private readonly eventService: EventService,
     private readonly eventCategoryService: EventCategoryService,
     private readonly eventProductService: EventProductService,
+    private readonly blobStorageService: BlobStorageService,
     private readonly productCategoryService: ProductCategoryService,
     private readonly productService: ProductService
   ) {}
@@ -110,6 +118,12 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         this.masterProducts = [...masterProducts].sort((left, right) =>
           (left.productName || '').localeCompare(right.productName || '', undefined, { sensitivity: 'base' })
         );
+        this.eventImageUrls = {};
+        this.masterCategoryImageUrls = {};
+        this.masterProductImageUrls = {};
+        this.hydrateEventImages(this.events);
+        this.hydrateMasterCategoryImages(this.masterCategories);
+        this.hydrateMasterProductImages(this.masterProducts);
         this.rootContextLoaded = true;
         this.rootLoading = false;
         this.applyQuerySelection();
@@ -148,7 +162,12 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
   onAddEvent(payload: EventMutation): void {
     this.eventMutationPending = true;
-    this.eventService.create(payload).subscribe({
+    this.resolveEventImagePath(payload).pipe(
+      switchMap((imageURL) => this.eventService.create({
+        ...payload,
+        imageURL
+      }))
+    ).subscribe({
       next: (createdEvent) => {
         this.eventMutationPending = false;
         this.addEventModalOpen = false;
@@ -191,6 +210,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       partitionKey: assignment.partitionKey,
       eventId: assignment.eventId,
       productCategoryId: assignment.productCategoryId,
+      overrideImageURL: assignment.overrideImageURL,
       visible: assignment.visible,
       order: assignment.order
     };
@@ -216,20 +236,24 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         : this.nextCategoryOrder();
 
     this.categoryMutationPending = true;
-    const request = this.categoryModalMode === 'edit' && this.selectedCategoryAssignment
-      ? this.eventCategoryService.update({
-          id: this.selectedCategoryAssignment.id,
-          eventId: this.selectedEvent.id,
-          productCategoryId: this.selectedCategoryAssignment.productCategoryId,
-          visible: payload.visible,
-          order: assignmentOrder
-        })
-      : this.eventCategoryService.create({
-          eventId: this.selectedEvent.id,
-          productCategoryId: payload.productCategoryId,
-          visible: payload.visible,
-          order: assignmentOrder
-        });
+    const request = this.resolveEventCategoryImagePath(payload).pipe(
+      switchMap((overrideImageURL) => this.categoryModalMode === 'edit' && this.selectedCategoryAssignment
+        ? this.eventCategoryService.update({
+            id: this.selectedCategoryAssignment.id,
+            eventId: this.selectedEvent.id,
+            productCategoryId: this.selectedCategoryAssignment.productCategoryId,
+            overrideImageURL,
+            visible: payload.visible,
+            order: assignmentOrder
+          })
+        : this.eventCategoryService.create({
+            eventId: this.selectedEvent.id,
+            productCategoryId: payload.productCategoryId,
+            overrideImageURL,
+            visible: payload.visible,
+            order: assignmentOrder
+          }))
+    );
 
     request.subscribe({
       next: (savedAssignment) => {
@@ -244,7 +268,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         );
         if (mode === 'add' && !this.selectedCategory) {
           this.selectedCategory = savedDisplayRecord;
-          this.eventProducts = [];
+          this.clearProductSelection();
           this.syncQueryState(this.selectedEvent!.id, savedDisplayRecord.id, true);
         }
       },
@@ -329,6 +353,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       eventId: assignment.eventId,
       eventCategoryId: assignment.eventCategoryId,
       productId: assignment.productId,
+      overrideImageURL: assignment.overrideImageURL,
+      orignalPrice: assignment.orignalPrice,
+      currentPrice: assignment.currentPrice,
+      currentCost: assignment.currentCost,
+      unitName: assignment.unitName,
       visible: assignment.visible,
       order: assignment.order
     };
@@ -354,22 +383,34 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         : this.nextProductOrder();
 
     this.productMutationPending = true;
-    const request = this.productModalMode === 'edit' && this.selectedProductAssignment
-      ? this.eventProductService.update({
-          id: this.selectedProductAssignment.id,
-          eventId: this.selectedEvent.id,
-          eventCategoryId: this.selectedCategory.id,
-          productId: this.selectedProductAssignment.productId,
-          visible: payload.visible,
-          order: assignmentOrder
-        })
-      : this.eventProductService.create({
-          eventId: this.selectedEvent.id,
-          eventCategoryId: this.selectedCategory.id,
-          productId: payload.productId,
-          visible: payload.visible,
-          order: assignmentOrder
-        });
+    const request = this.resolveEventProductImagePath(payload).pipe(
+      switchMap((overrideImageURL) => this.productModalMode === 'edit' && this.selectedProductAssignment
+        ? this.eventProductService.update({
+            id: this.selectedProductAssignment.id,
+            eventId: this.selectedEvent.id,
+            eventCategoryId: this.selectedCategory.id,
+            productId: this.selectedProductAssignment.productId,
+            overrideImageURL,
+            orignalPrice: payload.orignalPrice,
+            currentPrice: payload.currentPrice,
+            currentCost: payload.currentCost,
+            unitName: payload.unitName,
+            visible: payload.visible,
+            order: assignmentOrder
+          })
+        : this.eventProductService.create({
+            eventId: this.selectedEvent.id,
+            eventCategoryId: this.selectedCategory.id,
+            productId: payload.productId,
+            overrideImageURL,
+            orignalPrice: payload.orignalPrice,
+            currentPrice: payload.currentPrice,
+            currentCost: payload.currentCost,
+            unitName: payload.unitName,
+            visible: payload.visible,
+            order: assignmentOrder
+          }))
+    );
 
     request.subscribe({
       next: (savedAssignment) => {
@@ -455,6 +496,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       id: assignment.id,
       eventId: assignment.eventId,
       productCategoryId: assignment.productCategoryId,
+      overrideImageURL: assignment.overrideImageURL,
       visible: assignment.visible,
       order: index
     }));
@@ -466,6 +508,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       next: (savedAssignments) => {
         this.categoryMutationPending = false;
         this.eventCategories = this.buildAssignedCategories(savedAssignments, this.masterCategories);
+        this.hydrateEventCategoryImages(this.eventCategories);
         this.selectedCategory = this.eventCategories.find((assignment) => assignment.id === this.selectedCategory?.id) || null;
         this.setFeedback('Event categories reordered.', 'success');
       },
@@ -490,6 +533,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       eventId: assignment.eventId,
       eventCategoryId: assignment.eventCategoryId,
       productId: assignment.productId,
+      overrideImageURL: assignment.overrideImageURL,
+      orignalPrice: assignment.orignalPrice,
+      currentPrice: assignment.currentPrice,
+      currentCost: assignment.currentCost,
+      unitName: assignment.unitName,
       visible: assignment.visible,
       order: index
     }));
@@ -501,6 +549,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       next: (savedAssignments) => {
         this.productMutationPending = false;
         this.eventProducts = this.buildAssignedProducts(savedAssignments, this.masterProducts);
+        this.hydrateEventProductImages(this.eventProducts);
         this.setFeedback('Event products reordered.', 'success');
       },
       error: () => {
@@ -668,16 +717,19 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
     const details = [
       assignment.masterProduct.productDescription || 'No master description available.',
-      this.productPriceSummary(assignment.masterProduct)
+      this.productPriceSummary(assignment)
     ].filter(Boolean);
 
-    return `${details.join(' ')} Event composition stores visibility and order only.`;
+    return `${details.join(' ')} Event composition stores pricing, visibility, and order.`;
   }
 
-  productPriceSummary(product: Product): string {
-    const price = Number.isFinite(product.currentPrice) ? product.currentPrice.toFixed(2) : '0.00';
-    const unit = (product.unitName || '').trim();
-    return unit ? `Current price ${price} per ${unit}.` : `Current price ${price}.`;
+  productPriceSummary(assignment: EventProductDisplayRecord): string {
+    const currentPrice = Number.isFinite(assignment.currentPrice) ? assignment.currentPrice.toFixed(2) : '0.00';
+    const originalPrice = Number.isFinite(assignment.orignalPrice) ? assignment.orignalPrice.toFixed(2) : '0.00';
+    const currentCost = Number.isFinite(assignment.currentCost) ? assignment.currentCost.toFixed(2) : '0.00';
+    const unit = (assignment.unitName || '').trim();
+    const unitSuffix = unit ? ` per ${unit}` : '';
+    return `Event price ${currentPrice}${unitSuffix}. Original ${originalPrice}. Cost ${currentCost}.`;
   }
 
   productMasterStateLabel(assignment: EventProductDisplayRecord): string {
@@ -690,6 +742,18 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
   productMasterStateTone(assignment: EventProductDisplayRecord): 'success' | 'muted' {
     return assignment.masterProduct?.visible ? 'success' : 'muted';
+  }
+
+  eventImageUrl(eventRecord: EventRecord): string {
+    return this.eventImageUrls[eventRecord.id] || '';
+  }
+
+  categoryImageUrl(assignment: EventCategoryDisplayRecord): string {
+    return this.eventCategoryImageUrls[assignment.id] || this.masterCategoryImageUrls[assignment.productCategoryId] || '';
+  }
+
+  productImageUrl(assignment: EventProductDisplayRecord): string {
+    return this.eventProductImageUrls[assignment.id] || this.masterProductImageUrls[assignment.productId] || '';
   }
 
   deleteCategoryMessage(): string {
@@ -736,7 +800,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
     this.selectedEvent = nextEvent;
     if (currentEventId !== nextEventId || this.eventCategories.length === 0) {
-      this.clearCategorySelection();
+      this.clearEventCategoryState();
       this.loadEventCategories(nextEventId);
       return;
     }
@@ -752,6 +816,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       next: (assignments) => {
         this.categoriesLoading = false;
         this.eventCategories = this.buildAssignedCategories(assignments, this.masterCategories);
+        this.hydrateEventCategoryImages(this.eventCategories);
         this.applyCategorySelection();
       },
       error: () => {
@@ -786,6 +851,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
     this.selectedCategory = nextCategory;
     if (currentCategoryId !== nextCategoryId || this.eventProducts.length === 0) {
+      this.clearProductSelection();
       this.loadEventProducts(nextCategory);
     }
   }
@@ -798,6 +864,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       next: (assignments) => {
         this.productsLoading = false;
         this.eventProducts = this.buildAssignedProducts(assignments, this.masterProducts);
+        this.hydrateEventProductImages(this.eventProducts);
       },
       error: () => {
         this.productsLoading = false;
@@ -829,6 +896,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         partitionKey: assignment.partitionKey,
         eventId: (assignment.eventId || '').trim(),
         productCategoryId: (assignment.productCategoryId || '').trim(),
+        overrideImageURL: (assignment.overrideImageURL || '').trim(),
         visible: !!assignment.visible,
         order: this.normalizeOrder(assignment.order),
         masterCategory: masterCategoryById.get((assignment.productCategoryId || '').trim()) || null
@@ -858,6 +926,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         eventId: (assignment.eventId || '').trim(),
         eventCategoryId: (assignment.eventCategoryId || '').trim(),
         productId: (assignment.productId || '').trim(),
+        overrideImageURL: (assignment.overrideImageURL || '').trim(),
+        orignalPrice: this.normalizeMoney(assignment.orignalPrice),
+        currentPrice: this.normalizeMoney(assignment.currentPrice),
+        currentCost: this.normalizeMoney(assignment.currentCost),
+        unitName: (assignment.unitName || '').trim(),
         visible: !!assignment.visible,
         order: this.normalizeOrder(assignment.order),
         masterProduct: masterProductById.get((assignment.productId || '').trim()) || null
@@ -866,15 +939,25 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
   private clearEventSelection(): void {
     this.selectedEvent = null;
-    this.eventCategories = [];
-    this.clearCategorySelection();
+    this.clearEventCategoryState();
     this.categoriesLoading = false;
     this.categoriesError = '';
   }
 
+  private clearEventCategoryState(): void {
+    this.eventCategories = [];
+    this.eventCategoryImageUrls = {};
+    this.clearCategorySelection();
+  }
+
   private clearCategorySelection(): void {
     this.selectedCategory = null;
+    this.clearProductSelection();
+  }
+
+  private clearProductSelection(): void {
     this.eventProducts = [];
+    this.eventProductImageUrls = {};
     this.productsLoading = false;
     this.productsError = '';
   }
@@ -900,6 +983,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       [...this.eventCategories.filter((assignment) => assignment.id !== savedAssignment.id), savedAssignment],
       this.masterCategories
     );
+    this.hydrateEventCategoryImage(this.eventCategories.find((assignment) => assignment.id === savedAssignment.id) || null);
 
     if (this.selectedCategory?.id === savedAssignment.id) {
       this.selectedCategory = this.eventCategories.find((assignment) => assignment.id === savedAssignment.id) || null;
@@ -910,6 +994,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
   private removeEventCategory(eventCategoryId: string): void {
     this.eventCategories = this.eventCategories.filter((assignment) => assignment.id !== eventCategoryId);
+    delete this.eventCategoryImageUrls[eventCategoryId];
   }
 
   private upsertEventProduct(savedAssignment: EventProductRecord): EventProductDisplayRecord {
@@ -917,12 +1002,14 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       [...this.eventProducts.filter((assignment) => assignment.id !== savedAssignment.id), savedAssignment],
       this.masterProducts
     );
+    this.hydrateEventProductImage(this.eventProducts.find((assignment) => assignment.id === savedAssignment.id) || null);
 
     return this.eventProducts.find((assignment) => assignment.id === savedAssignment.id)!;
   }
 
   private removeEventProduct(eventProductId: string): void {
     this.eventProducts = this.eventProducts.filter((assignment) => assignment.id !== eventProductId);
+    delete this.eventProductImageUrls[eventProductId];
   }
 
   private reloadAfterEventMutation(preferredEventId: string): void {
@@ -964,6 +1051,153 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     this.feedbackTone = tone || 'success';
   }
 
+  private hydrateEventImages(events: EventRecord[]): void {
+    for (const eventRecord of events) {
+      const imagePath = (eventRecord.imageURL || '').trim();
+      if (!imagePath) {
+        this.eventImageUrls[eventRecord.id] = '';
+        continue;
+      }
+
+      this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+        next: (imageUrl) => {
+          this.eventImageUrls[eventRecord.id] = imageUrl || '';
+        },
+        error: () => {
+          this.eventImageUrls[eventRecord.id] = '';
+        }
+      });
+    }
+  }
+
+  private hydrateMasterCategoryImages(categories: ProductCategory[]): void {
+    for (const category of categories) {
+      const imagePath = (category.productCategoryImageURL || '').trim();
+      if (!imagePath) {
+        this.masterCategoryImageUrls[category.id] = '';
+        continue;
+      }
+
+      this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+        next: (imageUrl) => {
+          this.masterCategoryImageUrls[category.id] = imageUrl || '';
+        },
+        error: () => {
+          this.masterCategoryImageUrls[category.id] = '';
+        }
+      });
+    }
+  }
+
+  private hydrateMasterProductImages(products: Product[]): void {
+    for (const product of products) {
+      const imagePath = (product.imageURL || '').trim();
+      if (!imagePath) {
+        this.masterProductImageUrls[product.id] = '';
+        continue;
+      }
+
+      this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+        next: (imageUrl) => {
+          this.masterProductImageUrls[product.id] = imageUrl || '';
+        },
+        error: () => {
+          this.masterProductImageUrls[product.id] = '';
+        }
+      });
+    }
+  }
+
+  private hydrateEventCategoryImages(assignments: EventCategoryDisplayRecord[]): void {
+    for (const assignment of assignments) {
+      this.hydrateEventCategoryImage(assignment);
+    }
+  }
+
+  private hydrateEventCategoryImage(assignment: EventCategoryDisplayRecord | null): void {
+    if (!assignment) {
+      return;
+    }
+
+    const imagePath = (assignment.overrideImageURL || '').trim();
+    if (!imagePath) {
+      this.eventCategoryImageUrls[assignment.id] = '';
+      return;
+    }
+
+    this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+      next: (imageUrl) => {
+        this.eventCategoryImageUrls[assignment.id] = imageUrl || '';
+      },
+      error: () => {
+        this.eventCategoryImageUrls[assignment.id] = '';
+      }
+    });
+  }
+
+  private hydrateEventProductImages(assignments: EventProductDisplayRecord[]): void {
+    for (const assignment of assignments) {
+      this.hydrateEventProductImage(assignment);
+    }
+  }
+
+  private hydrateEventProductImage(assignment: EventProductDisplayRecord | null): void {
+    if (!assignment) {
+      return;
+    }
+
+    const imagePath = (assignment.overrideImageURL || '').trim();
+    if (!imagePath) {
+      this.eventProductImageUrls[assignment.id] = '';
+      return;
+    }
+
+    this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+      next: (imageUrl) => {
+        this.eventProductImageUrls[assignment.id] = imageUrl || '';
+      },
+      error: () => {
+        this.eventProductImageUrls[assignment.id] = '';
+      }
+    });
+  }
+
+  private resolveEventImagePath(payload: EventMutation): Observable<string> {
+    if (payload.clearImage) {
+      return of('');
+    }
+
+    if (payload.imageFile) {
+      return this.blobStorageService.uploadImage(payload.imageFile, 'dukanz/events');
+    }
+
+    return of((payload.imageURL || '').trim());
+  }
+
+  private resolveEventCategoryImagePath(payload: EventCategoryMutation): Observable<string> {
+    if (payload.clearImage) {
+      return of('');
+    }
+
+    if (payload.imageFile) {
+      return this.blobStorageService.uploadImage(payload.imageFile, 'dukanz/event-categories');
+    }
+
+    return of((payload.overrideImageURL || '').trim());
+  }
+
+  private resolveEventProductImagePath(payload: EventProductMutation): Observable<string> {
+    if (payload.clearImage) {
+      return of('');
+    }
+
+    if (payload.imageFile) {
+      return this.blobStorageService.uploadImage(payload.imageFile, 'dukanz/event-products');
+    }
+
+    return of((payload.overrideImageURL || '').trim());
+  }
+
   private normalizeText(value: string | null | undefined): string {
     return (value || '').trim();
   }
@@ -974,6 +1208,14 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     }
 
     return Math.max(0, Math.trunc(value));
+  }
+
+  private normalizeMoney(value: number | undefined): number {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return 0;
+    }
+
+    return Math.max(0, value);
   }
 
   private formatUtcDate(value: string | null | undefined): string {

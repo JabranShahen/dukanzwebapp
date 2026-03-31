@@ -18,6 +18,17 @@
         <textarea rows="3" formControlName="eventDescription" placeholder="Optional planning notes for administrators"></textarea>
       </label>
 
+      <label class="field-span">
+        Event image
+        <input type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
+        <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
+        <span class="error" *ngIf="imageError">{{ imageError }}</span>
+      </label>
+
+      <div class="field-span image-preview" *ngIf="selectedImagePreviewUrl">
+        <img [src]="selectedImagePreviewUrl" [alt]="eventForm.controls.eventName.value || 'Selected event image'" />
+      </div>
+
       <label>
         Lifecycle
         <select formControlName="lifecycleStatus">

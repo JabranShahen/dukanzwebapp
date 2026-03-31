@@ -23,7 +23,6 @@ describe('AddCategoryModalComponent', () => {
   it('rejects whitespace-only names', () => {
     component.categoryForm.setValue({
       productCategoryName: '   ',
-      productCategoryImageURL: '',
       visible: true
     });
 
@@ -36,7 +35,6 @@ describe('AddCategoryModalComponent', () => {
     component.existingNames = ['Fresh Produce'];
     component.categoryForm.setValue({
       productCategoryName: ' fresh produce ',
-      productCategoryImageURL: '',
       visible: true
     });
 
@@ -49,16 +47,31 @@ describe('AddCategoryModalComponent', () => {
     spyOn(component.saved, 'emit');
     component.categoryForm.setValue({
       productCategoryName: '  Pantry  ',
-      productCategoryImageURL: '  https://img.test/pantry.png  ',
       visible: false
     });
+
+    const file = new File(['img'], 'pantry.png', { type: 'image/png' });
+    component.selectedImageFile = file;
 
     component.onSubmit();
 
     expect(component.saved.emit).toHaveBeenCalledWith({
       productCategoryName: 'Pantry',
-      productCategoryImageURL: 'https://img.test/pantry.png',
+      productCategoryImageURL: '',
+      imageFile: file,
       visible: false
     });
+  });
+
+  it('rejects non-image files', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    const file = new File(['x'], 'notes.txt', { type: 'text/plain' });
+    Object.defineProperty(input, 'files', { value: [file] });
+
+    component.onImageSelected({ target: input } as unknown as Event);
+
+    expect(component.imageError).toBe('Select a valid image file.');
+    expect(component.selectedImageFile).toBeNull();
   });
 });

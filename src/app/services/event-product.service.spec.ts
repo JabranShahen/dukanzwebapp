@@ -42,6 +42,11 @@ describe('EventProductService', () => {
       eventId: '  event-1  ',
       eventCategoryId: '  event-category-1  ',
       productId: '  product-2  ',
+      overrideImageURL: '  dukanz/event-products/tea.png  ',
+      orignalPrice: 12.5,
+      currentPrice: 10.25,
+      currentCost: 7.75,
+      unitName: ' cup ',
       visible: true,
       order: 3
     }).subscribe((assignment) => {
@@ -53,6 +58,11 @@ describe('EventProductService', () => {
     expect(request.request.body.eventId).toBe('event-1');
     expect(request.request.body.eventCategoryId).toBe('event-category-1');
     expect(request.request.body.productId).toBe('product-2');
+    expect(request.request.body.overrideImageURL).toBe('dukanz/event-products/tea.png');
+    expect(request.request.body.orignalPrice).toBe(12.5);
+    expect(request.request.body.currentPrice).toBe(10.25);
+    expect(request.request.body.currentCost).toBe(7.75);
+    expect(request.request.body.unitName).toBe('cup');
     expect(request.request.body.visible).toBeTrue();
     expect(request.request.body.order).toBe(3);
     expect(request.request.body.PartitionKey).toBe('assignment-1');
@@ -67,6 +77,11 @@ describe('EventProductService', () => {
       eventId: 'event-1',
       eventCategoryId: 'event-category-1',
       productId: 'product-2',
+      overrideImageURL: 'dukanz/event-products/tea.png',
+      orignalPrice: 12.5,
+      currentPrice: 10.25,
+      currentCost: 7.75,
+      unitName: 'cup',
       visible: true,
       order: 3
     });

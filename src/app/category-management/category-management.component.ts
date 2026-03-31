@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { Observable, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 import { ProductCategory, ProductCategoryMutation } from '../models/product-category.model';
+import { BlobStorageService } from '../services/blob-storage.service';
 import { ProductCategoryService } from '../services/product-category.service';
 
 @Component({
@@ -21,7 +24,10 @@ export class CategoryManagementComponent implements OnInit {
   pendingDeleteCategory: ProductCategory | null = null;
   categories: ProductCategory[] = [];
 
-  constructor(private readonly categoryService: ProductCategoryService) {}
+  constructor(
+    private readonly categoryService: ProductCategoryService,
+    private readonly blobStorageService: BlobStorageService
+  ) {}
 
   ngOnInit(): void {
     this.reload();
@@ -71,10 +77,13 @@ export class CategoryManagementComponent implements OnInit {
 
   onAddCategory(payload: ProductCategoryMutation): void {
     this.mutationPending = true;
-    this.categoryService.create({
-      ...payload,
-      order: this.getNextCategoryOrder()
-    }).subscribe({
+    this.resolveCategoryImagePath(payload).pipe(
+      switchMap((productCategoryImageURL) => this.categoryService.create({
+        ...payload,
+        productCategoryImageURL,
+        order: this.getNextCategoryOrder()
+      }))
+    ).subscribe({
       next: () => {
         this.mutationPending = false;
         this.addModalOpen = false;
@@ -91,10 +100,13 @@ export class CategoryManagementComponent implements OnInit {
   onEditCategory(payload: ProductCategoryMutation): void {
     const existingOrder = this.selectedCategory?.order;
     this.mutationPending = true;
-    this.categoryService.update({
-      ...payload,
-      ...(typeof existingOrder === 'number' ? { order: existingOrder } : {})
-    }).subscribe({
+    this.resolveCategoryImagePath(payload).pipe(
+      switchMap((productCategoryImageURL) => this.categoryService.update({
+        ...payload,
+        productCategoryImageURL,
+        ...(typeof existingOrder === 'number' ? { order: existingOrder } : {})
+      }))
+    ).subscribe({
       next: () => {
         this.mutationPending = false;
         this.editModalOpen = false;
@@ -198,5 +210,17 @@ export class CategoryManagementComponent implements OnInit {
   private setFeedback(tone: 'success' | 'error', message: string): void {
     this.feedbackTone = tone;
     this.feedbackMessage = message;
+  }
+
+  private resolveCategoryImagePath(payload: ProductCategoryMutation): Observable<string> {
+    if (payload.clearImage) {
+      return of('');
+    }
+
+    if (payload.imageFile) {
+      return this.blobStorageService.uploadImage(payload.imageFile, 'dukanz/categories');
+    }
+
+    return of((payload.productCategoryImageURL || '').trim());
   }
 }

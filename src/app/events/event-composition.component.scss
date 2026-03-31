@@ -82,6 +82,30 @@
   align-items: flex-start;
 }
 
+.selection-card__layout {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.selection-card__media {
+  flex-shrink: 0;
+}
+
+.selection-card__thumb {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: cover;
+  border-radius: 0.9rem;
+  border: 1px solid var(--tone-border);
+  background: #eef2f1;
+}
+
+.selection-card__content {
+  min-width: 0;
+}
+
 .selection-card__title {
   font-weight: 700;
 }
@@ -202,5 +226,9 @@
 
   .composition-grid > :last-child {
     grid-column: auto;
+  }
+
+  .selection-card__layout {
+    grid-template-columns: 1fr;
   }
 }

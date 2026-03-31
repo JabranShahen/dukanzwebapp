@@ -50,9 +50,24 @@
       </label>
 
       <label class="field-span">
-        Image URL
-        <input type="text" formControlName="imageURL" placeholder="https://..." />
+        Product image
+        <input type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
+        <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
+        <span class="hint" *ngIf="!selectedImageFile && currentImagePath">Current image stored.</span>
+        <span class="error" *ngIf="imageError">{{ imageError }}</span>
       </label>
+
+      <label class="field-span check-row" *ngIf="currentImagePath">
+        <input type="checkbox" [(ngModel)]="removeCurrentImage" [ngModelOptions]="{ standalone: true }" [disabled]="pending" />
+        Remove current image
+      </label>
+
+      <div class="field-span image-preview" *ngIf="selectedImagePreviewUrl || (currentImagePreviewUrl && !removeCurrentImage)">
+        <img
+          [src]="selectedImagePreviewUrl || currentImagePreviewUrl"
+          [alt]="productForm.controls.productName.value || 'Product image preview'"
+        />
+      </div>
     </div>
 
     <div class="actions">

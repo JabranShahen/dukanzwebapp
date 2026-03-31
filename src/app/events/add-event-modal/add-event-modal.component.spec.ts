@@ -65,6 +65,8 @@ describe('AddEventModalComponent', () => {
     expect(component.saved.emit).toHaveBeenCalledWith({
       eventName: 'Spring Launch',
       eventDescription: 'First seasonal window',
+      imageURL: '',
+      imageFile: null,
       lifecycleStatus: 'scheduled',
       startDateUtc: new Date('2026-04-01T10:30').toISOString(),
       endDateUtc: new Date('2026-04-02T18:45').toISOString()

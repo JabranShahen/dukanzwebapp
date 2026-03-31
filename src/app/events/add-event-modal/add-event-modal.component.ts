@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 
 import { EDITABLE_EVENT_LIFECYCLE_STATUSES, EventLifecycleStatus, EventMutation } from '../../models/event.model';
@@ -8,13 +8,15 @@ import { EDITABLE_EVENT_LIFECYCLE_STATUSES, EventLifecycleStatus, EventMutation 
   templateUrl: './add-event-modal.component.html',
   styleUrls: ['./add-event-modal.component.scss']
 })
-export class AddEventModalComponent {
+export class AddEventModalComponent implements OnDestroy {
   @Input() pending = false;
   @Output() cancelled = new EventEmitter<void>();
   @Output() saved = new EventEmitter<EventMutation>();
-
   nameError = '';
   dateRangeError = '';
+  imageError = '';
+  selectedImageFile: File | null = null;
+  selectedImagePreviewUrl = '';
 
   readonly lifecycleOptions = EDITABLE_EVENT_LIFECYCLE_STATUSES;
   readonly eventForm = this.formBuilder.nonNullable.group({
@@ -27,13 +29,44 @@ export class AddEventModalComponent {
 
   constructor(private readonly formBuilder: FormBuilder) {}
 
+  ngOnDestroy(): void {
+    this.revokeSelectedImagePreview();
+  }
+
   onCancel(): void {
     this.cancelled.emit();
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] || null;
+    this.imageError = '';
+
+    if (!file) {
+      this.selectedImageFile = null;
+      this.revokeSelectedImagePreview();
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.selectedImageFile = null;
+      this.revokeSelectedImagePreview();
+      this.imageError = 'Select a valid image file.';
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    this.selectedImageFile = file;
+    this.revokeSelectedImagePreview();
+    this.selectedImagePreviewUrl = URL.createObjectURL(file);
   }
 
   onSubmit(): void {
     this.nameError = '';
     this.dateRangeError = '';
+    this.imageError = '';
     this.eventForm.markAllAsTouched();
 
     if (this.eventForm.invalid) {
@@ -62,6 +95,8 @@ export class AddEventModalComponent {
     this.saved.emit({
       eventName: normalizedName,
       eventDescription: this.normalizeText(value.eventDescription),
+      imageURL: '',
+      imageFile: this.selectedImageFile,
       lifecycleStatus: value.lifecycleStatus,
       startDateUtc: normalizedStartDateUtc,
       endDateUtc: normalizedEndDateUtc
@@ -84,5 +119,12 @@ export class AddEventModalComponent {
     }
 
     return parsed.toISOString();
+  }
+
+  private revokeSelectedImagePreview(): void {
+    if (this.selectedImagePreviewUrl) {
+      URL.revokeObjectURL(this.selectedImagePreviewUrl);
+      this.selectedImagePreviewUrl = '';
+    }
   }
 }

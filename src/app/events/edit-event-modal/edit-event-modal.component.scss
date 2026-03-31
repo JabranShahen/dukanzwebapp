@@ -53,6 +53,12 @@ textarea {
   resize: vertical;
 }
 
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -70,6 +76,20 @@ textarea {
   color: var(--tone-muted);
   font-size: 0.9rem;
   line-height: 1.45;
+}
+
+.image-preview {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.image-preview img {
+  width: 8rem;
+  height: 8rem;
+  object-fit: cover;
+  border-radius: 1rem;
+  border: 1px solid var(--tone-border);
+  background: #eef2f1;
 }
 
 @media (max-width: 640px) {

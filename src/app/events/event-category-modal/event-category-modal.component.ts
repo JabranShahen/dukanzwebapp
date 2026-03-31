@@ -1,15 +1,17 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 import { EventCategoryMutation, EventCategoryRecord } from '../../models/event-category.model';
 import { ProductCategory } from '../../models/product-category.model';
+import { BlobStorageService } from '../../services/blob-storage.service';
 
 @Component({
   selector: 'app-event-category-modal',
   templateUrl: './event-category-modal.component.html',
   styleUrls: ['./event-category-modal.component.scss']
 })
-export class EventCategoryModalComponent implements OnChanges {
+export class EventCategoryModalComponent implements OnChanges, OnDestroy {
   @Input() mode: 'add' | 'edit' = 'add';
   @Input() eventName = '';
   @Input() assignment: EventCategoryRecord | null = null;
@@ -21,13 +23,25 @@ export class EventCategoryModalComponent implements OnChanges {
   @Output() saved = new EventEmitter<EventCategoryMutation>();
 
   categoryError = '';
+  imageError = '';
+  selectedImageFile: File | null = null;
+  removeCurrentImage = false;
+  currentOverrideImagePath = '';
+  currentOverridePreviewUrl = '';
+  masterImagePreviewUrl = '';
+  selectedImagePreviewUrl = '';
+  private currentOverrideImageSubscription: Subscription | null = null;
+  private masterImageSubscription: Subscription | null = null;
 
   readonly assignmentForm = this.formBuilder.nonNullable.group({
     productCategoryId: ['', [Validators.required]],
     visible: [true]
   });
 
-  constructor(private readonly formBuilder: FormBuilder) {}
+  constructor(
+    private readonly formBuilder: FormBuilder,
+    private readonly blobStorageService: BlobStorageService
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['mode'] || changes['assignment']) {
@@ -44,15 +58,64 @@ export class EventCategoryModalComponent implements OnChanges {
       }
 
       this.categoryError = '';
+      this.imageError = '';
+      this.selectedImageFile = null;
+      this.removeCurrentImage = false;
+      this.currentOverrideImagePath = this.assignment?.overrideImageURL || '';
+      this.revokeSelectedImagePreview();
+      this.loadCurrentOverridePreview();
+      this.loadMasterPreview();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.currentOverrideImageSubscription?.unsubscribe();
+    this.masterImageSubscription?.unsubscribe();
+    this.revokeSelectedImagePreview();
   }
 
   onCancel(): void {
     this.cancelled.emit();
   }
 
+  onCategorySelectionChange(): void {
+    this.loadMasterPreview();
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] || null;
+    this.imageError = '';
+
+    if (!file) {
+      this.selectedImageFile = null;
+      this.revokeSelectedImagePreview();
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.selectedImageFile = null;
+      this.revokeSelectedImagePreview();
+      this.imageError = 'Select a valid image file.';
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    this.selectedImageFile = file;
+    this.removeCurrentImage = false;
+    this.revokeSelectedImagePreview();
+    this.selectedImagePreviewUrl = URL.createObjectURL(file);
+  }
+
+  onRemoveCurrentImageChange(event: Event): void {
+    this.removeCurrentImage = (event.target as HTMLInputElement | null)?.checked ?? false;
+  }
+
   onSubmit(): void {
     this.categoryError = '';
+    this.imageError = '';
     this.assignmentForm.markAllAsTouched();
 
     if (this.assignmentForm.invalid) {
@@ -78,6 +141,9 @@ export class EventCategoryModalComponent implements OnChanges {
     this.saved.emit({
       ...(this.assignment ? { id: this.assignment.id } : {}),
       productCategoryId,
+      overrideImageURL: this.removeCurrentImage ? '' : this.currentOverrideImagePath,
+      imageFile: this.selectedImageFile,
+      clearImage: this.removeCurrentImage,
       visible: !!value.visible,
       order: this.assignment?.order ?? 0
     });
@@ -92,7 +158,80 @@ export class EventCategoryModalComponent implements OnChanges {
     return matchedCategory?.productCategoryName || this.assignment.productCategoryId;
   }
 
+  previewImageUrl(): string {
+    if (this.selectedImagePreviewUrl) {
+      return this.selectedImagePreviewUrl;
+    }
+
+    if (!this.removeCurrentImage && this.currentOverridePreviewUrl) {
+      return this.currentOverridePreviewUrl;
+    }
+
+    return this.masterImagePreviewUrl;
+  }
+
+  previewLabel(): string {
+    if (this.selectedImagePreviewUrl) {
+      return 'Selected override image';
+    }
+
+    if (!this.removeCurrentImage && this.currentOverridePreviewUrl) {
+      return 'Current override image';
+    }
+
+    return this.masterImagePreviewUrl ? 'Master category image' : '';
+  }
+
   private normalizeText(value: string): string {
     return (value || '').trim();
+  }
+
+  private loadCurrentOverridePreview(): void {
+    this.currentOverridePreviewUrl = '';
+    this.currentOverrideImageSubscription?.unsubscribe();
+
+    const imagePath = (this.currentOverrideImagePath || '').trim();
+    if (!imagePath) {
+      return;
+    }
+
+    this.currentOverrideImageSubscription = this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+      next: (imageUrl) => {
+        this.currentOverridePreviewUrl = imageUrl || '';
+      },
+      error: () => {
+        this.currentOverridePreviewUrl = '';
+      }
+    });
+  }
+
+  private loadMasterPreview(): void {
+    this.masterImagePreviewUrl = '';
+    this.masterImageSubscription?.unsubscribe();
+
+    const categoryId = this.mode === 'edit' && this.assignment
+      ? this.assignment.productCategoryId
+      : this.assignmentForm.controls.productCategoryId.value;
+    const selectedCategory = this.availableCategories.find((category) => category.id === this.normalizeText(categoryId));
+    const imagePath = (selectedCategory?.productCategoryImageURL || '').trim();
+    if (!imagePath) {
+      return;
+    }
+
+    this.masterImageSubscription = this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+      next: (imageUrl) => {
+        this.masterImagePreviewUrl = imageUrl || '';
+      },
+      error: () => {
+        this.masterImagePreviewUrl = '';
+      }
+    });
+  }
+
+  private revokeSelectedImagePreview(): void {
+    if (this.selectedImagePreviewUrl) {
+      URL.revokeObjectURL(this.selectedImagePreviewUrl);
+      this.selectedImagePreviewUrl = '';
+    }
   }
 }

@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 import { EventMutation, EventRecord } from '../models/event.model';
+import { BlobStorageService } from '../services/blob-storage.service';
 import { EventService } from '../services/event.service';
 
 @Component({
@@ -19,10 +22,12 @@ export class EventManagementComponent implements OnInit {
   editModalOpen = false;
   selectedEvent: EventRecord | null = null;
   events: EventRecord[] = [];
+  eventImageUrls: Record<string, string> = {};
 
   constructor(
     private readonly eventService: EventService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly blobStorageService: BlobStorageService
   ) {}
 
   ngOnInit(): void {
@@ -32,10 +37,12 @@ export class EventManagementComponent implements OnInit {
   reload(): void {
     this.loading = true;
     this.error = '';
+    this.eventImageUrls = {};
 
     this.eventService.getAll().subscribe({
       next: (events) => {
         this.events = [...events].sort((left, right) => this.compareEvents(left, right));
+        this.hydrateEventImages(this.events);
         this.loading = false;
       },
       error: () => {
@@ -79,7 +86,12 @@ export class EventManagementComponent implements OnInit {
 
   onAddEvent(payload: EventMutation): void {
     this.mutationPending = true;
-    this.eventService.create(payload).subscribe({
+    this.resolveEventImagePath(payload).pipe(
+      switchMap((imageURL) => this.eventService.create({
+        ...payload,
+        imageURL
+      }))
+    ).subscribe({
       next: () => {
         this.mutationPending = false;
         this.addModalOpen = false;
@@ -95,7 +107,12 @@ export class EventManagementComponent implements OnInit {
 
   onEditEvent(payload: EventMutation): void {
     this.mutationPending = true;
-    this.eventService.update(payload).subscribe({
+    this.resolveEventImagePath(payload).pipe(
+      switchMap((imageURL) => this.eventService.update({
+        ...payload,
+        imageURL
+      }))
+    ).subscribe({
       next: () => {
         this.mutationPending = false;
         this.editModalOpen = false;
@@ -156,6 +173,18 @@ export class EventManagementComponent implements OnInit {
     return 'Metadata stays here. Category and product composition now live in the dedicated event-composition flow.';
   }
 
+  eventImageUrl(eventRecord: EventRecord): string {
+    return this.eventImageUrls[eventRecord.id] || '';
+  }
+
+  eventImageStatus(eventRecord: EventRecord): string {
+    if (this.eventImageUrl(eventRecord)) {
+      return 'Image loaded';
+    }
+
+    return eventRecord.imageURL ? 'Image stored' : 'No image';
+  }
+
   trackById(_index: number, item: EventRecord): string {
     return item.id;
   }
@@ -174,6 +203,37 @@ export class EventManagementComponent implements OnInit {
   private setFeedback(tone: 'success' | 'error', message: string): void {
     this.feedbackTone = tone;
     this.feedbackMessage = message;
+  }
+
+  private hydrateEventImages(events: EventRecord[]): void {
+    for (const eventRecord of events) {
+      const imagePath = (eventRecord.imageURL || '').trim();
+      if (!imagePath) {
+        this.eventImageUrls[eventRecord.id] = '';
+        continue;
+      }
+
+      this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+        next: (imageUrl) => {
+          this.eventImageUrls[eventRecord.id] = imageUrl || '';
+        },
+        error: () => {
+          this.eventImageUrls[eventRecord.id] = '';
+        }
+      });
+    }
+  }
+
+  private resolveEventImagePath(payload: EventMutation): Observable<string> {
+    if (payload.clearImage) {
+      return of('');
+    }
+
+    if (payload.imageFile) {
+      return this.blobStorageService.uploadImage(payload.imageFile, 'dukanz/events');
+    }
+
+    return of((payload.imageURL || '').trim());
   }
 
   private formatUtcDate(value: string | null | undefined): string {

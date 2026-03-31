@@ -6,6 +6,7 @@ export interface EventRecord {
   partitionKey?: string;
   eventName: string;
   eventDescription?: string;
+  imageURL?: string;
   lifecycleStatus: EventLifecycleStatus | string;
   startDateUtc?: string | null;
   endDateUtc?: string | null;
@@ -17,6 +18,9 @@ export interface EventMutation {
   partitionKey?: string;
   eventName: string;
   eventDescription?: string;
+  imageURL?: string;
+  imageFile?: File | null;
+  clearImage?: boolean;
   lifecycleStatus: EventLifecycleStatus | string;
   startDateUtc?: string | null;
   endDateUtc?: string | null;

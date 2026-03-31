@@ -9,7 +9,7 @@
     <div class="field-grid">
       <label class="field-span" *ngIf="mode === 'add'">
         Master product
-        <select formControlName="productId">
+        <select formControlName="productId" (change)="onProductSelectionChange()">
           <option value="">Select a master product</option>
           <option *ngFor="let product of availableProducts" [value]="product.id">
             {{ product.productName }}{{ product.visible ? '' : ' (Retired)' }}
@@ -27,13 +27,57 @@
       </label>
 
       <label>
+        Original price
+        <input type="number" min="0" step="0.01" formControlName="orignalPrice" />
+      </label>
+
+      <label>
+        Current price
+        <input type="number" min="0" step="0.01" formControlName="currentPrice" />
+      </label>
+
+      <label>
+        Current cost
+        <input type="number" min="0" step="0.01" formControlName="currentCost" />
+      </label>
+
+      <label>
+        Unit
+        <input type="text" formControlName="unitName" placeholder="cup" />
+        <span class="error" *ngIf="unitError">{{ unitError }}</span>
+      </label>
+
+      <label>
         Event visibility
         <select formControlName="visible">
           <option [ngValue]="true">Visible in this category</option>
           <option [ngValue]="false">Hidden in this category</option>
         </select>
       </label>
+
+      <label class="field-span">
+        Override image
+        <input type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
+        <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
+        <span class="hint" *ngIf="!selectedImageFile && currentOverrideImagePath">Current override image stored.</span>
+        <span class="hint" *ngIf="!selectedImageFile && !currentOverrideImagePath">Leave empty to use the master product image.</span>
+        <span class="error" *ngIf="imageError">{{ imageError }}</span>
+      </label>
+
+      <label class="field-span check-row" *ngIf="currentOverrideImagePath">
+        <input type="checkbox" [checked]="removeCurrentImage" (change)="onRemoveCurrentImageChange($event)" [disabled]="pending" />
+        Remove current override image
+      </label>
+
+      <div class="field-span image-preview" *ngIf="previewImageUrl()">
+        <div>
+          <div class="hint">{{ previewLabel() }}</div>
+          <img [src]="previewImageUrl()" [alt]="productLabel() || 'Event product image preview'" />
+        </div>
+      </div>
     </div>
+
+    <span class="error" *ngIf="priceError">{{ priceError }}</span>
 
     <div class="actions">
       <app-ui-button variant="ghost" (clicked)="onCancel()">Cancel</app-ui-button>

@@ -4,6 +4,7 @@ export interface EventCategoryRecord {
   partitionKey?: string;
   eventId: string;
   productCategoryId: string;
+  overrideImageURL?: string;
   visible: boolean;
   order: number;
 }
@@ -14,6 +15,9 @@ export interface EventCategoryMutation {
   partitionKey?: string;
   eventId?: string;
   productCategoryId: string;
+  overrideImageURL?: string;
+  imageFile?: File | null;
+  clearImage?: boolean;
   visible: boolean;
   order: number;
 }

@@ -102,6 +102,11 @@ export class EventProductService {
       eventId,
       eventCategoryId,
       productId,
+      overrideImageURL: this.normalizeText(payload.overrideImageURL),
+      orignalPrice: this.normalizeMoney(payload.orignalPrice),
+      currentPrice: this.normalizeMoney(payload.currentPrice),
+      currentCost: this.normalizeMoney(payload.currentCost),
+      unitName: this.normalizeText(payload.unitName),
       visible: !!payload.visible,
       order: this.normalizeOrder(payload.order)
     };
@@ -126,9 +131,26 @@ export class EventProductService {
       eventId: (record.eventId || '').trim(),
       eventCategoryId: (record.eventCategoryId || '').trim(),
       productId: (record.productId || '').trim(),
+      overrideImageURL: this.normalizeText(record.overrideImageURL),
+      orignalPrice: this.normalizeMoney(record.orignalPrice),
+      currentPrice: this.normalizeMoney(record.currentPrice),
+      currentCost: this.normalizeMoney(record.currentCost),
+      unitName: this.normalizeText(record.unitName),
       visible: !!record.visible,
       order: this.normalizeOrder(record.order)
     };
+  }
+
+  private normalizeMoney(value: number | undefined): number {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return 0;
+    }
+
+    return Math.max(0, value);
+  }
+
+  private normalizeText(value: string | undefined): string {
+    return (value || '').trim();
   }
 
   private normalizeOrder(value: number | undefined): number {

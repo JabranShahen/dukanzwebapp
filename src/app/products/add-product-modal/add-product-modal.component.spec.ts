@@ -57,9 +57,11 @@ describe('AddProductModalComponent', () => {
       orignalPrice: 12.5,
       currentPrice: 10,
       currentCost: 7.25,
-      unitName: '  bag  ',
-      imageURL: '  https://img.test/coffee.png  '
+      unitName: '  bag  '
     });
+
+    const file = new File(['img'], 'coffee.png', { type: 'image/png' });
+    component.selectedImageFile = file;
 
     component.onSubmit();
 
@@ -67,12 +69,38 @@ describe('AddProductModalComponent', () => {
       productName: 'Coffee Beans',
       productDescription: 'Roasted weekly',
       unitName: 'bag',
-      imageURL: 'https://img.test/coffee.png',
+      imageURL: '',
+      imageFile: file,
       visible: true,
       productCategory: jasmine.objectContaining({
         id: '',
         productCategoryName: ''
       })
     }));
+  });
+
+  it('rejects non-image files', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    const file = new File(['x'], 'notes.txt', { type: 'text/plain' });
+    Object.defineProperty(input, 'files', { value: [file] });
+
+    component.onImageSelected({ target: input } as unknown as Event);
+
+    expect(component.imageError).toBe('Select a valid image file.');
+    expect(component.selectedImageFile).toBeNull();
+  });
+
+  it('creates a local preview for selected images', () => {
+    const createObjectUrlSpy = spyOn(URL, 'createObjectURL').and.returnValue('blob:preview');
+    const input = document.createElement('input');
+    input.type = 'file';
+    const file = new File(['img'], 'coffee.png', { type: 'image/png' });
+    Object.defineProperty(input, 'files', { value: [file] });
+
+    component.onImageSelected({ target: input } as unknown as Event);
+
+    expect(createObjectUrlSpy).toHaveBeenCalledWith(file);
+    expect(component.selectedImagePreviewUrl).toBe('blob:preview');
   });
 });

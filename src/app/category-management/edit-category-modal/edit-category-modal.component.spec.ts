@@ -1,6 +1,6 @@
 import { NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { EditCategoryModalComponent } from './edit-category-modal.component';
 
@@ -11,7 +11,7 @@ describe('EditCategoryModalComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [EditCategoryModalComponent],
-      imports: [ReactiveFormsModule],
+      imports: [FormsModule, ReactiveFormsModule],
       schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
 
@@ -35,7 +35,6 @@ describe('EditCategoryModalComponent', () => {
     component.existingNames = ['Fruit', 'Vegetables'];
     component.categoryForm.setValue({
       productCategoryName: ' fruit ',
-      productCategoryImageURL: '',
       visible: true
     });
 
@@ -48,12 +47,37 @@ describe('EditCategoryModalComponent', () => {
   it('rejects whitespace-only names during edit', () => {
     component.categoryForm.setValue({
       productCategoryName: '   ',
-      productCategoryImageURL: '',
       visible: true
     });
 
     component.onSubmit();
 
     expect(component.nameError).toBe('Master category name is required.');
+  });
+
+  it('can mark the current image for removal', () => {
+    spyOn(component.saved, 'emit');
+    component.category = {
+      id: 'category-1',
+      productCategoryName: 'Fruit',
+      productCategoryImageURL: 'dukanz/categories/fruit.png',
+      visible: true,
+      order: 1
+    };
+    component.ngOnChanges({
+      category: new SimpleChange(null, component.category, true)
+    });
+    component.removeCurrentImage = true;
+    component.categoryForm.setValue({
+      productCategoryName: 'Fruit',
+      visible: true
+    });
+
+    component.onSubmit();
+
+    expect(component.saved.emit).toHaveBeenCalledWith(jasmine.objectContaining({
+      productCategoryImageURL: '',
+      clearImage: true
+    }));
   });
 });

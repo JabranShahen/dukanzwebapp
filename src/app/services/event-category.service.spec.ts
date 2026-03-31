@@ -40,6 +40,7 @@ describe('EventCategoryService', () => {
     service.create({
       eventId: '  event-1  ',
       productCategoryId: '  category-2  ',
+      overrideImageURL: '  dukanz/event-categories/tea.png  ',
       visible: true,
       order: 3
     }).subscribe((assignment) => {
@@ -50,6 +51,7 @@ describe('EventCategoryService', () => {
     expect(request.request.method).toBe('POST');
     expect(request.request.body.eventId).toBe('event-1');
     expect(request.request.body.productCategoryId).toBe('category-2');
+    expect(request.request.body.overrideImageURL).toBe('dukanz/event-categories/tea.png');
     expect(request.request.body.visible).toBeTrue();
     expect(request.request.body.order).toBe(3);
     expect(request.request.body.PartitionKey).toBe(request.request.body.id);
@@ -63,6 +65,7 @@ describe('EventCategoryService', () => {
       PartitionKey: 'assignment-1',
       eventId: 'event-1',
       productCategoryId: 'category-2',
+      overrideImageURL: 'dukanz/event-categories/tea.png',
       visible: true,
       order: 3
     });

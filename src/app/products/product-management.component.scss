@@ -57,6 +57,20 @@ th {
   line-height: 1.4;
 }
 
+.image-cell {
+  display: flex;
+  align-items: center;
+}
+
+.product-thumb {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: cover;
+  border-radius: 0.85rem;
+  border: 1px solid var(--tone-border);
+  background: #eef2f1;
+}
+
 .actions {
   display: flex;
   gap: 0.5rem;

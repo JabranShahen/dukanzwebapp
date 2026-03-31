@@ -1,8 +1,10 @@
 import { NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
+import { of } from 'rxjs';
 
 import { EventProductModalComponent } from './event-product-modal.component';
+import { BlobStorageService } from '../../services/blob-storage.service';
 
 describe('EventProductModalComponent', () => {
   let component: EventProductModalComponent;
@@ -12,6 +14,14 @@ describe('EventProductModalComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [EventProductModalComponent],
       imports: [ReactiveFormsModule],
+      providers: [
+        {
+          provide: BlobStorageService,
+          useValue: {
+            getDownloadUrl: () => of('https://img.test/product.png')
+          }
+        }
+      ],
       schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
 
@@ -22,6 +32,11 @@ describe('EventProductModalComponent', () => {
       eventId: 'event-1',
       eventCategoryId: 'event-category-1',
       productId: 'product-1',
+      overrideImageURL: 'dukanz/event-products/coffee.png',
+      orignalPrice: 12.5,
+      currentPrice: 10,
+      currentCost: 7.25,
+      unitName: 'bag',
       visible: true,
       order: 2
     };
@@ -64,6 +79,10 @@ describe('EventProductModalComponent', () => {
     });
     component.assignmentForm.patchValue({
       productId: 'product-1',
+      orignalPrice: 12.5,
+      currentPrice: 10,
+      currentCost: 7.25,
+      unitName: 'bag',
       visible: true
     });
 
@@ -84,6 +103,10 @@ describe('EventProductModalComponent', () => {
     });
     component.assignmentForm.patchValue({
       productId: '  product-2  ',
+      orignalPrice: 8,
+      currentPrice: 6.5,
+      currentCost: 3.2,
+      unitName: ' cup ',
       visible: false
     });
 
@@ -91,9 +114,35 @@ describe('EventProductModalComponent', () => {
 
     expect(component.saved.emit).toHaveBeenCalledWith({
       productId: 'product-2',
+      overrideImageURL: '',
+      imageFile: null,
+      clearImage: false,
+      orignalPrice: 8,
+      currentPrice: 6.5,
+      currentCost: 3.2,
+      unitName: 'cup',
       visible: false,
       order: 0
     });
+  });
+
+  it('copies price and unit defaults from the selected master product in add mode', () => {
+    component.mode = 'add';
+    component.assignment = null;
+    component.ngOnChanges({
+      mode: new SimpleChange('edit', 'add', false),
+      assignment: new SimpleChange({ id: 'assignment-1' }, null, false)
+    });
+    component.assignmentForm.patchValue({
+      productId: 'product-1'
+    });
+
+    component.onProductSelectionChange();
+
+    expect(component.assignmentForm.getRawValue().orignalPrice).toBe(12.5);
+    expect(component.assignmentForm.getRawValue().currentPrice).toBe(10);
+    expect(component.assignmentForm.getRawValue().currentCost).toBe(7.25);
+    expect(component.assignmentForm.getRawValue().unitName).toBe('bag');
   });
 
   it('keeps the selected master product when available products input changes', () => {
@@ -107,6 +156,10 @@ describe('EventProductModalComponent', () => {
     });
     component.assignmentForm.patchValue({
       productId: 'product-1',
+      orignalPrice: 12.5,
+      currentPrice: 10,
+      currentCost: 7.25,
+      unitName: 'bag',
       visible: true
     });
 
@@ -161,6 +214,7 @@ describe('EventProductModalComponent', () => {
     });
 
     expect(component.assignmentForm.getRawValue().productId).toBe('product-1');
+    expect(component.assignmentForm.getRawValue().orignalPrice).toBe(12.5);
     expect(component.assignmentForm.getRawValue().visible).toBeTrue();
   });
 });

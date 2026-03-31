@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 import {
   DISPLAYABLE_EVENT_LIFECYCLE_STATUSES,
@@ -8,13 +9,14 @@ import {
   EventMutation,
   EventRecord
 } from '../../models/event.model';
+import { BlobStorageService } from '../../services/blob-storage.service';
 
 @Component({
   selector: 'app-edit-event-modal',
   templateUrl: './edit-event-modal.component.html',
   styleUrls: ['./edit-event-modal.component.scss']
 })
-export class EditEventModalComponent implements OnChanges {
+export class EditEventModalComponent implements OnChanges, OnDestroy {
   @Input() eventRecord: EventRecord | null = null;
   @Input() pending = false;
   @Output() cancelled = new EventEmitter<void>();
@@ -22,7 +24,14 @@ export class EditEventModalComponent implements OnChanges {
 
   nameError = '';
   dateRangeError = '';
+  imageError = '';
   lifecycleOptions: string[] = EDITABLE_EVENT_LIFECYCLE_STATUSES;
+  selectedImageFile: File | null = null;
+  removeCurrentImage = false;
+  currentImagePath = '';
+  currentImagePreviewUrl = '';
+  selectedImagePreviewUrl = '';
+  private imagePreviewSubscription: Subscription | null = null;
 
   readonly eventForm = this.formBuilder.nonNullable.group({
     eventName: ['', [Validators.required, Validators.maxLength(120)]],
@@ -32,12 +41,20 @@ export class EditEventModalComponent implements OnChanges {
     endDateUtc: ['']
   });
 
-  constructor(private readonly formBuilder: FormBuilder) {}
+  constructor(
+    private readonly formBuilder: FormBuilder,
+    private readonly blobStorageService: BlobStorageService
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['eventRecord'] && this.eventRecord) {
       const normalizedLifecycle = this.normalizeLifecycleStatus(this.eventRecord.lifecycleStatus);
       this.lifecycleOptions = this.resolveLifecycleOptions(normalizedLifecycle);
+      this.currentImagePath = this.eventRecord.imageURL || '';
+      this.selectedImageFile = null;
+      this.removeCurrentImage = false;
+      this.revokeSelectedImagePreview();
+      this.loadCurrentImagePreview();
       this.eventForm.reset({
         eventName: this.eventRecord.eventName || '',
         eventDescription: this.eventRecord.eventDescription || '',
@@ -47,11 +64,48 @@ export class EditEventModalComponent implements OnChanges {
       });
       this.nameError = '';
       this.dateRangeError = '';
+      this.imageError = '';
     }
+  }
+
+  ngOnDestroy(): void {
+    this.imagePreviewSubscription?.unsubscribe();
+    this.revokeSelectedImagePreview();
   }
 
   onCancel(): void {
     this.cancelled.emit();
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] || null;
+    this.imageError = '';
+
+    if (!file) {
+      this.selectedImageFile = null;
+      this.revokeSelectedImagePreview();
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.selectedImageFile = null;
+      this.revokeSelectedImagePreview();
+      this.imageError = 'Select a valid image file.';
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    this.selectedImageFile = file;
+    this.removeCurrentImage = false;
+    this.revokeSelectedImagePreview();
+    this.selectedImagePreviewUrl = URL.createObjectURL(file);
+  }
+
+  onRemoveCurrentImageChange(event: Event): void {
+    this.removeCurrentImage = (event.target as HTMLInputElement | null)?.checked ?? false;
   }
 
   onSubmit(): void {
@@ -61,6 +115,7 @@ export class EditEventModalComponent implements OnChanges {
 
     this.nameError = '';
     this.dateRangeError = '';
+    this.imageError = '';
     this.eventForm.markAllAsTouched();
 
     if (this.eventForm.invalid) {
@@ -90,6 +145,9 @@ export class EditEventModalComponent implements OnChanges {
       id: this.eventRecord.id,
       eventName: normalizedName,
       eventDescription: this.normalizeText(value.eventDescription),
+      imageURL: this.removeCurrentImage ? '' : this.currentImagePath,
+      imageFile: this.selectedImageFile,
+      clearImage: this.removeCurrentImage,
       lifecycleStatus: this.normalizeLifecycleStatus(value.lifecycleStatus),
       startDateUtc: normalizedStartDateUtc,
       endDateUtc: normalizedEndDateUtc
@@ -144,5 +202,31 @@ export class EditEventModalComponent implements OnChanges {
     const offset = parsed.getTimezoneOffset();
     const localDate = new Date(parsed.getTime() - (offset * 60 * 1000));
     return localDate.toISOString().slice(0, 16);
+  }
+
+  private loadCurrentImagePreview(): void {
+    this.currentImagePreviewUrl = '';
+    this.imagePreviewSubscription?.unsubscribe();
+
+    const imagePath = (this.currentImagePath || '').trim();
+    if (!imagePath) {
+      return;
+    }
+
+    this.imagePreviewSubscription = this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+      next: (imageUrl) => {
+        this.currentImagePreviewUrl = imageUrl || '';
+      },
+      error: () => {
+        this.currentImagePreviewUrl = '';
+      }
+    });
+  }
+
+  private revokeSelectedImagePreview(): void {
+    if (this.selectedImagePreviewUrl) {
+      URL.revokeObjectURL(this.selectedImagePreviewUrl);
+      this.selectedImagePreviewUrl = '';
+    }
   }
 }

@@ -1,8 +1,10 @@
 import { NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
+import { of } from 'rxjs';
 
 import { EventCategoryModalComponent } from './event-category-modal.component';
+import { BlobStorageService } from '../../services/blob-storage.service';
 
 describe('EventCategoryModalComponent', () => {
   let component: EventCategoryModalComponent;
@@ -12,6 +14,14 @@ describe('EventCategoryModalComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [EventCategoryModalComponent],
       imports: [ReactiveFormsModule],
+      providers: [
+        {
+          provide: BlobStorageService,
+          useValue: {
+            getDownloadUrl: () => of('https://img.test/category.png')
+          }
+        }
+      ],
       schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
 
@@ -49,6 +59,7 @@ describe('EventCategoryModalComponent', () => {
       id: 'assignment-1',
       eventId: 'event-1',
       productCategoryId: 'category-1',
+      overrideImageURL: 'dukanz/event-categories/coffee.png',
       visible: false,
       order: 4
     };
@@ -65,6 +76,9 @@ describe('EventCategoryModalComponent', () => {
     expect(component.saved.emit).toHaveBeenCalledWith({
       id: 'assignment-1',
       productCategoryId: 'category-1',
+      overrideImageURL: 'dukanz/event-categories/coffee.png',
+      imageFile: null,
+      clearImage: false,
       visible: true,
       order: 4
     });

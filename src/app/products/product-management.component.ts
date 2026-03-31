@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 import { Product, ProductMutation } from '../models/product.model';
 import { ProductCategory } from '../models/product-category.model';
+import { BlobStorageService } from '../services/blob-storage.service';
 import { ProductService } from '../services/product.service';
 import { ProductCategoryService } from '../services/product-category.service';
 
@@ -24,10 +26,12 @@ export class ProductManagementComponent implements OnInit {
   pendingDeleteProduct: Product | null = null;
   products: Product[] = [];
   categories: ProductCategory[] = [];
+  productImageUrls: Record<string, string> = {};
 
   constructor(
     private readonly productService: ProductService,
-    private readonly categoryService: ProductCategoryService
+    private readonly categoryService: ProductCategoryService,
+    private readonly blobStorageService: BlobStorageService
   ) {}
 
   ngOnInit(): void {
@@ -37,6 +41,7 @@ export class ProductManagementComponent implements OnInit {
   reload(): void {
     this.loading = true;
     this.error = '';
+    this.productImageUrls = {};
 
     forkJoin({
       products: this.productService.getAll(),
@@ -49,6 +54,7 @@ export class ProductManagementComponent implements OnInit {
         this.categories = [...categories].sort((a, b) =>
           (a.productCategoryName || '').localeCompare(b.productCategoryName || '', undefined, { sensitivity: 'base' })
         );
+        this.hydrateProductImages(this.products);
         this.loading = false;
       },
       error: () => {
@@ -89,10 +95,13 @@ export class ProductManagementComponent implements OnInit {
 
   onAddProduct(payload: ProductMutation): void {
     this.mutationPending = true;
-    this.productService.create({
-      ...payload,
-      order: this.getNextProductOrder()
-    }).subscribe({
+    this.resolveProductImagePath(payload).pipe(
+      switchMap((imageURL) => this.productService.create({
+        ...payload,
+        imageURL,
+        order: this.getNextProductOrder()
+      }))
+    ).subscribe({
       next: () => {
         this.mutationPending = false;
         this.addModalOpen = false;
@@ -109,10 +118,13 @@ export class ProductManagementComponent implements OnInit {
   onEditProduct(payload: ProductMutation): void {
     const existingOrder = this.selectedProduct?.order;
     this.mutationPending = true;
-    this.productService.update({
-      ...payload,
-      ...(typeof existingOrder === 'number' ? { order: existingOrder } : {})
-    }).subscribe({
+    this.resolveProductImagePath(payload).pipe(
+      switchMap((imageURL) => this.productService.update({
+        ...payload,
+        imageURL,
+        ...(typeof existingOrder === 'number' ? { order: existingOrder } : {})
+      }))
+    ).subscribe({
       next: () => {
         this.mutationPending = false;
         this.editModalOpen = false;
@@ -214,6 +226,18 @@ export class ProductManagementComponent implements OnInit {
     return product.unitName ? `Unit: ${product.unitName}` : 'No unit metadata';
   }
 
+  productImageUrl(product: Product): string {
+    return this.productImageUrls[product.id] || '';
+  }
+
+  productImageState(product: Product): string {
+    if (this.productImageUrl(product)) {
+      return 'Image loaded';
+    }
+
+    return product.imageURL ? 'Image stored' : 'No image';
+  }
+
   statusTone(product: Product): 'success' | 'muted' {
     return product.visible ? 'success' : 'muted';
   }
@@ -241,5 +265,36 @@ export class ProductManagementComponent implements OnInit {
 
   private formatNumber(value: number): string {
     return Number(value ?? 0).toFixed(2);
+  }
+
+  private hydrateProductImages(products: Product[]): void {
+    for (const product of products) {
+      const imagePath = (product.imageURL || '').trim();
+      if (!imagePath) {
+        this.productImageUrls[product.id] = '';
+        continue;
+      }
+
+      this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+        next: (imageUrl) => {
+          this.productImageUrls[product.id] = imageUrl || '';
+        },
+        error: () => {
+          this.productImageUrls[product.id] = '';
+        }
+      });
+    }
+  }
+
+  private resolveProductImagePath(payload: ProductMutation): Observable<string> {
+    if (payload.clearImage) {
+      return of('');
+    }
+
+    if (payload.imageFile) {
+      return this.blobStorageService.uploadImage(payload.imageFile, 'dukanz/products');
+    }
+
+    return of((payload.imageURL || '').trim());
   }
 }

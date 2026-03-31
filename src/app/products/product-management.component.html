@@ -23,6 +23,7 @@
       <table>
         <thead>
           <tr>
+            <th>Image</th>
             <th>Product</th>
             <th>Compatibility Category</th>
             <th>Pricing</th>
@@ -32,6 +33,14 @@
         </thead>
         <tbody>
           <tr *ngFor="let product of products; trackBy: trackById">
+            <td>
+              <div class="image-cell" *ngIf="productImageUrl(product); else imageState">
+                <img class="product-thumb" [src]="productImageUrl(product)" [alt]="product.productName" />
+              </div>
+              <ng-template #imageState>
+                <div class="cell-copy">{{ productImageState(product) }}</div>
+              </ng-template>
+            </td>
             <td>
               <div class="cell-title">{{ product.productName }}</div>
               <div class="cell-copy">{{ product.productDescription || 'No description set.' }}</div>

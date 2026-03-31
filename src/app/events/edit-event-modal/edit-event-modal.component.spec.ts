@@ -1,8 +1,10 @@
 import { NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
+import { of } from 'rxjs';
 
 import { EditEventModalComponent } from './edit-event-modal.component';
+import { BlobStorageService } from '../../services/blob-storage.service';
 
 describe('EditEventModalComponent', () => {
   let component: EditEventModalComponent;
@@ -12,6 +14,14 @@ describe('EditEventModalComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [EditEventModalComponent],
       imports: [ReactiveFormsModule],
+      providers: [
+        {
+          provide: BlobStorageService,
+          useValue: {
+            getDownloadUrl: () => of('https://img.test/event.png')
+          }
+        }
+      ],
       schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
 
@@ -21,6 +31,7 @@ describe('EditEventModalComponent', () => {
       id: 'event-1',
       eventName: 'Spring Launch',
       eventDescription: 'First seasonal window',
+      imageURL: 'dukanz/events/spring-launch.png',
       lifecycleStatus: 'live',
       startDateUtc: '2026-04-01T10:30:00.000Z',
       endDateUtc: '2026-04-02T18:45:00.000Z'
@@ -58,6 +69,9 @@ describe('EditEventModalComponent', () => {
     expect(component.saved.emit).toHaveBeenCalledWith(jasmine.objectContaining({
       id: 'event-1',
       eventName: 'Spring Refresh',
+      imageURL: 'dukanz/events/spring-launch.png',
+      imageFile: null,
+      clearImage: false,
       lifecycleStatus: 'draft'
     }));
   });

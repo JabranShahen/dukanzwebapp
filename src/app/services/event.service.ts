@@ -94,6 +94,7 @@ export class EventService {
     const requestPayload: Record<string, unknown> = {
       eventName: (payload.eventName || '').trim(),
       eventDescription: (payload.eventDescription || '').trim(),
+      imageURL: (payload.imageURL || '').trim(),
       lifecycleStatus: this.normalizeLifecycleStatus(payload.lifecycleStatus),
       startDateUtc: this.normalizeDate(payload.startDateUtc),
       endDateUtc: this.normalizeDate(payload.endDateUtc)
@@ -118,6 +119,7 @@ export class EventService {
       partitionKey: partitionKey || undefined,
       eventName: (eventRecord.eventName || '').trim(),
       eventDescription: (eventRecord.eventDescription || '').trim(),
+      imageURL: (eventRecord.imageURL || '').trim(),
       lifecycleStatus: this.normalizeLifecycleStatus(eventRecord.lifecycleStatus),
       startDateUtc: this.normalizeDate(eventRecord.startDateUtc),
       endDateUtc: this.normalizeDate(eventRecord.endDateUtc)

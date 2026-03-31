@@ -40,15 +40,22 @@
           [class.selection-card--selected]="eventRecord.id === selectedEvent?.id"
           (click)="selectEvent(eventRecord)"
         >
-          <div class="selection-card__top">
-            <span class="selection-card__title">{{ eventRecord.eventName }}</span>
-            <app-ui-status-pill
-              [label]="eventLifecycleLabel(eventRecord)"
-              [tone]="eventLifecycleTone(eventRecord)"
-            ></app-ui-status-pill>
+          <div class="selection-card__layout">
+            <div class="selection-card__media" *ngIf="eventImageUrl(eventRecord)">
+              <img class="selection-card__thumb" [src]="eventImageUrl(eventRecord)" [alt]="eventRecord.eventName" />
+            </div>
+            <div class="selection-card__content">
+              <div class="selection-card__top">
+                <span class="selection-card__title">{{ eventRecord.eventName }}</span>
+                <app-ui-status-pill
+                  [label]="eventLifecycleLabel(eventRecord)"
+                  [tone]="eventLifecycleTone(eventRecord)"
+                ></app-ui-status-pill>
+              </div>
+              <div class="selection-card__copy">{{ eventRecord.eventDescription || 'No event description set.' }}</div>
+              <div class="selection-card__copy selection-card__copy--tight">{{ eventScheduleSummary(eventRecord) }}</div>
+            </div>
           </div>
-          <div class="selection-card__copy">{{ eventRecord.eventDescription || 'No event description set.' }}</div>
-          <div class="selection-card__copy selection-card__copy--tight">{{ eventScheduleSummary(eventRecord) }}</div>
         </button>
       </div>
 
@@ -67,7 +74,7 @@
           <p>Assign categories.</p>
         </div>
         <div class="panel-actions">
-          <app-ui-button variant="secondary" [disabled]="!selectedEvent || categoryMutationPending" (clicked)="openAddCategoryModal()">
+          <app-ui-button variant="secondary" [disabled]="!selectedEvent || categoriesLoading || categoryMutationPending" (clicked)="openAddCategoryModal()">
             Assign category
           </app-ui-button>
           <app-ui-button variant="ghost" (clicked)="goToCategories()">Master categories</app-ui-button>
@@ -103,8 +110,15 @@
               [class.selection-card__select--selected]="assignment.id === selectedCategory?.id"
               (click)="selectCategory(assignment)"
             >
-              <span class="selection-card__title">{{ categoryName(assignment) }}</span>
-              <span class="selection-card__copy">{{ categoryDetail(assignment) }}</span>
+              <div class="selection-card__layout">
+                <div class="selection-card__media" *ngIf="categoryImageUrl(assignment)">
+                  <img class="selection-card__thumb" [src]="categoryImageUrl(assignment)" [alt]="categoryName(assignment)" />
+                </div>
+                <div class="selection-card__content">
+                  <span class="selection-card__title">{{ categoryName(assignment) }}</span>
+                  <span class="selection-card__copy">{{ categoryDetail(assignment) }}</span>
+                </div>
+              </div>
             </button>
             <button type="button" class="drag-handle" cdkDragHandle aria-label="Reorder category">::</button>
           </div>
@@ -145,7 +159,7 @@
         <div class="panel-actions">
           <app-ui-button
             variant="secondary"
-            [disabled]="!selectedCategory || productMutationPending"
+            [disabled]="!selectedCategory || productsLoading || productMutationPending"
             (clicked)="openAddProductModal()"
           >
             Assign product
@@ -183,9 +197,14 @@
       >
         <div class="selection-card selection-card--nested" *ngFor="let assignment of eventProducts; trackBy: trackById" cdkDrag>
           <div class="selection-card__top">
-            <div>
-              <div class="selection-card__title">{{ productName(assignment) }}</div>
-              <div class="selection-card__copy">{{ productDetail(assignment) }}</div>
+            <div class="selection-card__layout">
+              <div class="selection-card__media" *ngIf="productImageUrl(assignment)">
+                <img class="selection-card__thumb" [src]="productImageUrl(assignment)" [alt]="productName(assignment)" />
+              </div>
+              <div class="selection-card__content">
+                <div class="selection-card__title">{{ productName(assignment) }}</div>
+                <div class="selection-card__copy">{{ productDetail(assignment) }}</div>
+              </div>
             </div>
             <button type="button" class="drag-handle" cdkDragHandle aria-label="Reorder product">::</button>
           </div>

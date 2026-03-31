@@ -78,6 +78,20 @@ textarea {
   font-weight: 500;
 }
 
+.image-preview {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.image-preview img {
+  width: 8rem;
+  height: 8rem;
+  object-fit: cover;
+  border-radius: 1rem;
+  border: 1px solid var(--tone-border);
+  background: #eef2f1;
+}
+
 @media (max-width: 640px) {
   .field-grid {
     grid-template-columns: 1fr;

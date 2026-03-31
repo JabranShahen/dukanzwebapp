@@ -1,9 +1,10 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { convertToParamMap, ActivatedRoute, Router } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 
 import { EventCompositionComponent } from './event-composition.component';
+import { BlobStorageService } from '../services/blob-storage.service';
 import { EventCategoryService } from '../services/event-category.service';
 import { EventProductService } from '../services/event-product.service';
 import { EventService } from '../services/event.service';
@@ -29,6 +30,7 @@ describe('EventCompositionComponent', () => {
         id: 'event-category-1',
         eventId: 'event-1',
         productCategoryId: 'category-1',
+        overrideImageURL: '',
         visible: true,
         order: 0
       }
@@ -39,6 +41,11 @@ describe('EventCompositionComponent', () => {
         eventId: 'event-1',
         eventCategoryId: 'event-category-1',
         productId: 'product-1',
+        overrideImageURL: '',
+        orignalPrice: 6,
+        currentPrice: 5,
+        currentCost: 2,
+        unitName: 'cup',
         visible: true,
         order: 0
       }
@@ -61,11 +68,13 @@ describe('EventCompositionComponent', () => {
               {
                 id: 'event-1',
                 eventName: 'Event One',
+                imageURL: 'dukanz/events/event-one.png',
                 lifecycleStatus: 'draft'
               },
               {
                 id: 'event-2',
                 eventName: 'Event Two',
+                imageURL: '',
                 lifecycleStatus: 'scheduled'
               }
             ])
@@ -74,12 +83,20 @@ describe('EventCompositionComponent', () => {
         { provide: EventCategoryService, useValue: eventCategoryService },
         { provide: EventProductService, useValue: eventProductService },
         {
+          provide: BlobStorageService,
+          useValue: {
+            getDownloadUrl: () => of('https://img.test/resolved.png'),
+            uploadImage: () => of('dukanz/uploaded.png')
+          }
+        },
+        {
           provide: ProductCategoryService,
           useValue: {
             getAll: () => of([
               {
                 id: 'category-1',
                 productCategoryName: 'Coffee',
+                productCategoryImageURL: 'dukanz/categories/coffee.png',
                 visible: true,
                 order: 0
               }
@@ -98,6 +115,7 @@ describe('EventCompositionComponent', () => {
                 currentPrice: 5,
                 currentCost: 2,
                 unitName: 'cup',
+                imageURL: 'dukanz/products/latte.png',
                 visible: true,
                 productCategory: {
                   id: 'category-1',
@@ -155,6 +173,7 @@ describe('EventCompositionComponent', () => {
         id: 'event-category-1',
         eventId: 'event-1',
         productCategoryId: 'category-1',
+        overrideImageURL: '',
         visible: true,
         order: 0,
         masterCategory: {
@@ -168,6 +187,7 @@ describe('EventCompositionComponent', () => {
         id: 'event-category-2',
         eventId: 'event-1',
         productCategoryId: 'category-2',
+        overrideImageURL: '',
         visible: true,
         order: 1,
         masterCategory: {
@@ -194,6 +214,7 @@ describe('EventCompositionComponent', () => {
       id: 'event-category-2',
       eventId: 'event-1',
       productCategoryId: 'category-2',
+      overrideImageURL: '',
       visible: true,
       order: 1
     }));
@@ -202,12 +223,14 @@ describe('EventCompositionComponent', () => {
       {
         id: 'category-1',
         productCategoryName: 'Coffee',
+        productCategoryImageURL: 'dukanz/categories/coffee.png',
         visible: true,
         order: 0
       },
       {
         id: 'category-2',
         productCategoryName: 'Tea',
+        productCategoryImageURL: '',
         visible: true,
         order: 1
       }
@@ -217,6 +240,7 @@ describe('EventCompositionComponent', () => {
     component.categoryModalMode = 'add';
     component.onSaveCategoryAssignment({
       productCategoryId: 'category-2',
+      overrideImageURL: '',
       visible: true,
       order: 0
     });
@@ -224,6 +248,7 @@ describe('EventCompositionComponent', () => {
     expect(eventCategoryService.create).toHaveBeenCalledWith(jasmine.objectContaining({
       eventId: 'event-1',
       productCategoryId: 'category-2',
+      overrideImageURL: '',
       order: 1
     }));
     expect(component.eventCategories.map((assignment) => assignment.id)).toEqual(['event-category-1', 'event-category-2']);
@@ -236,6 +261,11 @@ describe('EventCompositionComponent', () => {
       eventId: 'event-1',
       eventCategoryId: 'event-category-1',
       productId: 'product-2',
+      overrideImageURL: '',
+      orignalPrice: 6,
+      currentPrice: 5.5,
+      currentCost: 2.4,
+      unitName: 'cup',
       visible: true,
       order: 1
     }));
@@ -249,6 +279,7 @@ describe('EventCompositionComponent', () => {
         currentPrice: 5,
         currentCost: 2,
         unitName: 'cup',
+        imageURL: 'dukanz/products/latte.png',
         visible: true,
         productCategory: {
           id: 'category-1',
@@ -265,6 +296,7 @@ describe('EventCompositionComponent', () => {
         currentPrice: 5.5,
         currentCost: 2.4,
         unitName: 'cup',
+        imageURL: '',
         visible: true,
         productCategory: {
           id: 'category-1',
@@ -279,6 +311,11 @@ describe('EventCompositionComponent', () => {
     component.productModalMode = 'add';
     component.onSaveProductAssignment({
       productId: 'product-2',
+      overrideImageURL: '',
+      orignalPrice: 6,
+      currentPrice: 5.5,
+      currentCost: 2.4,
+      unitName: 'cup',
       visible: true,
       order: 0
     });
@@ -287,9 +324,58 @@ describe('EventCompositionComponent', () => {
       eventId: 'event-1',
       eventCategoryId: 'event-category-1',
       productId: 'product-2',
+      overrideImageURL: '',
+      orignalPrice: 6,
+      currentPrice: 5.5,
+      currentCost: 2.4,
+      unitName: 'cup',
       order: 1
     }));
     expect(component.eventProducts.map((assignment) => assignment.id)).toEqual(['event-product-1', 'event-product-2']);
     expect(eventProductService.getByEventCategory.calls.count()).toBe(initialGetByEventCategoryCalls);
+  });
+
+  it('clears stale assigned categories when switching to another event before its categories finish loading', () => {
+    component.masterCategories = [
+      {
+        id: 'category-1',
+        productCategoryName: 'Coffee',
+        productCategoryImageURL: 'dukanz/categories/coffee.png',
+        visible: true,
+        order: 0
+      },
+      {
+        id: 'category-2',
+        productCategoryName: 'Tea',
+        productCategoryImageURL: '',
+        visible: true,
+        order: 1
+      }
+    ];
+    component['eventCategories'] = [
+      {
+        id: 'event-category-1',
+        eventId: 'event-1',
+        productCategoryId: 'category-1',
+        overrideImageURL: '',
+        visible: true,
+        order: 0,
+        masterCategory: {
+          id: 'category-1',
+          productCategoryName: 'Coffee',
+          visible: true,
+          order: 0
+        }
+      }
+    ];
+
+    const pendingCategories = new Subject<any[]>();
+    eventCategoryService.getByEvent.and.returnValue(pendingCategories.asObservable());
+
+    queryParamMap$.next(convertToParamMap({ event: 'event-2', category: null }));
+
+    expect(component.selectedEvent?.id).toBe('event-2');
+    expect(component.eventCategories).toEqual([]);
+    expect(component.availableCategories().map((category) => category.id)).toEqual(['category-1', 'category-2']);
   });
 });

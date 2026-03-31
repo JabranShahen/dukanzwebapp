@@ -9,7 +9,7 @@
     <div class="field-grid">
       <label class="field-span" *ngIf="mode === 'add'">
         Master category
-        <select formControlName="productCategoryId">
+        <select formControlName="productCategoryId" (change)="onCategorySelectionChange()">
           <option value="">Select a master category</option>
           <option *ngFor="let category of availableCategories" [value]="category.id">
             {{ category.productCategoryName }}{{ category.visible ? '' : ' (Retired)' }}
@@ -33,6 +33,27 @@
           <option [ngValue]="false">Hidden in this event</option>
         </select>
       </label>
+
+      <label class="field-span">
+        Override image
+        <input type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
+        <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
+        <span class="hint" *ngIf="!selectedImageFile && currentOverrideImagePath">Current override image stored.</span>
+        <span class="hint" *ngIf="!selectedImageFile && !currentOverrideImagePath">Leave empty to use the master category image.</span>
+        <span class="error" *ngIf="imageError">{{ imageError }}</span>
+      </label>
+
+      <label class="field-span check-row" *ngIf="currentOverrideImagePath">
+        <input type="checkbox" [checked]="removeCurrentImage" (change)="onRemoveCurrentImageChange($event)" [disabled]="pending" />
+        Remove current override image
+      </label>
+
+      <div class="field-span image-preview" *ngIf="previewImageUrl()">
+        <div>
+          <div class="hint">{{ previewLabel() }}</div>
+          <img [src]="previewImageUrl()" [alt]="categoryLabel() || 'Event category image preview'" />
+        </div>
+      </div>
     </div>
 
     <div class="actions">

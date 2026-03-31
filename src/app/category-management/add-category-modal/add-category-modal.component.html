@@ -12,8 +12,10 @@
     </label>
 
     <label>
-      Image URL
-      <input type="text" formControlName="productCategoryImageURL" placeholder="https://..." />
+      Category image
+      <input type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
+      <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
+      <span class="error" *ngIf="imageError">{{ imageError }}</span>
     </label>
 
     <label class="check-row">

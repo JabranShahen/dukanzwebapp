@@ -31,6 +31,8 @@ export interface ProductMutation {
   displayPercentage?: number;
   displayUnitName?: string;
   imageURL?: string;
+  imageFile?: File | null;
+  clearImage?: boolean;
   visible: boolean;
   productCategory?: ProductCategory | null;
   order?: number;

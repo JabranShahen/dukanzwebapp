@@ -50,9 +50,15 @@
       </label>
 
       <label class="field-span">
-        Image URL
-        <input type="text" formControlName="imageURL" placeholder="https://..." />
+        Product image
+        <input type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
+        <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
+        <span class="error" *ngIf="imageError">{{ imageError }}</span>
       </label>
+
+      <div class="field-span image-preview" *ngIf="selectedImagePreviewUrl">
+        <img [src]="selectedImagePreviewUrl" [alt]="productForm.controls.productName.value || 'Selected product image'" />
+      </div>
     </div>
 
     <div class="actions">

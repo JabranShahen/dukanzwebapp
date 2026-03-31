@@ -16,11 +16,14 @@ export class EditCategoryModalComponent implements OnChanges {
   @Output() saved = new EventEmitter<ProductCategoryMutation>();
 
   nameError = '';
+  imageError = '';
+  selectedImageFile: File | null = null;
+  removeCurrentImage = false;
+  currentImagePath = '';
   private currentName = '';
 
   readonly categoryForm = this.formBuilder.nonNullable.group({
     productCategoryName: ['', [Validators.required, Validators.maxLength(80)]],
-    productCategoryImageURL: ['', [Validators.maxLength(400)]],
     visible: [true]
   });
 
@@ -29,17 +32,43 @@ export class EditCategoryModalComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['category'] && this.category) {
       this.currentName = this.category.productCategoryName || '';
+      this.currentImagePath = this.category.productCategoryImageURL || '';
+      this.selectedImageFile = null;
+      this.removeCurrentImage = false;
       this.categoryForm.reset({
         productCategoryName: this.category.productCategoryName || '',
-        productCategoryImageURL: this.category.productCategoryImageURL || '',
         visible: !!this.category.visible
       });
       this.nameError = '';
+      this.imageError = '';
     }
   }
 
   onCancel(): void {
     this.cancelled.emit();
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] || null;
+    this.imageError = '';
+
+    if (!file) {
+      this.selectedImageFile = null;
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.selectedImageFile = null;
+      this.imageError = 'Select a valid image file.';
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    this.selectedImageFile = file;
+    this.removeCurrentImage = false;
   }
 
   onSubmit(): void {
@@ -48,6 +77,7 @@ export class EditCategoryModalComponent implements OnChanges {
     }
 
     this.nameError = '';
+    this.imageError = '';
     this.categoryForm.markAllAsTouched();
 
     if (this.categoryForm.invalid) {
@@ -75,7 +105,9 @@ export class EditCategoryModalComponent implements OnChanges {
     this.saved.emit({
       id: this.category.id,
       productCategoryName: value.productCategoryName.trim(),
-      productCategoryImageURL: value.productCategoryImageURL.trim(),
+      productCategoryImageURL: this.removeCurrentImage ? '' : this.currentImagePath,
+      imageFile: this.selectedImageFile,
+      clearImage: this.removeCurrentImage,
       visible: !!value.visible
     });
   }
