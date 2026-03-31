@@ -1,0 +1,51 @@
+<div class="modal-backdrop" role="presentation">
+  <form class="modal-card" [formGroup]="assignmentForm" (ngSubmit)="onSubmit()" novalidate>
+    <h3>{{ mode === 'add' ? 'Add event category' : 'Edit event category settings' }}</h3>
+    <p class="hint">
+      This screen configures event-specific category membership for {{ eventName || 'the selected event' }} only.
+      It does not edit the master category record.
+    </p>
+
+    <div class="field-grid">
+      <label class="field-span" *ngIf="mode === 'add'">
+        Master category
+        <select formControlName="productCategoryId">
+          <option value="">Select a master category</option>
+          <option *ngFor="let category of availableCategories" [value]="category.id">
+            {{ category.productCategoryName }}{{ category.visible ? '' : ' (Retired)' }}
+          </option>
+        </select>
+        <span class="error" *ngIf="assignmentForm.controls.productCategoryId.touched && assignmentForm.controls.productCategoryId.invalid">
+          Master category selection is required.
+        </span>
+        <span class="error" *ngIf="categoryError">{{ categoryError }}</span>
+      </label>
+
+      <label class="field-span" *ngIf="mode === 'edit'">
+        Master category
+        <input type="text" [value]="categoryLabel()" readonly />
+      </label>
+
+      <label>
+        Event visibility
+        <select formControlName="visible">
+          <option [ngValue]="true">Visible in this event</option>
+          <option [ngValue]="false">Hidden in this event</option>
+        </select>
+      </label>
+
+      <label>
+        Event order
+        <input type="number" min="0" step="1" formControlName="order" />
+        <span class="error" *ngIf="orderError">{{ orderError }}</span>
+      </label>
+    </div>
+
+    <div class="actions">
+      <app-ui-button variant="ghost" (clicked)="onCancel()">Cancel</app-ui-button>
+      <app-ui-button buttonType="submit" [disabled]="pending">
+        {{ mode === 'add' ? 'Save assignment' : 'Save changes' }}
+      </app-ui-button>
+    </div>
+  </form>
+</div>

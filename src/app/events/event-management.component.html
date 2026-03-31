@@ -1,0 +1,88 @@
+<div class="page">
+  <app-management-header
+    eyebrow="Event Planning"
+    title="Events"
+    subtext="Create and maintain event containers with lifecycle state before categories, products, merchandising, and launch rules arrive in later stories."
+    ctaLabel="Create event"
+    (ctaClick)="openAddModal()"
+  ></app-management-header>
+
+  <app-management-panel>
+    <div class="panel-actions">
+      <app-ui-button variant="secondary" (clicked)="reload()">Refresh</app-ui-button>
+      <span class="count" *ngIf="!loading">{{ eventCountLabel() }}</span>
+    </div>
+
+    <div *ngIf="feedbackMessage" class="feedback" [class.feedback--error]="feedbackTone === 'error'">
+      {{ feedbackMessage }}
+    </div>
+
+    <div *ngIf="error" class="error">{{ error }}</div>
+
+    <div class="table-wrap" *ngIf="!loading && !error && events.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Schedule</th>
+            <th>Lifecycle</th>
+            <th>Scope</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let eventRecord of events; trackBy: trackById">
+            <td>
+              <div class="cell-title">{{ eventRecord.eventName }}</div>
+              <div class="cell-copy">{{ eventRecord.eventDescription || 'No event description set.' }}</div>
+            </td>
+            <td>
+              <div class="cell-title">{{ scheduleSummary(eventRecord) }}</div>
+              <div class="cell-copy">All dates are stored as UTC-capable metadata.</div>
+            </td>
+            <td>
+              <app-ui-status-pill
+                [label]="lifecycleLabel(eventRecord)"
+                [tone]="lifecycleTone(eventRecord)"
+              ></app-ui-status-pill>
+            </td>
+            <td>
+              <div class="cell-copy cell-copy--tight">{{ scopeSummary(eventRecord) }}</div>
+            </td>
+            <td>
+              <div class="actions">
+                <app-ui-button variant="secondary" [disabled]="mutationPending" (clicked)="openCategoryManagement(eventRecord)">
+                  Categories
+                </app-ui-button>
+                <app-ui-button variant="ghost" [disabled]="mutationPending" (clicked)="openEditModal(eventRecord)">Edit</app-ui-button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-ui-empty-state
+      *ngIf="!loading && !error && events.length === 0"
+      title="No events yet"
+      body="Create the first event container to prepare metadata and lifecycle state before merchandising and launch rules are added."
+    ></app-ui-empty-state>
+
+    <div class="loading" *ngIf="loading">Loading event containers...</div>
+  </app-management-panel>
+
+  <app-add-event-modal
+    *ngIf="addModalOpen"
+    [pending]="mutationPending"
+    (cancelled)="closeAddModal()"
+    (saved)="onAddEvent($event)"
+  ></app-add-event-modal>
+
+  <app-edit-event-modal
+    *ngIf="editModalOpen && selectedEvent"
+    [eventRecord]="selectedEvent"
+    [pending]="mutationPending"
+    (cancelled)="closeEditModal()"
+    (saved)="onEditEvent($event)"
+  ></app-edit-event-modal>
+</div>

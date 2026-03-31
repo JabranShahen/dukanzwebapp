@@ -19,6 +19,7 @@ export class DashboardComponent {
   readonly navItems: NavItem[] = [
     { key: 'overview', label: 'Overview', route: '/dashboard' },
     { key: 'categories', label: 'Categories', route: '/dashboard/categories' },
+    { key: 'events', label: 'Events', route: '/dashboard/events' },
     { key: 'products', label: 'Products', route: '/dashboard/products' },
     { key: 'account', label: 'Account', route: '/dashboard/account' },
     { key: 'settings', label: 'Settings', route: '/dashboard/settings' }

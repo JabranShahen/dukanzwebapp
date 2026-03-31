@@ -1,0 +1,48 @@
+<div class="modal-backdrop" role="presentation">
+  <form class="modal-card" [formGroup]="eventForm" (ngSubmit)="onSubmit()" novalidate>
+    <h3>Create event container</h3>
+    <p class="hint">This story manages event metadata and lifecycle only. Category and product composition land in the next stories.</p>
+
+    <div class="field-grid">
+      <label class="field-span">
+        Event name
+        <input type="text" formControlName="eventName" placeholder="Spring Launch" />
+        <span class="error" *ngIf="eventForm.controls.eventName.touched && eventForm.controls.eventName.invalid">
+          Name is required.
+        </span>
+        <span class="error" *ngIf="nameError">{{ nameError }}</span>
+      </label>
+
+      <label class="field-span">
+        Description
+        <textarea rows="3" formControlName="eventDescription" placeholder="Optional planning notes for administrators"></textarea>
+      </label>
+
+      <label>
+        Lifecycle
+        <select formControlName="lifecycleStatus">
+          <option *ngFor="let option of lifecycleOptions" [value]="option">
+            {{ option | titlecase }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Start date
+        <input type="datetime-local" formControlName="startDateUtc" />
+      </label>
+
+      <label>
+        End date
+        <input type="datetime-local" formControlName="endDateUtc" />
+      </label>
+    </div>
+
+    <span class="error" *ngIf="dateRangeError">{{ dateRangeError }}</span>
+
+    <div class="actions">
+      <app-ui-button variant="ghost" (clicked)="onCancel()">Cancel</app-ui-button>
+      <app-ui-button buttonType="submit" [disabled]="pending">Save event</app-ui-button>
+    </div>
+  </form>
+</div>
