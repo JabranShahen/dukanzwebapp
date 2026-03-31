@@ -40,15 +40,20 @@ const routes: Routes = [
       },
       {
         path: 'event-composition',
+        redirectTo: 'events',
+        pathMatch: 'full'
+      },
+      {
+        path: 'events/manage',
+        component: EventManagementComponent
+      },
+      {
+        path: 'events',
         component: EventCompositionComponent
       },
       {
         path: 'events/:eventId/categories',
         component: EventCategoryManagementComponent
-      },
-      {
-        path: 'events',
-        component: EventManagementComponent
       },
       {
         path: 'products',

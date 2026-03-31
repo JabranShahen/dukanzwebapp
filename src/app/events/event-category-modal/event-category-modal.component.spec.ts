@@ -34,26 +34,12 @@ describe('EventCategoryModalComponent', () => {
     component.existingProductCategoryIds = ['category-1'];
     component.assignmentForm.setValue({
       productCategoryId: 'category-1',
-      visible: true,
-      order: 0
+      visible: true
     });
 
     component.onSubmit();
 
     expect(component.categoryError).toBe('This master category is already assigned to the selected event.');
-  });
-
-  it('rejects negative order values', () => {
-    component.mode = 'add';
-    component.assignmentForm.setValue({
-      productCategoryId: 'category-1',
-      visible: true,
-      order: -1
-    });
-
-    component.onSubmit();
-
-    expect(component.orderError).toBe('Order must be zero or greater.');
   });
 
   it('emits normalized assignment data for valid edits', () => {
@@ -71,8 +57,7 @@ describe('EventCategoryModalComponent', () => {
       mode: new SimpleChange('add', 'edit', false)
     });
     component.assignmentForm.patchValue({
-      visible: true,
-      order: 7
+      visible: true
     });
 
     component.onSubmit();
@@ -81,7 +66,7 @@ describe('EventCategoryModalComponent', () => {
       id: 'assignment-1',
       productCategoryId: 'category-1',
       visible: true,
-      order: 7
+      order: 4
     });
   });
 
@@ -96,8 +81,7 @@ describe('EventCategoryModalComponent', () => {
     });
     component.assignmentForm.patchValue({
       productCategoryId: 'category-1',
-      visible: true,
-      order: 2
+      visible: true
     });
 
     component.availableCategories = [
@@ -127,6 +111,6 @@ describe('EventCategoryModalComponent', () => {
     });
 
     expect(component.assignmentForm.getRawValue().productCategoryId).toBe('category-1');
-    expect(component.assignmentForm.getRawValue().order).toBe(2);
+    expect(component.assignmentForm.getRawValue().visible).toBeTrue();
   });
 });

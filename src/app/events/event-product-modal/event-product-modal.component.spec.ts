@@ -64,8 +64,7 @@ describe('EventProductModalComponent', () => {
     });
     component.assignmentForm.patchValue({
       productId: 'product-1',
-      visible: true,
-      order: 0
+      visible: true
     });
 
     component.onSubmit();
@@ -85,8 +84,7 @@ describe('EventProductModalComponent', () => {
     });
     component.assignmentForm.patchValue({
       productId: '  product-2  ',
-      visible: false,
-      order: 4
+      visible: false
     });
 
     component.onSubmit();
@@ -94,7 +92,7 @@ describe('EventProductModalComponent', () => {
     expect(component.saved.emit).toHaveBeenCalledWith({
       productId: 'product-2',
       visible: false,
-      order: 4
+      order: 0
     });
   });
 
@@ -109,8 +107,7 @@ describe('EventProductModalComponent', () => {
     });
     component.assignmentForm.patchValue({
       productId: 'product-1',
-      visible: true,
-      order: 2
+      visible: true
     });
 
     component.availableProducts = [
@@ -164,6 +161,6 @@ describe('EventProductModalComponent', () => {
     });
 
     expect(component.assignmentForm.getRawValue().productId).toBe('product-1');
-    expect(component.assignmentForm.getRawValue().order).toBe(2);
+    expect(component.assignmentForm.getRawValue().visible).toBeTrue();
   });
 });

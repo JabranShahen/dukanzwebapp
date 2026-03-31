@@ -63,7 +63,7 @@ export class EventManagementComponent implements OnInit {
   }
 
   openCategoryManagement(eventRecord: EventRecord): void {
-    this.router.navigate(['/dashboard/event-composition'], {
+    this.router.navigate(['/dashboard/events'], {
       queryParams: {
         event: eventRecord.id
       }

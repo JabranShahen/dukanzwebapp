@@ -1,8 +1,8 @@
 <div class="page">
   <app-management-header
-    eyebrow="Event Composition"
-    title="Compose Event Categories and Products"
-    subtext="Work left to right: select an event, then its event-specific categories, then the products inside the selected category. Master category and product records remain on their catalog screens."
+    eyebrow="Events"
+    title="Compose"
+    subtext="Select an event, categories, and products."
   ></app-management-header>
 
   <div *ngIf="feedbackMessage" class="feedback" [class.feedback--error]="feedbackTone === 'error'">
@@ -17,11 +17,14 @@
         <div>
           <div class="step-label">Step 1</div>
           <h3>Events</h3>
-          <p>Select the event context for composition.</p>
+          <p>Choose an event.</p>
         </div>
         <div class="panel-actions">
+          <app-ui-button variant="secondary" [disabled]="eventMutationPending" (clicked)="openAddEventModal()">
+            Create event
+          </app-ui-button>
           <app-ui-button variant="secondary" (clicked)="reload()">Refresh</app-ui-button>
-          <app-ui-button variant="ghost" (clicked)="goToEvents()">Event CRUD</app-ui-button>
+          <app-ui-button variant="ghost" (clicked)="goToEvents()">Event list</app-ui-button>
         </div>
       </div>
 
@@ -61,7 +64,7 @@
         <div>
           <div class="step-label">Step 2</div>
           <h3>Event Categories</h3>
-          <p>Manage category membership, visibility, and ordering for the selected event.</p>
+          <p>Assign categories.</p>
         </div>
         <div class="panel-actions">
           <app-ui-button variant="secondary" [disabled]="!selectedEvent || categoryMutationPending" (clicked)="openAddCategoryModal()">
@@ -80,8 +83,8 @@
 
       <app-ui-empty-state
         *ngIf="!selectedEvent && !rootLoading"
-        title="Select an event first"
-        body="Choose an event in the first panel to load its event-specific category assignments."
+        title="Select an event"
+        body="Choose an event to view categories."
       ></app-ui-empty-state>
 
       <div class="panel-loading" *ngIf="selectedEvent && categoriesLoading">Loading event categories...</div>
@@ -128,7 +131,7 @@
       <app-ui-empty-state
         *ngIf="selectedEvent && !categoriesLoading && eventCategories.length === 0"
         title="No categories assigned"
-        body="Assign a master category to this event to begin the event-specific merchandising structure."
+        body="Add a category to begin."
       ></app-ui-empty-state>
     </app-management-panel>
 
@@ -137,7 +140,7 @@
         <div>
           <div class="step-label">Step 3</div>
           <h3>Event Products</h3>
-          <p>Manage products inside the selected event category without changing master product metadata.</p>
+          <p>Assign products.</p>
         </div>
         <div class="panel-actions">
           <app-ui-button
@@ -160,14 +163,14 @@
 
       <app-ui-empty-state
         *ngIf="!selectedEvent && !rootLoading"
-        title="Select an event first"
-        body="Choose an event before product assignments can load."
+        title="Select an event"
+        body="Choose an event to view products."
       ></app-ui-empty-state>
 
       <app-ui-empty-state
         *ngIf="selectedEvent && !selectedCategory && !categoriesLoading"
-        title="Select an event category"
-        body="Choose one assigned event category to view and manage its event-specific products."
+        title="Select a category"
+        body="Choose a category to view products."
       ></app-ui-empty-state>
 
       <div class="panel-loading" *ngIf="selectedCategory && productsLoading">Loading event products...</div>
@@ -209,7 +212,7 @@
       <app-ui-empty-state
         *ngIf="selectedCategory && !productsLoading && eventProducts.length === 0"
         title="No products assigned"
-        body="Assign master products into this event category to complete the event composition flow."
+        body="Add a product to begin."
       ></app-ui-empty-state>
     </app-management-panel>
   </div>
@@ -225,6 +228,13 @@
     (cancelled)="closeCategoryModal()"
     (saved)="onSaveCategoryAssignment($event)"
   ></app-event-category-modal>
+
+  <app-add-event-modal
+    *ngIf="addEventModalOpen"
+    [pending]="eventMutationPending"
+    (cancelled)="closeAddEventModal()"
+    (saved)="onAddEvent($event)"
+  ></app-add-event-modal>
 
   <app-event-product-modal
     *ngIf="productModalOpen"

@@ -5,7 +5,7 @@ import { forkJoin, Subscription } from 'rxjs';
 
 import { EventCategoryMutation, EventCategoryRecord } from '../models/event-category.model';
 import { EventProductMutation, EventProductRecord } from '../models/event-product.model';
-import { EventRecord } from '../models/event.model';
+import { EventMutation, EventRecord } from '../models/event.model';
 import { ProductCategory } from '../models/product-category.model';
 import { Product } from '../models/product.model';
 import { EventCategoryService } from '../services/event-category.service';
@@ -38,6 +38,8 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
   productMutationPending = false;
   feedbackMessage = '';
   feedbackTone: 'success' | 'error' = 'success';
+  eventMutationPending = false;
+  addEventModalOpen = false;
 
   categoryModalOpen = false;
   categoryModalMode: 'add' | 'edit' = 'add';
@@ -122,7 +124,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
   }
 
   goToEvents(): void {
-    this.router.navigate(['/dashboard/events']);
+    this.router.navigate(['/dashboard/events/manage']);
   }
 
   goToCategories(): void {
@@ -131,6 +133,33 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
   goToProducts(): void {
     this.router.navigate(['/dashboard/products']);
+  }
+
+  openAddEventModal(): void {
+    this.addEventModalOpen = true;
+    this.setFeedback('', undefined);
+  }
+
+  closeAddEventModal(): void {
+    if (!this.eventMutationPending) {
+      this.addEventModalOpen = false;
+    }
+  }
+
+  onAddEvent(payload: EventMutation): void {
+    this.eventMutationPending = true;
+    this.eventService.create(payload).subscribe({
+      next: (createdEvent) => {
+        this.eventMutationPending = false;
+        this.addEventModalOpen = false;
+        this.setFeedback('Event container created.', 'success');
+        this.reloadAfterEventMutation(createdEvent?.id || '');
+      },
+      error: () => {
+        this.eventMutationPending = false;
+        this.setFeedback('Failed to create event container.', 'error');
+      }
+    });
   }
 
   selectEvent(eventRecord: EventRecord): void {
@@ -181,6 +210,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const assignmentOrder =
+      this.categoryModalMode === 'edit' && this.selectedCategoryAssignment
+        ? this.selectedCategoryAssignment.order
+        : this.nextCategoryOrder();
+
     this.categoryMutationPending = true;
     const request = this.categoryModalMode === 'edit' && this.selectedCategoryAssignment
       ? this.eventCategoryService.update({
@@ -188,18 +222,19 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
           eventId: this.selectedEvent.id,
           productCategoryId: this.selectedCategoryAssignment.productCategoryId,
           visible: payload.visible,
-          order: payload.order
+          order: assignmentOrder
         })
       : this.eventCategoryService.create({
           eventId: this.selectedEvent.id,
           productCategoryId: payload.productCategoryId,
           visible: payload.visible,
-          order: payload.order
+          order: assignmentOrder
         });
 
     request.subscribe({
-      next: () => {
+      next: (savedAssignment) => {
         const mode = this.categoryModalMode;
+        const savedDisplayRecord = this.upsertEventCategory(savedAssignment);
         this.categoryMutationPending = false;
         this.categoryModalOpen = false;
         this.selectedCategoryAssignment = null;
@@ -207,7 +242,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
           mode === 'edit' ? 'Event-category settings updated.' : 'Master category assigned to the selected event.',
           'success'
         );
-        this.loadEventCategories(this.selectedEvent!.id);
+        if (mode === 'add' && !this.selectedCategory) {
+          this.selectedCategory = savedDisplayRecord;
+          this.eventProducts = [];
+          this.syncQueryState(this.selectedEvent!.id, savedDisplayRecord.id, true);
+        }
       },
       error: () => {
         const mode = this.categoryModalMode;
@@ -258,12 +297,12 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         }
 
         this.setFeedback('Category removed from the selected event.', 'success');
+        this.removeEventCategory(deletedCategoryId);
         if (this.selectedCategory?.id === deletedCategoryId) {
+          this.clearCategorySelection();
           this.syncQueryState(this.selectedEvent.id, '');
           return;
         }
-
-        this.loadEventCategories(this.selectedEvent.id);
       },
       error: () => {
         this.categoryMutationPending = false;
@@ -309,6 +348,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const assignmentOrder =
+      this.productModalMode === 'edit' && this.selectedProductAssignment
+        ? this.selectedProductAssignment.order
+        : this.nextProductOrder();
+
     this.productMutationPending = true;
     const request = this.productModalMode === 'edit' && this.selectedProductAssignment
       ? this.eventProductService.update({
@@ -317,19 +361,20 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
           eventCategoryId: this.selectedCategory.id,
           productId: this.selectedProductAssignment.productId,
           visible: payload.visible,
-          order: payload.order
+          order: assignmentOrder
         })
       : this.eventProductService.create({
           eventId: this.selectedEvent.id,
           eventCategoryId: this.selectedCategory.id,
           productId: payload.productId,
           visible: payload.visible,
-          order: payload.order
+          order: assignmentOrder
         });
 
     request.subscribe({
-      next: () => {
+      next: (savedAssignment) => {
         const mode = this.productModalMode;
+        this.upsertEventProduct(savedAssignment);
         this.productMutationPending = false;
         this.productModalOpen = false;
         this.selectedProductAssignment = null;
@@ -337,7 +382,6 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
           mode === 'edit' ? 'Event-product settings updated.' : 'Master product assigned to the selected event category.',
           'success'
         );
-        this.loadEventProducts(this.selectedCategory!);
       },
       error: () => {
         const mode = this.productModalMode;
@@ -375,6 +419,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     }
 
     this.productMutationPending = true;
+    const deletedProductId = this.pendingDeleteProduct.id;
     this.eventProductService.delete(this.pendingDeleteProduct.id).subscribe({
       next: (deleted) => {
         this.productMutationPending = false;
@@ -387,7 +432,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         }
 
         this.setFeedback('Product removed from the selected event category.', 'success');
-        this.loadEventProducts(this.selectedCategory!);
+        this.removeEventProduct(deletedProductId);
       },
       error: () => {
         this.productMutationPending = false;
@@ -832,6 +877,64 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     this.eventProducts = [];
     this.productsLoading = false;
     this.productsError = '';
+  }
+
+  private nextCategoryOrder(): number {
+    if (this.eventCategories.length === 0) {
+      return 0;
+    }
+
+    return Math.max(...this.eventCategories.map((assignment) => this.normalizeOrder(assignment.order))) + 1;
+  }
+
+  private nextProductOrder(): number {
+    if (this.eventProducts.length === 0) {
+      return 0;
+    }
+
+    return Math.max(...this.eventProducts.map((assignment) => this.normalizeOrder(assignment.order))) + 1;
+  }
+
+  private upsertEventCategory(savedAssignment: EventCategoryRecord): EventCategoryDisplayRecord {
+    this.eventCategories = this.buildAssignedCategories(
+      [...this.eventCategories.filter((assignment) => assignment.id !== savedAssignment.id), savedAssignment],
+      this.masterCategories
+    );
+
+    if (this.selectedCategory?.id === savedAssignment.id) {
+      this.selectedCategory = this.eventCategories.find((assignment) => assignment.id === savedAssignment.id) || null;
+    }
+
+    return this.eventCategories.find((assignment) => assignment.id === savedAssignment.id)!;
+  }
+
+  private removeEventCategory(eventCategoryId: string): void {
+    this.eventCategories = this.eventCategories.filter((assignment) => assignment.id !== eventCategoryId);
+  }
+
+  private upsertEventProduct(savedAssignment: EventProductRecord): EventProductDisplayRecord {
+    this.eventProducts = this.buildAssignedProducts(
+      [...this.eventProducts.filter((assignment) => assignment.id !== savedAssignment.id), savedAssignment],
+      this.masterProducts
+    );
+
+    return this.eventProducts.find((assignment) => assignment.id === savedAssignment.id)!;
+  }
+
+  private removeEventProduct(eventProductId: string): void {
+    this.eventProducts = this.eventProducts.filter((assignment) => assignment.id !== eventProductId);
+  }
+
+  private reloadAfterEventMutation(preferredEventId: string): void {
+    if (preferredEventId) {
+      this.requestedEventId = preferredEventId;
+      this.requestedCategoryId = '';
+      this.syncQueryState(preferredEventId, '', true);
+      this.reload();
+      return;
+    }
+
+    this.reload();
   }
 
   private compareEvents(left: EventRecord, right: EventRecord): number {

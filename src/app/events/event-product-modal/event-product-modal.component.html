@@ -33,12 +33,6 @@
           <option [ngValue]="false">Hidden in this category</option>
         </select>
       </label>
-
-      <label>
-        Event order
-        <input type="number" min="0" step="1" formControlName="order" />
-        <span class="error" *ngIf="orderError">{{ orderError }}</span>
-      </label>
     </div>
 
     <div class="actions">

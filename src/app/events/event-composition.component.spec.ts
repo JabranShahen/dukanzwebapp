@@ -188,4 +188,108 @@ describe('EventCompositionComponent', () => {
     expect(eventCategoryService.update.calls.argsFor(0)[0].order).toBe(0);
     expect(eventCategoryService.update.calls.argsFor(1)[0].order).toBe(1);
   });
+
+  it('adds a saved category locally without reloading the category list', () => {
+    eventCategoryService.create.and.returnValue(of({
+      id: 'event-category-2',
+      eventId: 'event-1',
+      productCategoryId: 'category-2',
+      visible: true,
+      order: 1
+    }));
+
+    component.masterCategories = [
+      {
+        id: 'category-1',
+        productCategoryName: 'Coffee',
+        visible: true,
+        order: 0
+      },
+      {
+        id: 'category-2',
+        productCategoryName: 'Tea',
+        visible: true,
+        order: 1
+      }
+    ];
+
+    const initialGetByEventCalls = eventCategoryService.getByEvent.calls.count();
+    component.categoryModalMode = 'add';
+    component.onSaveCategoryAssignment({
+      productCategoryId: 'category-2',
+      visible: true,
+      order: 0
+    });
+
+    expect(eventCategoryService.create).toHaveBeenCalledWith(jasmine.objectContaining({
+      eventId: 'event-1',
+      productCategoryId: 'category-2',
+      order: 1
+    }));
+    expect(component.eventCategories.map((assignment) => assignment.id)).toEqual(['event-category-1', 'event-category-2']);
+    expect(eventCategoryService.getByEvent.calls.count()).toBe(initialGetByEventCalls);
+  });
+
+  it('adds a saved product locally without reloading the product list', () => {
+    eventProductService.create.and.returnValue(of({
+      id: 'event-product-2',
+      eventId: 'event-1',
+      eventCategoryId: 'event-category-1',
+      productId: 'product-2',
+      visible: true,
+      order: 1
+    }));
+
+    component.masterProducts = [
+      {
+        id: 'product-1',
+        productName: 'Latte',
+        productDescription: 'Milk coffee',
+        orignalPrice: 6,
+        currentPrice: 5,
+        currentCost: 2,
+        unitName: 'cup',
+        visible: true,
+        productCategory: {
+          id: 'category-1',
+          productCategoryName: 'Coffee',
+          visible: true,
+          order: 0
+        }
+      },
+      {
+        id: 'product-2',
+        productName: 'Flat White',
+        productDescription: 'Velvety coffee',
+        orignalPrice: 6,
+        currentPrice: 5.5,
+        currentCost: 2.4,
+        unitName: 'cup',
+        visible: true,
+        productCategory: {
+          id: 'category-1',
+          productCategoryName: 'Coffee',
+          visible: true,
+          order: 0
+        }
+      }
+    ];
+
+    const initialGetByEventCategoryCalls = eventProductService.getByEventCategory.calls.count();
+    component.productModalMode = 'add';
+    component.onSaveProductAssignment({
+      productId: 'product-2',
+      visible: true,
+      order: 0
+    });
+
+    expect(eventProductService.create).toHaveBeenCalledWith(jasmine.objectContaining({
+      eventId: 'event-1',
+      eventCategoryId: 'event-category-1',
+      productId: 'product-2',
+      order: 1
+    }));
+    expect(component.eventProducts.map((assignment) => assignment.id)).toEqual(['event-product-1', 'event-product-2']);
+    expect(eventProductService.getByEventCategory.calls.count()).toBe(initialGetByEventCategoryCalls);
+  });
 });

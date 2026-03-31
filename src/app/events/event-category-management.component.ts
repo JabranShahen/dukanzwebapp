@@ -15,7 +15,7 @@ export class EventCategoryManagementComponent implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
       const eventId = (params.get('eventId') || '').trim();
-      this.router.navigate(['/dashboard/event-composition'], {
+      this.router.navigate(['/dashboard/events'], {
         queryParams: {
           event: eventId || null
         },
