@@ -1,0 +1,51 @@
+<div class="modal-backdrop" role="presentation">
+  <form class="modal-card" [formGroup]="assignmentForm" (ngSubmit)="onSubmit()" novalidate>
+    <h3>{{ mode === 'add' ? 'Add event product' : 'Edit event product settings' }}</h3>
+    <p class="hint">
+      This configures event-specific product membership for {{ categoryName || 'the selected category' }} in {{ eventName || 'the selected event' }} only.
+      It does not edit the master product record.
+    </p>
+
+    <div class="field-grid">
+      <label class="field-span" *ngIf="mode === 'add'">
+        Master product
+        <select formControlName="productId">
+          <option value="">Select a master product</option>
+          <option *ngFor="let product of availableProducts" [value]="product.id">
+            {{ product.productName }}{{ product.visible ? '' : ' (Retired)' }}
+          </option>
+        </select>
+        <span class="error" *ngIf="assignmentForm.controls.productId.touched && assignmentForm.controls.productId.invalid">
+          Master product selection is required.
+        </span>
+        <span class="error" *ngIf="productError">{{ productError }}</span>
+      </label>
+
+      <label class="field-span" *ngIf="mode === 'edit'">
+        Master product
+        <input type="text" [value]="productLabel()" readonly />
+      </label>
+
+      <label>
+        Event visibility
+        <select formControlName="visible">
+          <option [ngValue]="true">Visible in this category</option>
+          <option [ngValue]="false">Hidden in this category</option>
+        </select>
+      </label>
+
+      <label>
+        Event order
+        <input type="number" min="0" step="1" formControlName="order" />
+        <span class="error" *ngIf="orderError">{{ orderError }}</span>
+      </label>
+    </div>
+
+    <div class="actions">
+      <app-ui-button variant="ghost" (clicked)="onCancel()">Cancel</app-ui-button>
+      <app-ui-button buttonType="submit" [disabled]="pending">
+        {{ mode === 'add' ? 'Save assignment' : 'Save changes' }}
+      </app-ui-button>
+    </div>
+  </form>
+</div>

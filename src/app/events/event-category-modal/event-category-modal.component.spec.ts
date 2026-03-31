@@ -84,4 +84,49 @@ describe('EventCategoryModalComponent', () => {
       order: 7
     });
   });
+
+  it('keeps the selected master category when available categories input changes', () => {
+    component.mode = 'add';
+    component.assignment = null;
+    component.ngOnChanges({
+      mode: new SimpleChange('edit', 'add', false),
+      assignment: new SimpleChange({
+        id: 'assignment-1'
+      }, null, false)
+    });
+    component.assignmentForm.patchValue({
+      productCategoryId: 'category-1',
+      visible: true,
+      order: 2
+    });
+
+    component.availableCategories = [
+      ...component.availableCategories,
+      {
+        id: 'category-2',
+        productCategoryName: 'Tea',
+        productCategoryImageURL: '',
+        visible: true,
+        order: 1
+      }
+    ];
+    component.ngOnChanges({
+      availableCategories: new SimpleChange(
+        [
+          {
+            id: 'category-1',
+            productCategoryName: 'Coffee',
+            productCategoryImageURL: '',
+            visible: true,
+            order: 0
+          }
+        ],
+        component.availableCategories,
+        false
+      )
+    });
+
+    expect(component.assignmentForm.getRawValue().productCategoryId).toBe('category-1');
+    expect(component.assignmentForm.getRawValue().order).toBe(2);
+  });
 });

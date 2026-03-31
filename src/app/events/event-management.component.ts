@@ -63,7 +63,11 @@ export class EventManagementComponent implements OnInit {
   }
 
   openCategoryManagement(eventRecord: EventRecord): void {
-    this.router.navigate(['/dashboard/events', eventRecord.id, 'categories']);
+    this.router.navigate(['/dashboard/event-composition'], {
+      queryParams: {
+        event: eventRecord.id
+      }
+    });
   }
 
   closeEditModal(): void {
@@ -149,7 +153,7 @@ export class EventManagementComponent implements OnInit {
       return 'Display only. Launch and close behavior land in Story 2.5.';
     }
 
-    return 'Metadata, lifecycle, and category composition are available. Product composition lands in Story 2.3.';
+    return 'Metadata stays here. Category and product composition now live in the dedicated event-composition flow.';
   }
 
   trackById(_index: number, item: EventRecord): string {

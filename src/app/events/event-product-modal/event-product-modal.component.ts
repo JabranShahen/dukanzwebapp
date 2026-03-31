@@ -1,30 +1,31 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 
-import { EventCategoryMutation, EventCategoryRecord } from '../../models/event-category.model';
-import { ProductCategory } from '../../models/product-category.model';
+import { EventProductMutation, EventProductRecord } from '../../models/event-product.model';
+import { Product } from '../../models/product.model';
 
 @Component({
-  selector: 'app-event-category-modal',
-  templateUrl: './event-category-modal.component.html',
-  styleUrls: ['./event-category-modal.component.scss']
+  selector: 'app-event-product-modal',
+  templateUrl: './event-product-modal.component.html',
+  styleUrls: ['./event-product-modal.component.scss']
 })
-export class EventCategoryModalComponent implements OnChanges {
+export class EventProductModalComponent implements OnChanges {
   @Input() mode: 'add' | 'edit' = 'add';
   @Input() eventName = '';
-  @Input() assignment: EventCategoryRecord | null = null;
-  @Input() availableCategories: ProductCategory[] = [];
-  @Input() existingProductCategoryIds: string[] = [];
+  @Input() categoryName = '';
+  @Input() assignment: EventProductRecord | null = null;
+  @Input() availableProducts: Product[] = [];
+  @Input() existingProductIds: string[] = [];
   @Input() pending = false;
 
   @Output() cancelled = new EventEmitter<void>();
-  @Output() saved = new EventEmitter<EventCategoryMutation>();
+  @Output() saved = new EventEmitter<EventProductMutation>();
 
-  categoryError = '';
+  productError = '';
   orderError = '';
 
   readonly assignmentForm = this.formBuilder.nonNullable.group({
-    productCategoryId: ['', [Validators.required]],
+    productId: ['', [Validators.required]],
     visible: [true],
     order: [0, [Validators.required, Validators.min(0)]]
   });
@@ -35,19 +36,19 @@ export class EventCategoryModalComponent implements OnChanges {
     if (changes['mode'] || changes['assignment']) {
       if (this.mode === 'edit' && this.assignment) {
         this.assignmentForm.reset({
-          productCategoryId: this.assignment.productCategoryId || '',
+          productId: this.assignment.productId || '',
           visible: this.assignment.visible,
           order: this.assignment.order ?? 0
         });
       } else {
         this.assignmentForm.reset({
-          productCategoryId: '',
+          productId: '',
           visible: true,
           order: 0
         });
       }
 
-      this.categoryError = '';
+      this.productError = '';
       this.orderError = '';
     }
   }
@@ -57,7 +58,7 @@ export class EventCategoryModalComponent implements OnChanges {
   }
 
   onSubmit(): void {
-    this.categoryError = '';
+    this.productError = '';
     this.orderError = '';
     this.assignmentForm.markAllAsTouched();
 
@@ -70,19 +71,16 @@ export class EventCategoryModalComponent implements OnChanges {
     }
 
     const value = this.assignmentForm.getRawValue();
-    const productCategoryId = this.normalizeText(value.productCategoryId);
+    const productId = this.normalizeText(value.productId);
     const order = this.normalizeOrder(value.order);
 
-    if (!productCategoryId) {
-      this.categoryError = 'A master category selection is required.';
+    if (!productId) {
+      this.productError = 'A master product selection is required.';
       return;
     }
 
-    if (
-      this.mode === 'add' &&
-      this.existingProductCategoryIds.some((existingId) => existingId === productCategoryId.toLowerCase())
-    ) {
-      this.categoryError = 'This master category is already assigned to the selected event.';
+    if (this.mode === 'add' && this.existingProductIds.some((existingId) => existingId === productId.toLowerCase())) {
+      this.productError = 'This master product is already assigned to the selected event category.';
       return;
     }
 
@@ -93,19 +91,19 @@ export class EventCategoryModalComponent implements OnChanges {
 
     this.saved.emit({
       ...(this.assignment ? { id: this.assignment.id } : {}),
-      productCategoryId,
+      productId,
       visible: !!value.visible,
       order
     });
   }
 
-  categoryLabel(): string {
+  productLabel(): string {
     if (this.mode !== 'edit' || !this.assignment) {
       return '';
     }
 
-    const matchedCategory = this.availableCategories.find((category) => category.id === this.assignment?.productCategoryId);
-    return matchedCategory?.productCategoryName || this.assignment.productCategoryId;
+    const matchedProduct = this.availableProducts.find((product) => product.id === this.assignment?.productId);
+    return matchedProduct?.productName || this.assignment.productId;
   }
 
   private normalizeText(value: string): string {

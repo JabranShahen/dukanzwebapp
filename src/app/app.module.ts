@@ -12,8 +12,10 @@ import { CategoryManagementComponent } from './category-management/category-mana
 import { AddCategoryModalComponent } from './category-management/add-category-modal/add-category-modal.component';
 import { EditCategoryModalComponent } from './category-management/edit-category-modal/edit-category-modal.component';
 import { EventManagementComponent } from './events/event-management.component';
+import { EventCompositionComponent } from './events/event-composition.component';
 import { EventCategoryManagementComponent } from './events/event-category-management.component';
 import { EventCategoryModalComponent } from './events/event-category-modal/event-category-modal.component';
+import { EventProductModalComponent } from './events/event-product-modal/event-product-modal.component';
 import { ProductManagementComponent } from './products/product-management.component';
 import { AddProductModalComponent } from './products/add-product-modal/add-product-modal.component';
 import { EditProductModalComponent } from './products/edit-product-modal/edit-product-modal.component';
@@ -21,6 +23,7 @@ import { AddEventModalComponent } from './events/add-event-modal/add-event-modal
 import { EditEventModalComponent } from './events/edit-event-modal/edit-event-modal.component';
 import { SettingsComponent } from './settings/settings.component';
 import { AccountComponent } from './account/account.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ManagementHeaderComponent } from './shared/management-header/management-header.component';
 import { ManagementPanelComponent } from './shared/management-panel/management-panel.component';
 import { UiButtonComponent } from './shared/ui/ui-button/ui-button.component';
@@ -38,8 +41,10 @@ import { UiStatusPillComponent } from './shared/ui/ui-status-pill/ui-status-pill
     AddCategoryModalComponent,
     EditCategoryModalComponent,
     EventManagementComponent,
+    EventCompositionComponent,
     EventCategoryManagementComponent,
     EventCategoryModalComponent,
+    EventProductModalComponent,
     AddEventModalComponent,
     EditEventModalComponent,
     ProductManagementComponent,
@@ -56,6 +61,7 @@ import { UiStatusPillComponent } from './shared/ui/ui-status-pill/ui-status-pill
   ],
   imports: [
     BrowserModule,
+    DragDropModule,
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,

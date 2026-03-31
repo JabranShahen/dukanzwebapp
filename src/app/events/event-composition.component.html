@@ -1,0 +1,265 @@
+<div class="page">
+  <app-management-header
+    eyebrow="Event Composition"
+    title="Compose Event Categories and Products"
+    subtext="Work left to right: select an event, then its event-specific categories, then the products inside the selected category. Master category and product records remain on their catalog screens."
+  ></app-management-header>
+
+  <div *ngIf="feedbackMessage" class="feedback" [class.feedback--error]="feedbackTone === 'error'">
+    {{ feedbackMessage }}
+  </div>
+
+  <div *ngIf="rootError" class="error">{{ rootError }}</div>
+
+  <div class="composition-grid" *ngIf="!rootError">
+    <app-management-panel class="panel-shell">
+      <div class="panel-header">
+        <div>
+          <div class="step-label">Step 1</div>
+          <h3>Events</h3>
+          <p>Select the event context for composition.</p>
+        </div>
+        <div class="panel-actions">
+          <app-ui-button variant="secondary" (clicked)="reload()">Refresh</app-ui-button>
+          <app-ui-button variant="ghost" (clicked)="goToEvents()">Event CRUD</app-ui-button>
+        </div>
+      </div>
+
+      <div class="panel-meta" *ngIf="!rootLoading">{{ eventCountLabel() }}</div>
+
+      <div class="panel-loading" *ngIf="rootLoading">Loading events, categories, and products...</div>
+
+      <div class="selection-list" *ngIf="!rootLoading && events.length > 0">
+        <button
+          type="button"
+          class="selection-card"
+          *ngFor="let eventRecord of events; trackBy: trackById"
+          [class.selection-card--selected]="eventRecord.id === selectedEvent?.id"
+          (click)="selectEvent(eventRecord)"
+        >
+          <div class="selection-card__top">
+            <span class="selection-card__title">{{ eventRecord.eventName }}</span>
+            <app-ui-status-pill
+              [label]="eventLifecycleLabel(eventRecord)"
+              [tone]="eventLifecycleTone(eventRecord)"
+            ></app-ui-status-pill>
+          </div>
+          <div class="selection-card__copy">{{ eventRecord.eventDescription || 'No event description set.' }}</div>
+          <div class="selection-card__copy selection-card__copy--tight">{{ eventScheduleSummary(eventRecord) }}</div>
+        </button>
+      </div>
+
+      <app-ui-empty-state
+        *ngIf="!rootLoading && events.length === 0"
+        title="No events available"
+        body="Create an event before assigning categories and products into an event-specific composition."
+      ></app-ui-empty-state>
+    </app-management-panel>
+
+    <app-management-panel class="panel-shell">
+      <div class="panel-header">
+        <div>
+          <div class="step-label">Step 2</div>
+          <h3>Event Categories</h3>
+          <p>Manage category membership, visibility, and ordering for the selected event.</p>
+        </div>
+        <div class="panel-actions">
+          <app-ui-button variant="secondary" [disabled]="!selectedEvent || categoryMutationPending" (clicked)="openAddCategoryModal()">
+            Assign category
+          </app-ui-button>
+          <app-ui-button variant="ghost" (clicked)="goToCategories()">Master categories</app-ui-button>
+        </div>
+      </div>
+
+      <div class="panel-meta" *ngIf="selectedEvent && !categoriesLoading">
+        <span>{{ assignedCategoryCountLabel() }}</span>
+        <span>{{ availableCategoryCountLabel() }}</span>
+      </div>
+
+      <div *ngIf="categoriesError" class="error error--local">{{ categoriesError }}</div>
+
+      <app-ui-empty-state
+        *ngIf="!selectedEvent && !rootLoading"
+        title="Select an event first"
+        body="Choose an event in the first panel to load its event-specific category assignments."
+      ></app-ui-empty-state>
+
+      <div class="panel-loading" *ngIf="selectedEvent && categoriesLoading">Loading event categories...</div>
+
+      <div
+        cdkDropList
+        class="selection-list"
+        *ngIf="selectedEvent && !categoriesLoading && eventCategories.length > 0"
+        (cdkDropListDropped)="onCategoryDrop($event)"
+      >
+        <div class="selection-card selection-card--nested" *ngFor="let assignment of eventCategories; trackBy: trackById" cdkDrag>
+          <div class="selection-card__top">
+            <button
+              type="button"
+              class="selection-card__select"
+              [class.selection-card__select--selected]="assignment.id === selectedCategory?.id"
+              (click)="selectCategory(assignment)"
+            >
+              <span class="selection-card__title">{{ categoryName(assignment) }}</span>
+              <span class="selection-card__copy">{{ categoryDetail(assignment) }}</span>
+            </button>
+            <button type="button" class="drag-handle" cdkDragHandle aria-label="Reorder category">::</button>
+          </div>
+
+          <div class="pill-row">
+            <app-ui-status-pill
+              [label]="categoryMasterStateLabel(assignment)"
+              [tone]="categoryMasterStateTone(assignment)"
+            ></app-ui-status-pill>
+            <app-ui-status-pill
+              [label]="assignmentVisibilityLabel(assignment.visible, 'category')"
+              [tone]="assignmentVisibilityTone(assignment.visible)"
+            ></app-ui-status-pill>
+            <span class="order-pill">Order {{ assignment.order }}</span>
+          </div>
+
+          <div class="action-row">
+            <app-ui-button variant="ghost" [disabled]="categoryMutationPending" (clicked)="openEditCategoryModal(assignment)">Edit</app-ui-button>
+            <app-ui-button variant="danger" [disabled]="categoryMutationPending" (clicked)="openDeleteCategoryDialog(assignment)">Remove</app-ui-button>
+          </div>
+        </div>
+      </div>
+
+      <app-ui-empty-state
+        *ngIf="selectedEvent && !categoriesLoading && eventCategories.length === 0"
+        title="No categories assigned"
+        body="Assign a master category to this event to begin the event-specific merchandising structure."
+      ></app-ui-empty-state>
+    </app-management-panel>
+
+    <app-management-panel class="panel-shell">
+      <div class="panel-header">
+        <div>
+          <div class="step-label">Step 3</div>
+          <h3>Event Products</h3>
+          <p>Manage products inside the selected event category without changing master product metadata.</p>
+        </div>
+        <div class="panel-actions">
+          <app-ui-button
+            variant="secondary"
+            [disabled]="!selectedCategory || productMutationPending"
+            (clicked)="openAddProductModal()"
+          >
+            Assign product
+          </app-ui-button>
+          <app-ui-button variant="ghost" (clicked)="goToProducts()">Master products</app-ui-button>
+        </div>
+      </div>
+
+      <div class="panel-meta" *ngIf="selectedCategory && !productsLoading">
+        <span>{{ assignedProductCountLabel() }}</span>
+        <span>{{ availableProductCountLabel() }}</span>
+      </div>
+
+      <div *ngIf="productsError" class="error error--local">{{ productsError }}</div>
+
+      <app-ui-empty-state
+        *ngIf="!selectedEvent && !rootLoading"
+        title="Select an event first"
+        body="Choose an event before product assignments can load."
+      ></app-ui-empty-state>
+
+      <app-ui-empty-state
+        *ngIf="selectedEvent && !selectedCategory && !categoriesLoading"
+        title="Select an event category"
+        body="Choose one assigned event category to view and manage its event-specific products."
+      ></app-ui-empty-state>
+
+      <div class="panel-loading" *ngIf="selectedCategory && productsLoading">Loading event products...</div>
+
+      <div
+        cdkDropList
+        class="selection-list"
+        *ngIf="selectedCategory && !productsLoading && eventProducts.length > 0"
+        (cdkDropListDropped)="onProductDrop($event)"
+      >
+        <div class="selection-card selection-card--nested" *ngFor="let assignment of eventProducts; trackBy: trackById" cdkDrag>
+          <div class="selection-card__top">
+            <div>
+              <div class="selection-card__title">{{ productName(assignment) }}</div>
+              <div class="selection-card__copy">{{ productDetail(assignment) }}</div>
+            </div>
+            <button type="button" class="drag-handle" cdkDragHandle aria-label="Reorder product">::</button>
+          </div>
+
+          <div class="pill-row">
+            <app-ui-status-pill
+              [label]="productMasterStateLabel(assignment)"
+              [tone]="productMasterStateTone(assignment)"
+            ></app-ui-status-pill>
+            <app-ui-status-pill
+              [label]="assignmentVisibilityLabel(assignment.visible, 'product')"
+              [tone]="assignmentVisibilityTone(assignment.visible)"
+            ></app-ui-status-pill>
+            <span class="order-pill">Order {{ assignment.order }}</span>
+          </div>
+
+          <div class="action-row">
+            <app-ui-button variant="ghost" [disabled]="productMutationPending" (clicked)="openEditProductModal(assignment)">Edit</app-ui-button>
+            <app-ui-button variant="danger" [disabled]="productMutationPending" (clicked)="openDeleteProductDialog(assignment)">Remove</app-ui-button>
+          </div>
+        </div>
+      </div>
+
+      <app-ui-empty-state
+        *ngIf="selectedCategory && !productsLoading && eventProducts.length === 0"
+        title="No products assigned"
+        body="Assign master products into this event category to complete the event composition flow."
+      ></app-ui-empty-state>
+    </app-management-panel>
+  </div>
+
+  <app-event-category-modal
+    *ngIf="categoryModalOpen"
+    [mode]="categoryModalMode"
+    [eventName]="selectedEvent?.eventName || ''"
+    [assignment]="selectedCategoryAssignment"
+    [availableCategories]="availableCategoriesForModal()"
+    [existingProductCategoryIds]="existingAssignedCategoryIds()"
+    [pending]="categoryMutationPending"
+    (cancelled)="closeCategoryModal()"
+    (saved)="onSaveCategoryAssignment($event)"
+  ></app-event-category-modal>
+
+  <app-event-product-modal
+    *ngIf="productModalOpen"
+    [mode]="productModalMode"
+    [eventName]="selectedEvent?.eventName || ''"
+    [categoryName]="selectedCategory ? categoryName(selectedCategory) : ''"
+    [assignment]="selectedProductAssignment"
+    [availableProducts]="availableProductsForModal()"
+    [existingProductIds]="existingAssignedProductIds()"
+    [pending]="productMutationPending"
+    (cancelled)="closeProductModal()"
+    (saved)="onSaveProductAssignment($event)"
+  ></app-event-product-modal>
+
+  <app-confirm-dialog
+    *ngIf="deleteCategoryDialogOpen && pendingDeleteCategory"
+    title="Remove category from event?"
+    [message]="deleteCategoryMessage()"
+    confirmLabel="Remove assignment"
+    cancelLabel="Keep assignment"
+    [destructive]="true"
+    [pending]="categoryMutationPending"
+    (cancelled)="closeDeleteCategoryDialog()"
+    (confirmed)="confirmDeleteCategory()"
+  ></app-confirm-dialog>
+
+  <app-confirm-dialog
+    *ngIf="deleteProductDialogOpen && pendingDeleteProduct"
+    title="Remove product from event category?"
+    [message]="deleteProductMessage()"
+    confirmLabel="Remove assignment"
+    cancelLabel="Keep assignment"
+    [destructive]="true"
+    [pending]="productMutationPending"
+    (cancelled)="closeDeleteProductDialog()"
+    (confirmed)="confirmDeleteProduct()"
+  ></app-confirm-dialog>
+</div>

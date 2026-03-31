@@ -5,6 +5,7 @@ import { AuthGuard } from './auth.guard';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DashboardOverviewComponent } from './dashboard/dashboard-overview/dashboard-overview.component';
 import { CategoryManagementComponent } from './category-management/category-management.component';
+import { EventCompositionComponent } from './events/event-composition.component';
 import { EventCategoryManagementComponent } from './events/event-category-management.component';
 import { EventManagementComponent } from './events/event-management.component';
 import { ProductManagementComponent } from './products/product-management.component';
@@ -36,6 +37,10 @@ const routes: Routes = [
       {
         path: 'categories',
         component: CategoryManagementComponent
+      },
+      {
+        path: 'event-composition',
+        component: EventCompositionComponent
       },
       {
         path: 'events/:eventId/categories',
