@@ -30,6 +30,7 @@ describe('EventCompositionComponent', () => {
         id: 'event-category-1',
         eventId: 'event-1',
         productCategoryId: 'category-1',
+        categoryName: 'Coffee',
         overrideImageURL: '',
         visible: true,
         order: 0
@@ -41,6 +42,7 @@ describe('EventCompositionComponent', () => {
         eventId: 'event-1',
         eventCategoryId: 'event-category-1',
         productId: 'product-1',
+        productName: 'Latte',
         overrideImageURL: '',
         orignalPrice: 6,
         currentPrice: 5,
@@ -69,13 +71,43 @@ describe('EventCompositionComponent', () => {
                 id: 'event-1',
                 eventName: 'Event One',
                 imageURL: 'dukanz/events/event-one.png',
-                lifecycleStatus: 'draft'
+                lifecycleStatus: 'draft',
+                order: 0,
+                categories: [
+                  {
+                    id: 'event-category-1',
+                    eventId: 'event-1',
+                    productCategoryId: 'category-1',
+                    categoryName: 'Coffee',
+                    imageURL: '',
+                    visible: true,
+                    order: 0,
+                    products: [
+                      {
+                        id: 'event-product-1',
+                        eventId: 'event-1',
+                        eventCategoryId: 'event-category-1',
+                        productId: 'product-1',
+                        productName: 'Latte',
+                        imageURL: '',
+                        orignalPrice: 6,
+                        currentPrice: 5,
+                        currentCost: 2,
+                        unitName: 'cup',
+                        visible: true,
+                        order: 0
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 id: 'event-2',
                 eventName: 'Event Two',
                 imageURL: '',
-                lifecycleStatus: 'scheduled'
+                lifecycleStatus: 'scheduled',
+                order: 1,
+                categories: []
               }
             ])
           }
@@ -140,8 +172,8 @@ describe('EventCompositionComponent', () => {
     expect(component.selectedEvent?.id).toBe('event-1');
     expect(component.selectedCategory?.id).toBe('event-category-1');
     expect(component.eventProducts.length).toBe(1);
-    expect(eventCategoryService.getByEvent).toHaveBeenCalledWith('event-1');
-    expect(eventProductService.getByEventCategory).toHaveBeenCalledWith('event-category-1');
+    expect(eventCategoryService.getByEvent).not.toHaveBeenCalled();
+    expect(eventProductService.getByEventCategory).not.toHaveBeenCalled();
   });
 
   it('clears category selection when a different event is selected', () => {
@@ -214,6 +246,7 @@ describe('EventCompositionComponent', () => {
       id: 'event-category-2',
       eventId: 'event-1',
       productCategoryId: 'category-2',
+      categoryName: 'Tea',
       overrideImageURL: '',
       visible: true,
       order: 1
@@ -241,6 +274,7 @@ describe('EventCompositionComponent', () => {
     component.onSaveCategoryAssignment({
       productCategoryId: 'category-2',
       overrideImageURL: '',
+      categoryName: 'Tea',
       visible: true,
       order: 0
     });
@@ -248,7 +282,7 @@ describe('EventCompositionComponent', () => {
     expect(eventCategoryService.create).toHaveBeenCalledWith(jasmine.objectContaining({
       eventId: 'event-1',
       productCategoryId: 'category-2',
-      overrideImageURL: '',
+      imageURL: '',
       order: 1
     }));
     expect(component.eventCategories.map((assignment) => assignment.id)).toEqual(['event-category-1', 'event-category-2']);
@@ -261,6 +295,7 @@ describe('EventCompositionComponent', () => {
       eventId: 'event-1',
       eventCategoryId: 'event-category-1',
       productId: 'product-2',
+      productName: 'Flat White',
       overrideImageURL: '',
       orignalPrice: 6,
       currentPrice: 5.5,
@@ -309,9 +344,11 @@ describe('EventCompositionComponent', () => {
 
     const initialGetByEventCategoryCalls = eventProductService.getByEventCategory.calls.count();
     component.productModalMode = 'add';
+    component['selectedCategory'] = component['eventCategories'][0];
     component.onSaveProductAssignment({
       productId: 'product-2',
       overrideImageURL: '',
+      productName: 'Flat White',
       orignalPrice: 6,
       currentPrice: 5.5,
       currentCost: 2.4,
@@ -324,7 +361,7 @@ describe('EventCompositionComponent', () => {
       eventId: 'event-1',
       eventCategoryId: 'event-category-1',
       productId: 'product-2',
-      overrideImageURL: '',
+      imageURL: '',
       orignalPrice: 6,
       currentPrice: 5.5,
       currentCost: 2.4,
@@ -333,6 +370,83 @@ describe('EventCompositionComponent', () => {
     }));
     expect(component.eventProducts.map((assignment) => assignment.id)).toEqual(['event-product-1', 'event-product-2']);
     expect(eventProductService.getByEventCategory.calls.count()).toBe(initialGetByEventCategoryCalls);
+  });
+
+  it('projects newly assigned products when the category is selected again', () => {
+    eventProductService.create.and.returnValue(of({
+      id: 'event-product-2',
+      eventId: 'event-1',
+      eventCategoryId: 'event-category-1',
+      productId: 'product-2',
+      productName: 'Flat White',
+      overrideImageURL: '',
+      orignalPrice: 6,
+      currentPrice: 5.5,
+      currentCost: 2.4,
+      unitName: 'cup',
+      visible: true,
+      order: 1
+    }));
+
+    component.masterProducts = [
+      {
+        id: 'product-1',
+        productName: 'Latte',
+        productDescription: 'Milk coffee',
+        orignalPrice: 6,
+        currentPrice: 5,
+        currentCost: 2,
+        unitName: 'cup',
+        imageURL: 'dukanz/products/latte.png',
+        visible: true,
+        productCategory: {
+          id: 'category-1',
+          productCategoryName: 'Coffee',
+          visible: true,
+          order: 0
+        }
+      },
+      {
+        id: 'product-2',
+        productName: 'Flat White',
+        productDescription: 'Velvety coffee',
+        orignalPrice: 6,
+        currentPrice: 5.5,
+        currentCost: 2.4,
+        unitName: 'cup',
+        imageURL: '',
+        visible: true,
+        productCategory: {
+          id: 'category-1',
+          productCategoryName: 'Coffee',
+          visible: true,
+          order: 0
+        }
+      }
+    ];
+
+    component.productModalMode = 'add';
+    component['selectedCategory'] = component['eventCategories'][0];
+    component.onSaveProductAssignment({
+      productId: 'product-2',
+      overrideImageURL: '',
+      productName: 'Flat White',
+      orignalPrice: 6,
+      currentPrice: 5.5,
+      currentCost: 2.4,
+      unitName: 'cup',
+      visible: true,
+      order: 0
+    });
+
+    component['requestedCategoryId'] = '';
+    component['applyCategorySelection']();
+    component['requestedCategoryId'] = 'event-category-1';
+    component['applyCategorySelection']();
+
+    expect(component.eventProducts.map((assignment) => assignment.id)).toEqual(['event-product-1', 'event-product-2']);
+    expect(component['selectedCategory']?.products?.map((assignment) => assignment.id)).toEqual(['event-product-1', 'event-product-2']);
+    expect(component.selectedEvent?.categories?.[0].products.map((assignment) => assignment.id)).toEqual(['event-product-1', 'event-product-2']);
   });
 
   it('clears stale assigned categories when switching to another event before its categories finish loading', () => {
@@ -357,6 +471,7 @@ describe('EventCompositionComponent', () => {
         id: 'event-category-1',
         eventId: 'event-1',
         productCategoryId: 'category-1',
+        categoryName: 'Coffee',
         overrideImageURL: '',
         visible: true,
         order: 0,

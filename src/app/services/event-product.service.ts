@@ -1,127 +1,202 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 
 import { EventProductMutation, EventProductRecord } from '../models/event-product.model';
-import { ApiService } from './api.service';
+import { EventCategoryAggregateRecord, EventRecord } from '../models/event.model';
+import { EventService } from './event.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EventProductService {
-  private readonly endpoint = 'EventProduct';
-
-  constructor(private readonly api: ApiService) {}
+  constructor(private readonly eventService: EventService) {}
 
   getByEventCategory(eventCategoryId: string): Observable<EventProductRecord[]> {
     const normalizedEventCategoryId = (eventCategoryId || '').trim();
-    return this.api.get<EventProductRecord[] | null>(`${this.endpoint}/eventCategory/${encodeURIComponent(normalizedEventCategoryId)}`).pipe(
-      map((response) => Array.isArray(response) ? response.map((record) => this.normalizeRecord(record)) : [])
+    return this.findEventAndCategory(normalizedEventCategoryId).pipe(
+      map((result) => result ? this.getSortedProducts(result.category) : [])
     );
   }
 
   getByEvent(eventId: string): Observable<EventProductRecord[]> {
     const normalizedEventId = (eventId || '').trim();
-    return this.api.get<EventProductRecord[] | null>(`${this.endpoint}/event/${encodeURIComponent(normalizedEventId)}`).pipe(
-      map((response) => Array.isArray(response) ? response.map((record) => this.normalizeRecord(record)) : [])
+    return this.eventService.getAll().pipe(
+      map((events) => {
+        const eventRecord = events.find((item) => item.id === normalizedEventId);
+        if (!eventRecord || !Array.isArray(eventRecord.categories)) {
+          return [];
+        }
+
+        return eventRecord.categories
+          .flatMap((category) => this.getSortedProducts(category))
+          .sort((left, right) => (left.order ?? 0) - (right.order ?? 0));
+      })
     );
   }
 
   create(payload: EventProductMutation): Observable<EventProductRecord> {
-    const id = (payload.id || '').trim() || this.generateId();
-    const requestPayload = this.toMutationPayload({ ...payload, id });
+    const normalizedEventCategoryId = (payload.eventCategoryId || '').trim();
+    if (!normalizedEventCategoryId) {
+      return throwError(() => new Error('Event category id is required.'));
+    }
 
-    return this.api
-      .post<{ id?: string; entity?: EventProductRecord } | EventProductRecord>(this.endpoint, requestPayload)
-      .pipe(
-        map((response) => {
-          const entityCandidate = (response as { entity?: EventProductRecord })?.entity;
-          if (entityCandidate) {
-            return this.normalizeRecord(entityCandidate);
-          }
+    return this.findEventAndCategory(normalizedEventCategoryId).pipe(
+      switchMap((result) => {
+        if (!result) {
+          return throwError(() => new Error('Event category not found.'));
+        }
 
-          const responseId = (response as { id?: string })?.id || id;
-          return this.normalizeRecord({
-            ...payload,
-            id: responseId,
-            PartitionKey: responseId,
-            partitionKey: responseId
-          });
-        })
-      );
+        const id = (payload.id || '').trim() || this.generateId();
+        const product = this.normalizeRecord({
+          ...payload,
+          id,
+          eventId: result.event.id,
+          eventCategoryId: result.category.id,
+          PartitionKey: id,
+          partitionKey: id
+        });
+
+        const categories = result.event.categories!.map((category) =>
+          category.id === result.category.id
+            ? { ...category, products: [...this.getSortedProducts(category), product] }
+            : category
+        );
+
+        return this.eventService.update({
+          ...result.event,
+          categories
+        }).pipe(
+          map((savedEvent) => {
+            const savedCategory = savedEvent.categories?.find((item) => item.id === result.category.id);
+            const savedProduct = savedCategory?.products?.find((item) => item.id === id);
+            if (!savedProduct) {
+              throw new Error('Saved product could not be resolved.');
+            }
+            return this.normalizeRecord(savedProduct);
+          })
+        );
+      })
+    );
   }
 
   update(payload: EventProductMutation): Observable<EventProductRecord> {
-    const requestPayload = this.toMutationPayload(payload);
+    const normalizedId = (payload.id || '').trim();
+    if (!normalizedId) {
+      return throwError(() => new Error('Event product id is required.'));
+    }
 
-    return this.api
-      .put<{ updated?: boolean; entity?: EventProductRecord } | EventProductRecord>(this.endpoint, requestPayload)
-      .pipe(
-        map((response) => {
-          const entityCandidate = (response as { entity?: EventProductRecord })?.entity;
-          if (entityCandidate) {
-            return this.normalizeRecord(entityCandidate);
-          }
+    return this.eventService.getAll().pipe(
+      switchMap((events) => {
+        const result = this.findOwningEventAndCategoryForProduct(events, normalizedId);
+        if (!result) {
+          return throwError(() => new Error('Event product not found.'));
+        }
 
-          const id = (payload.id || '').trim();
-          return this.normalizeRecord({
-            ...payload,
-            id,
-            PartitionKey: id || undefined,
-            partitionKey: id || undefined
-          });
-        })
-      );
+        const categories = result.event.categories!.map((category) =>
+          category.id === result.category.id
+            ? {
+                ...category,
+                products: this.getSortedProducts(category).map((product) =>
+                  product.id === normalizedId
+                    ? this.normalizeRecord({
+                        ...product,
+                        ...payload,
+                        id: normalizedId,
+                        eventId: result.event.id,
+                        eventCategoryId: result.category.id,
+                        PartitionKey: normalizedId,
+                        partitionKey: normalizedId
+                      })
+                    : product
+                )
+              }
+            : category
+        );
+
+        return this.eventService.update({
+          ...result.event,
+          categories
+        }).pipe(
+          map((savedEvent) => {
+            const savedCategory = savedEvent.categories?.find((item) => item.id === result.category.id);
+            const savedProduct = savedCategory?.products?.find((item) => item.id === normalizedId);
+            if (!savedProduct) {
+              throw new Error('Saved product could not be resolved.');
+            }
+            return this.normalizeRecord(savedProduct);
+          })
+        );
+      })
+    );
   }
 
   delete(eventProductId: string): Observable<boolean> {
     const normalizedId = (eventProductId || '').trim();
-    return this.api
-      .delete<{ deleted?: boolean } | string>(`${this.endpoint}/${encodeURIComponent(normalizedId)}`)
-      .pipe(
-        map((response) => {
-          if (typeof response === 'string') {
-            return true;
-          }
-
-          if (typeof response?.deleted === 'boolean') {
-            return response.deleted;
-          }
-
-          return true;
-        })
-      );
-  }
-
-  private toMutationPayload(payload: EventProductMutation): Record<string, unknown> {
-    const id = (payload.id || '').trim();
-    const eventId = (payload.eventId || '').trim();
-    const eventCategoryId = (payload.eventCategoryId || '').trim();
-    const productId = (payload.productId || '').trim();
-    const requestPayload: Record<string, unknown> = {
-      eventId,
-      eventCategoryId,
-      productId,
-      productName: this.normalizeText(payload.productName),
-      productDescription: this.normalizeText(payload.productDescription),
-      imageURL: this.normalizeText(payload.imageURL),
-      displayPercentage: this.normalizeMoney(payload.displayPercentage),
-      displayUnitName: this.normalizeText(payload.displayUnitName),
-      orignalPrice: this.normalizeMoney(payload.orignalPrice),
-      currentPrice: this.normalizeMoney(payload.currentPrice),
-      currentCost: this.normalizeMoney(payload.currentCost),
-      unitName: this.normalizeText(payload.unitName),
-      visible: !!payload.visible,
-      order: this.normalizeOrder(payload.order)
-    };
-
-    if (id) {
-      requestPayload['id'] = id;
-      requestPayload['partitionKey'] = id;
-      requestPayload['PartitionKey'] = id;
+    if (!normalizedId) {
+      return of(false);
     }
 
-    return requestPayload;
+    return this.eventService.getAll().pipe(
+      switchMap((events) => {
+        const result = this.findOwningEventAndCategoryForProduct(events, normalizedId);
+        if (!result) {
+          return of(false);
+        }
+
+        const categories = result.event.categories!.map((category) =>
+          category.id === result.category.id
+            ? {
+                ...category,
+                products: this.getSortedProducts(category)
+                  .filter((product) => product.id !== normalizedId)
+                  .map((product, index) => ({ ...product, order: index }))
+              }
+            : category
+        );
+
+        return this.eventService.update({
+          ...result.event,
+          categories
+        }).pipe(map(() => true));
+      })
+    );
+  }
+
+  private findEventAndCategory(eventCategoryId: string): Observable<{ event: EventRecord; category: EventCategoryAggregateRecord } | undefined> {
+    return this.eventService.getAll().pipe(
+      map((events) => {
+        for (const eventRecord of events) {
+          const category = eventRecord.categories?.find((item) => item.id === eventCategoryId);
+          if (category) {
+            return { event: eventRecord, category };
+          }
+        }
+
+        return undefined;
+      })
+    );
+  }
+
+  private findOwningEventAndCategoryForProduct(
+    events: EventRecord[],
+    eventProductId: string
+  ): { event: EventRecord; category: EventCategoryAggregateRecord } | undefined {
+    for (const eventRecord of events) {
+      for (const category of eventRecord.categories || []) {
+        if ((category.products || []).some((product) => product.id === eventProductId)) {
+          return { event: eventRecord, category };
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private getSortedProducts(category: EventCategoryAggregateRecord): EventProductRecord[] {
+    return Array.isArray(category.products)
+      ? [...category.products].sort((left, right) => (left.order ?? 0) - (right.order ?? 0))
+      : [];
   }
 
   private normalizeRecord(record: Partial<EventProductRecord> | EventProductMutation): EventProductRecord {
@@ -135,15 +210,16 @@ export class EventProductService {
       eventId: (record.eventId || '').trim(),
       eventCategoryId: (record.eventCategoryId || '').trim(),
       productId: (record.productId || '').trim(),
-      productName: this.normalizeText(record.productName),
-      productDescription: this.normalizeText(record.productDescription),
-      imageURL: this.normalizeText(record.imageURL),
+      productName: (record.productName || '').trim(),
+      productDescription: (record.productDescription || '').trim(),
+      imageURL: (record.imageURL || record.overrideImageURL || '').trim(),
+      overrideImageURL: (record.overrideImageURL || record.imageURL || '').trim(),
       displayPercentage: this.normalizeMoney(record.displayPercentage),
-      displayUnitName: this.normalizeText(record.displayUnitName),
+      displayUnitName: (record.displayUnitName || '').trim(),
       orignalPrice: this.normalizeMoney(record.orignalPrice),
       currentPrice: this.normalizeMoney(record.currentPrice),
       currentCost: this.normalizeMoney(record.currentCost),
-      unitName: this.normalizeText(record.unitName),
+      unitName: (record.unitName || '').trim(),
       visible: !!record.visible,
       order: this.normalizeOrder(record.order)
     };
@@ -155,10 +231,6 @@ export class EventProductService {
     }
 
     return Math.max(0, value);
-  }
-
-  private normalizeText(value: string | undefined): string {
-    return (value || '').trim();
   }
 
   private normalizeOrder(value: number | undefined): number {

@@ -5,17 +5,18 @@ export interface EventProductRecord {
   eventId: string;
   eventCategoryId: string;
   productId: string;
-  productName: string;
+  productName?: string;
   productDescription?: string;
   imageURL?: string;
+  overrideImageURL?: string;
   displayPercentage?: number;
   displayUnitName?: string;
   orignalPrice: number;
   currentPrice: number;
   currentCost: number;
-  unitName: string;
+  unitName?: string;
   visible: boolean;
-  order: number;
+  order?: number;
 }
 
 export interface EventProductMutation {
@@ -25,9 +26,10 @@ export interface EventProductMutation {
   eventId?: string;
   eventCategoryId?: string;
   productId: string;
-  productName: string;
+  productName?: string;
   productDescription?: string;
   imageURL?: string;
+  overrideImageURL?: string;
   imageFile?: File | null;
   clearImage?: boolean;
   displayPercentage?: number;
@@ -35,7 +37,7 @@ export interface EventProductMutation {
   orignalPrice: number;
   currentPrice: number;
   currentCost: number;
-  unitName: string;
+  unitName?: string;
   visible: boolean;
-  order: number;
+  order?: number;
 }

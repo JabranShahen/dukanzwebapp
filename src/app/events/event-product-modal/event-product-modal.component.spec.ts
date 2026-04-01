@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 
 import { EventProductModalComponent } from './event-product-modal.component';
 import { BlobStorageService } from '../../services/blob-storage.service';
+import { ProductService } from '../../services/product.service';
 
 describe('EventProductModalComponent', () => {
   let component: EventProductModalComponent;
@@ -20,6 +21,12 @@ describe('EventProductModalComponent', () => {
           useValue: {
             getDownloadUrl: () => of('https://img.test/product.png')
           }
+        },
+        {
+          provide: ProductService,
+          useValue: {
+            create: () => of({})
+          }
         }
       ],
       schemas: [NO_ERRORS_SCHEMA]
@@ -32,6 +39,7 @@ describe('EventProductModalComponent', () => {
       eventId: 'event-1',
       eventCategoryId: 'event-category-1',
       productId: 'product-1',
+      productName: 'Coffee Beans',
       overrideImageURL: 'dukanz/event-products/coffee.png',
       orignalPrice: 12.5,
       currentPrice: 10,
@@ -79,6 +87,7 @@ describe('EventProductModalComponent', () => {
     });
     component.assignmentForm.patchValue({
       productId: 'product-1',
+      productName: 'Coffee Beans',
       orignalPrice: 12.5,
       currentPrice: 10,
       currentCost: 7.25,
@@ -103,6 +112,7 @@ describe('EventProductModalComponent', () => {
     });
     component.assignmentForm.patchValue({
       productId: '  product-2  ',
+      productName: 'Espresso',
       orignalPrice: 8,
       currentPrice: 6.5,
       currentCost: 3.2,
@@ -114,9 +124,13 @@ describe('EventProductModalComponent', () => {
 
     expect(component.saved.emit).toHaveBeenCalledWith({
       productId: 'product-2',
-      overrideImageURL: '',
+      productName: 'Espresso',
+      productDescription: '',
+      imageURL: '',
       imageFile: null,
       clearImage: false,
+      displayPercentage: 0,
+      displayUnitName: '',
       orignalPrice: 8,
       currentPrice: 6.5,
       currentCost: 3.2,

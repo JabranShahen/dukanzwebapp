@@ -1,111 +1,151 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 
 import { EventCategoryMutation, EventCategoryRecord } from '../models/event-category.model';
-import { ApiService } from './api.service';
+import { EventCategoryAggregateRecord, EventRecord } from '../models/event.model';
+import { EventService } from './event.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EventCategoryService {
-  private readonly endpoint = 'EventCategory';
-
-  constructor(private readonly api: ApiService) {}
+  constructor(private readonly eventService: EventService) {}
 
   getByEvent(eventId: string): Observable<EventCategoryRecord[]> {
     const normalizedEventId = (eventId || '').trim();
-    return this.api.get<EventCategoryRecord[] | null>(`${this.endpoint}/event/${encodeURIComponent(normalizedEventId)}`).pipe(
-      map((response) => Array.isArray(response) ? response.map((record) => this.normalizeRecord(record)) : [])
+    return this.getEventById(normalizedEventId).pipe(
+      map((eventRecord) => eventRecord ? this.getSortedCategories(eventRecord) : [])
     );
   }
 
   create(payload: EventCategoryMutation): Observable<EventCategoryRecord> {
-    const id = (payload.id || '').trim() || this.generateId();
-    const requestPayload = this.toMutationPayload({ ...payload, id });
+    const normalizedEventId = (payload.eventId || '').trim();
+    if (!normalizedEventId) {
+      return throwError(() => new Error('Event id is required.'));
+    }
 
-    return this.api
-      .post<{ id?: string; entity?: EventCategoryRecord } | EventCategoryRecord>(this.endpoint, requestPayload)
-      .pipe(
-        map((response) => {
-          const entityCandidate = (response as { entity?: EventCategoryRecord })?.entity;
-          if (entityCandidate) {
-            return this.normalizeRecord(entityCandidate);
-          }
+    return this.getEventById(normalizedEventId).pipe(
+      switchMap((eventRecord) => {
+        if (!eventRecord) {
+          return throwError(() => new Error('Event not found.'));
+        }
 
-          const responseId = (response as { id?: string })?.id || id;
-          return this.normalizeRecord({
-            ...payload,
-            id: responseId,
-            PartitionKey: responseId,
-            partitionKey: responseId
-          });
-        })
-      );
+        const id = (payload.id || '').trim() || this.generateId();
+        const categories = this.getSortedCategories(eventRecord);
+        const category: EventCategoryRecord = this.normalizeRecord({
+          ...payload,
+          id,
+          eventId: normalizedEventId,
+          PartitionKey: id,
+          partitionKey: id
+        });
+
+        return this.eventService.update({
+          ...eventRecord,
+          categories: [...categories, { ...category, products: [] }]
+        }).pipe(
+          map((savedEvent) => {
+            const savedCategory = this.getSortedCategories(savedEvent).find((item) => item.id === id);
+            if (!savedCategory) {
+              throw new Error('Saved category could not be resolved.');
+            }
+            return savedCategory;
+          })
+        );
+      })
+    );
   }
 
   update(payload: EventCategoryMutation): Observable<EventCategoryRecord> {
-    const requestPayload = this.toMutationPayload(payload);
+    const normalizedId = (payload.id || '').trim();
+    if (!normalizedId) {
+      return throwError(() => new Error('Event category id is required.'));
+    }
 
-    return this.api
-      .put<{ updated?: boolean; entity?: EventCategoryRecord } | EventCategoryRecord>(this.endpoint, requestPayload)
-      .pipe(
-        map((response) => {
-          const entityCandidate = (response as { entity?: EventCategoryRecord })?.entity;
-          if (entityCandidate) {
-            return this.normalizeRecord(entityCandidate);
-          }
+    return this.getAllEvents().pipe(
+      switchMap((events) => {
+        const owningEvent = events.find((eventRecord) =>
+          this.getSortedCategories(eventRecord).some((item) => item.id === normalizedId));
+        if (!owningEvent) {
+          return throwError(() => new Error('Event category not found.'));
+        }
 
-          const id = (payload.id || '').trim();
-          return this.normalizeRecord({
-            ...payload,
-            id,
-            PartitionKey: id || undefined,
-            partitionKey: id || undefined
-          });
-        })
-      );
+        const categories = this.getSortedCategories(owningEvent).map((category) =>
+          category.id === normalizedId
+            ? {
+                ...category,
+                ...this.normalizeRecord({
+                  ...payload,
+                  id: normalizedId,
+                  eventId: owningEvent.id,
+                  PartitionKey: normalizedId,
+                  partitionKey: normalizedId
+                }),
+                products: category.products || []
+              }
+            : category
+        );
+
+        return this.eventService.update({
+          ...owningEvent,
+          categories
+        }).pipe(
+          map((savedEvent) => {
+            const savedCategory = this.getSortedCategories(savedEvent).find((item) => item.id === normalizedId);
+            if (!savedCategory) {
+              throw new Error('Saved category could not be resolved.');
+            }
+            return savedCategory;
+          })
+        );
+      })
+    );
   }
 
   delete(eventCategoryId: string): Observable<boolean> {
     const normalizedId = (eventCategoryId || '').trim();
-    return this.api
-      .delete<{ deleted?: boolean } | string>(`${this.endpoint}/${encodeURIComponent(normalizedId)}`)
-      .pipe(
-        map((response) => {
-          if (typeof response === 'string') {
-            return true;
-          }
-
-          if (typeof response?.deleted === 'boolean') {
-            return response.deleted;
-          }
-
-          return true;
-        })
-      );
-  }
-
-  private toMutationPayload(payload: EventCategoryMutation): Record<string, unknown> {
-    const id = (payload.id || '').trim();
-    const eventId = (payload.eventId || '').trim();
-    const productCategoryId = (payload.productCategoryId || '').trim();
-    const requestPayload: Record<string, unknown> = {
-      eventId,
-      productCategoryId,
-      categoryName: (payload.categoryName || '').trim(),
-      imageURL: (payload.imageURL || '').trim(),
-      visible: !!payload.visible,
-      order: this.normalizeOrder(payload.order)
-    };
-
-    if (id) {
-      requestPayload['id'] = id;
-      requestPayload['partitionKey'] = id;
-      requestPayload['PartitionKey'] = id;
+    if (!normalizedId) {
+      return of(false);
     }
 
-    return requestPayload;
+    return this.getAllEvents().pipe(
+      switchMap((events) => {
+        const owningEvent = events.find((eventRecord) =>
+          this.getSortedCategories(eventRecord).some((item) => item.id === normalizedId));
+        if (!owningEvent) {
+          return of(false);
+        }
+
+        const categories = this.getSortedCategories(owningEvent)
+          .filter((category) => category.id !== normalizedId)
+          .map((category, index) => ({
+            ...category,
+            order: index
+          }));
+
+        return this.eventService.update({
+          ...owningEvent,
+          categories
+        }).pipe(map(() => true));
+      })
+    );
+  }
+
+  private getAllEvents(): Observable<EventRecord[]> {
+    return this.eventService.getAll();
+  }
+
+  private getEventById(eventId: string): Observable<EventRecord | undefined> {
+    return this.getAllEvents().pipe(
+      map((events) => events.find((eventRecord) => eventRecord.id === eventId))
+    );
+  }
+
+  private getSortedCategories(eventRecord: EventRecord): EventCategoryAggregateRecord[] {
+    return Array.isArray(eventRecord.categories)
+      ? [...eventRecord.categories].sort((left, right) => (left.order ?? 0) - (right.order ?? 0))
+      : [];
   }
 
   private normalizeRecord(record: Partial<EventCategoryRecord> | EventCategoryMutation): EventCategoryRecord {
@@ -119,7 +159,8 @@ export class EventCategoryService {
       eventId: (record.eventId || '').trim(),
       productCategoryId: (record.productCategoryId || '').trim(),
       categoryName: (record.categoryName || '').trim(),
-      imageURL: (record.imageURL || '').trim(),
+      imageURL: (record.imageURL || record.overrideImageURL || '').trim(),
+      overrideImageURL: (record.overrideImageURL || record.imageURL || '').trim(),
       visible: !!record.visible,
       order: this.normalizeOrder(record.order)
     };
@@ -130,7 +171,7 @@ export class EventCategoryService {
       return 0;
     }
 
-    return Math.trunc(value);
+    return Math.max(0, Math.trunc(value));
   }
 
   private generateId(): string {

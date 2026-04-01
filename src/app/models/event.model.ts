@@ -1,4 +1,19 @@
+import { EventCategoryRecord, EventCategoryMutation } from './event-category.model';
+import { EventProductRecord, EventProductMutation } from './event-product.model';
+
 export type EventLifecycleStatus = 'draft' | 'scheduled' | 'live' | 'closed';
+
+export interface EventProductAggregateRecord extends EventProductRecord {}
+
+export interface EventProductAggregateMutation extends EventProductMutation {}
+
+export interface EventCategoryAggregateRecord extends EventCategoryRecord {
+  products: EventProductAggregateRecord[];
+}
+
+export interface EventCategoryAggregateMutation extends EventCategoryMutation {
+  products?: EventProductAggregateMutation[];
+}
 
 export interface EventRecord {
   id: string;
@@ -10,7 +25,8 @@ export interface EventRecord {
   lifecycleStatus: EventLifecycleStatus | string;
   startDateUtc?: string | null;
   endDateUtc?: string | null;
-  order: number;
+  order?: number;
+  categories?: EventCategoryAggregateRecord[];
 }
 
 export interface EventMutation {
@@ -26,6 +42,7 @@ export interface EventMutation {
   startDateUtc?: string | null;
   endDateUtc?: string | null;
   order?: number;
+  categories?: EventCategoryAggregateMutation[];
 }
 
 export const EDITABLE_EVENT_LIFECYCLE_STATUSES: EventLifecycleStatus[] = ['draft', 'scheduled'];

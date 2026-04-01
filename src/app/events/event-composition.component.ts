@@ -6,7 +6,7 @@ import { switchMap } from 'rxjs/operators';
 
 import { EventCategoryMutation, EventCategoryRecord } from '../models/event-category.model';
 import { EventProductMutation, EventProductRecord } from '../models/event-product.model';
-import { CLOSEABLE_EVENT_LIFECYCLE_STATUSES, EventMutation, EventRecord, LAUNCHABLE_EVENT_LIFECYCLE_STATUSES, REVERTABLE_TO_DRAFT_EVENT_LIFECYCLE_STATUSES } from '../models/event.model';
+import { CLOSEABLE_EVENT_LIFECYCLE_STATUSES, EventCategoryAggregateRecord, EventMutation, EventRecord, LAUNCHABLE_EVENT_LIFECYCLE_STATUSES, REVERTABLE_TO_DRAFT_EVENT_LIFECYCLE_STATUSES } from '../models/event.model';
 import { ProductCategory } from '../models/product-category.model';
 import { Product } from '../models/product.model';
 import { EventCategoryService } from '../services/event-category.service';
@@ -16,7 +16,10 @@ import { BlobStorageService } from '../services/blob-storage.service';
 import { ProductCategoryService } from '../services/product-category.service';
 import { ProductService } from '../services/product.service';
 
-interface EventCategoryDisplayRecord extends EventCategoryRecord {}
+interface EventCategoryDisplayRecord extends EventCategoryRecord {
+  masterCategory?: ProductCategory;
+  products?: EventProductRecord[];
+}
 
 interface EventProductDisplayRecord extends EventProductRecord {}
 
@@ -824,7 +827,8 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       error: () => {
         this.categoryMutationPending = false;
         this.setFeedback('Failed to reorder event categories.', 'error');
-        this.loadEventCategories(this.selectedEvent!.id);
+        this.eventCategories = this.buildAssignedCategories(this.selectedEvent?.categories || [], this.masterCategories);
+        this.hydrateEventCategoryImages(this.eventCategories);
       }
     });
   }
@@ -855,7 +859,8 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       error: () => {
         this.productMutationPending = false;
         this.setFeedback('Failed to reorder event products.', 'error');
-        this.loadEventProducts(this.selectedCategory!);
+        this.eventProducts = this.buildAssignedProducts(this.selectedCategory?.products || [], this.masterProducts);
+        this.hydrateEventProductImages(this.eventProducts);
       }
     });
   }
@@ -1068,30 +1073,15 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     this.selectedEvent = nextEvent;
     if (currentEventId !== nextEventId || this.eventCategories.length === 0) {
       this.clearEventCategoryState();
-      this.loadEventCategories(nextEventId);
+      this.categoriesLoading = false;
+      this.categoriesError = '';
+      this.eventCategories = this.buildAssignedCategories(nextEvent.categories || [], this.masterCategories);
+      this.hydrateEventCategoryImages(this.eventCategories);
+      this.applyCategorySelection();
       return;
     }
 
     this.applyCategorySelection();
-  }
-
-  private loadEventCategories(eventId: string): void {
-    this.categoriesLoading = true;
-    this.categoriesError = '';
-
-    this.eventCategoryService.getByEvent(eventId).subscribe({
-      next: (assignments) => {
-        this.categoriesLoading = false;
-        this.eventCategories = this.buildAssignedCategories(assignments, this.masterCategories);
-        this.hydrateEventCategoryImages(this.eventCategories);
-        this.applyCategorySelection();
-      },
-      error: () => {
-        this.categoriesLoading = false;
-        this.categoriesError = 'Failed to load categories for the selected event.';
-        this.clearCategorySelection();
-      }
-    });
   }
 
   private applyCategorySelection(): void {
@@ -1119,30 +1109,15 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     this.selectedCategory = nextCategory;
     if (currentCategoryId !== nextCategoryId || this.eventProducts.length === 0) {
       this.clearProductSelection();
-      this.loadEventProducts(nextCategory);
+      this.productsLoading = false;
+      this.productsError = '';
+      this.eventProducts = this.buildAssignedProducts(nextCategory.products || [], this.masterProducts);
+      this.hydrateEventProductImages(this.eventProducts);
     }
   }
 
-  private loadEventProducts(category: EventCategoryDisplayRecord): void {
-    this.productsLoading = true;
-    this.productsError = '';
-
-    this.eventProductService.getByEventCategory(category.id).subscribe({
-      next: (assignments) => {
-        this.productsLoading = false;
-        this.eventProducts = this.buildAssignedProducts(assignments, this.masterProducts);
-        this.hydrateEventProductImages(this.eventProducts);
-      },
-      error: () => {
-        this.productsLoading = false;
-        this.productsError = 'Failed to load products for the selected event category.';
-        this.eventProducts = [];
-      }
-    });
-  }
-
   private buildAssignedCategories(
-    assignments: Array<EventCategoryRecord | EventCategoryMutation>,
+    assignments: Array<EventCategoryRecord | EventCategoryMutation | EventCategoryAggregateRecord>,
     _masterCategories: ProductCategory[]
   ): EventCategoryDisplayRecord[] {
     return [...assignments]
@@ -1164,7 +1139,10 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         categoryName: (assignment.categoryName || '').trim(),
         imageURL: (assignment.imageURL || '').trim(),
         visible: !!assignment.visible,
-        order: this.normalizeOrder(assignment.order)
+        order: this.normalizeOrder(assignment.order),
+        products: ('products' in assignment && Array.isArray(assignment.products))
+          ? this.buildAssignedProducts(assignment.products, this.masterProducts)
+          : []
       }));
   }
 
@@ -1245,37 +1223,83 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
   }
 
   private upsertEventCategory(savedAssignment: EventCategoryRecord): EventCategoryDisplayRecord {
-    this.eventCategories = this.buildAssignedCategories(
+    const nextCategories = this.buildAssignedCategories(
       [...this.eventCategories.filter((assignment) => assignment.id !== savedAssignment.id), savedAssignment],
       this.masterCategories
     );
-    this.hydrateEventCategoryImage(this.eventCategories.find((assignment) => assignment.id === savedAssignment.id) || null);
+    this.syncSelectedEventCategories(nextCategories);
+    this.hydrateEventCategoryImage(nextCategories.find((assignment) => assignment.id === savedAssignment.id) || null);
 
     if (this.selectedCategory?.id === savedAssignment.id) {
-      this.selectedCategory = this.eventCategories.find((assignment) => assignment.id === savedAssignment.id) || null;
+      this.selectedCategory = nextCategories.find((assignment) => assignment.id === savedAssignment.id) || null;
     }
 
-    return this.eventCategories.find((assignment) => assignment.id === savedAssignment.id)!;
+    return nextCategories.find((assignment) => assignment.id === savedAssignment.id)!;
   }
 
   private removeEventCategory(eventCategoryId: string): void {
-    this.eventCategories = this.eventCategories.filter((assignment) => assignment.id !== eventCategoryId);
+    const nextCategories = this.eventCategories.filter((assignment) => assignment.id !== eventCategoryId);
+    this.syncSelectedEventCategories(nextCategories);
     delete this.eventCategoryImageUrls[eventCategoryId];
   }
 
   private upsertEventProduct(savedAssignment: EventProductRecord): EventProductDisplayRecord {
-    this.eventProducts = this.buildAssignedProducts(
+    const nextProducts = this.buildAssignedProducts(
       [...this.eventProducts.filter((assignment) => assignment.id !== savedAssignment.id), savedAssignment],
       this.masterProducts
     );
-    this.hydrateEventProductImage(this.eventProducts.find((assignment) => assignment.id === savedAssignment.id) || null);
+    this.syncSelectedCategoryProducts(nextProducts);
+    this.hydrateEventProductImage(nextProducts.find((assignment) => assignment.id === savedAssignment.id) || null);
 
-    return this.eventProducts.find((assignment) => assignment.id === savedAssignment.id)!;
+    return nextProducts.find((assignment) => assignment.id === savedAssignment.id)!;
   }
 
   private removeEventProduct(eventProductId: string): void {
-    this.eventProducts = this.eventProducts.filter((assignment) => assignment.id !== eventProductId);
+    const nextProducts = this.eventProducts.filter((assignment) => assignment.id !== eventProductId);
+    this.syncSelectedCategoryProducts(nextProducts);
     delete this.eventProductImageUrls[eventProductId];
+  }
+
+  private syncSelectedEventCategories(categories: EventCategoryDisplayRecord[]): void {
+    this.eventCategories = categories;
+
+    if (!this.selectedEvent) {
+      return;
+    }
+
+    const updatedEvent: EventRecord = {
+      ...this.selectedEvent,
+      categories: categories.map((assignment) => ({
+        ...assignment,
+        products: assignment.products || []
+      }))
+    };
+
+    this.selectedEvent = updatedEvent;
+    this.events = this.events.map((eventRecord) => eventRecord.id === updatedEvent.id ? updatedEvent : eventRecord);
+
+    if (this.selectedCategory) {
+      this.selectedCategory = categories.find((assignment) => assignment.id === this.selectedCategory?.id) || null;
+    }
+  }
+
+  private syncSelectedCategoryProducts(products: EventProductDisplayRecord[]): void {
+    this.eventProducts = products;
+
+    if (!this.selectedCategory) {
+      return;
+    }
+
+    const updatedCategory: EventCategoryDisplayRecord = {
+      ...this.selectedCategory,
+      products
+    };
+
+    this.selectedCategory = updatedCategory;
+    const nextCategories = this.eventCategories.map((assignment) =>
+      assignment.id === updatedCategory.id ? updatedCategory : assignment
+    );
+    this.syncSelectedEventCategories(nextCategories);
   }
 
   private reloadAfterEventMutation(preferredEventId: string): void {
