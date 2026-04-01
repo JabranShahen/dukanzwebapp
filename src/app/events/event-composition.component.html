@@ -152,6 +152,7 @@
                 </div>
                 <div class="selection-card__content">
                   <span class="selection-card__title">{{ categoryName(assignment) }}</span>
+                  <div class="selection-card__copy">{{ categoryDetail(assignment) }}</div>
                 </div>
               </div>
             </button>
@@ -232,6 +233,7 @@
               </div>
               <div class="selection-card__content">
                 <div class="selection-card__title">{{ productName(assignment) }}</div>
+                <div class="selection-card__copy selection-card__copy--tight" *ngIf="assignment.productDescription">{{ assignment.productDescription }}</div>
                 <div class="selection-card__copy">{{ productDetail(assignment) }}</div>
               </div>
             </div>
