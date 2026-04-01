@@ -6,7 +6,7 @@ import { switchMap } from 'rxjs/operators';
 
 import { EventCategoryMutation, EventCategoryRecord } from '../models/event-category.model';
 import { EventProductMutation, EventProductRecord } from '../models/event-product.model';
-import { EventMutation, EventRecord } from '../models/event.model';
+import { CLOSEABLE_EVENT_LIFECYCLE_STATUSES, EventMutation, EventRecord, LAUNCHABLE_EVENT_LIFECYCLE_STATUSES, REVERTABLE_TO_DRAFT_EVENT_LIFECYCLE_STATUSES } from '../models/event.model';
 import { ProductCategory } from '../models/product-category.model';
 import { Product } from '../models/product.model';
 import { EventCategoryService } from '../services/event-category.service';
@@ -16,13 +16,9 @@ import { BlobStorageService } from '../services/blob-storage.service';
 import { ProductCategoryService } from '../services/product-category.service';
 import { ProductService } from '../services/product.service';
 
-interface EventCategoryDisplayRecord extends EventCategoryRecord {
-  masterCategory: ProductCategory | null;
-}
+interface EventCategoryDisplayRecord extends EventCategoryRecord {}
 
-interface EventProductDisplayRecord extends EventProductRecord {
-  masterProduct: Product | null;
-}
+interface EventProductDisplayRecord extends EventProductRecord {}
 
 @Component({
   selector: 'app-event-composition',
@@ -42,6 +38,17 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
   feedbackTone: 'success' | 'error' = 'success';
   eventMutationPending = false;
   addEventModalOpen = false;
+  editEventModalOpen = false;
+  selectedEventForEdit: EventRecord | null = null;
+  deleteEventDialogOpen = false;
+  pendingDeleteEvent: EventRecord | null = null;
+  launchEventDialogOpen = false;
+  pendingLaunchEvent: EventRecord | null = null;
+  closeEventDialogOpen = false;
+  pendingCloseEvent: EventRecord | null = null;
+  revertToDraftDialogOpen = false;
+  pendingRevertEvent: EventRecord | null = null;
+  statusFilter: 'all' | 'draft' | 'scheduled' | 'live' | 'closed' = 'all';
   eventImageUrls: Record<string, string> = {};
   masterCategoryImageUrls: Record<string, string> = {};
   eventCategoryImageUrls: Record<string, string> = {};
@@ -137,10 +144,6 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     });
   }
 
-  goToEvents(): void {
-    this.router.navigate(['/dashboard/events/manage']);
-  }
-
   goToCategories(): void {
     this.router.navigate(['/dashboard/categories']);
   }
@@ -160,12 +163,247 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     }
   }
 
+  openEditEventModal(eventRecord: EventRecord): void {
+    this.selectedEventForEdit = { ...eventRecord };
+    this.editEventModalOpen = true;
+    this.setFeedback('', undefined);
+  }
+
+  closeEditEventModal(): void {
+    if (!this.eventMutationPending) {
+      this.editEventModalOpen = false;
+      this.selectedEventForEdit = null;
+    }
+  }
+
+  onEditEvent(payload: EventMutation): void {
+    this.eventMutationPending = true;
+    const existingOrder = this.events.find((e) => e.id === payload.id)?.order ?? 0;
+    this.resolveEventImagePath(payload).pipe(
+      switchMap((imageURL) => this.eventService.update({ ...payload, imageURL, order: existingOrder }))
+    ).subscribe({
+      next: (updatedEvent) => {
+        this.eventMutationPending = false;
+        this.editEventModalOpen = false;
+        this.selectedEventForEdit = null;
+        this.setFeedback('Event container updated.', 'success');
+        this.reloadAfterEventMutation(updatedEvent?.id || (payload.id || ''));
+      },
+      error: () => {
+        this.eventMutationPending = false;
+        this.setFeedback('Failed to update event container.', 'error');
+      }
+    });
+  }
+
+  openDeleteEventDialog(eventRecord: EventRecord): void {
+    if (this.eventMutationPending) {
+      return;
+    }
+
+    this.pendingDeleteEvent = eventRecord;
+    this.deleteEventDialogOpen = true;
+    this.setFeedback('', undefined);
+  }
+
+  closeDeleteEventDialog(): void {
+    if (!this.eventMutationPending) {
+      this.deleteEventDialogOpen = false;
+      this.pendingDeleteEvent = null;
+    }
+  }
+
+  confirmDeleteEvent(): void {
+    if (!this.pendingDeleteEvent) {
+      return;
+    }
+
+    const deletedId = this.pendingDeleteEvent.id;
+    this.eventMutationPending = true;
+    this.eventService.delete(deletedId).subscribe({
+      next: (deleted) => {
+        this.eventMutationPending = false;
+        this.deleteEventDialogOpen = false;
+        this.pendingDeleteEvent = null;
+
+        if (!deleted) {
+          this.setFeedback('Event could not be deleted.', 'error');
+          return;
+        }
+
+        if (this.selectedEvent?.id === deletedId) {
+          this.clearEventSelection();
+          this.syncQueryState('', '', true);
+        }
+
+        this.setFeedback('Event deleted.', 'success');
+        this.reload();
+      },
+      error: (err: Error) => {
+        this.eventMutationPending = false;
+        this.deleteEventDialogOpen = false;
+        this.pendingDeleteEvent = null;
+        this.setFeedback(err?.message || 'Failed to delete event.', 'error');
+      }
+    });
+  }
+
+  canLaunch(eventRecord: EventRecord): boolean {
+    const status = (eventRecord.lifecycleStatus || '').trim().toLowerCase();
+    return LAUNCHABLE_EVENT_LIFECYCLE_STATUSES.includes(status as never);
+  }
+
+  canClose(eventRecord: EventRecord): boolean {
+    const status = (eventRecord.lifecycleStatus || '').trim().toLowerCase();
+    return CLOSEABLE_EVENT_LIFECYCLE_STATUSES.includes(status as never);
+  }
+
+  launchEvent(eventRecord: EventRecord): void {
+    this.pendingLaunchEvent = eventRecord;
+    this.launchEventDialogOpen = true;
+    this.setFeedback('', undefined);
+  }
+
+  confirmLaunchEvent(): void {
+    if (!this.pendingLaunchEvent) {
+      return;
+    }
+
+    const eventRecord = this.pendingLaunchEvent;
+    this.launchEventDialogOpen = false;
+    this.pendingLaunchEvent = null;
+    this.eventMutationPending = true;
+    this.setFeedback('', undefined);
+
+    this.eventService.launch(eventRecord.id).subscribe({
+      next: () => {
+        this.eventMutationPending = false;
+        this.setFeedback('Event is now live.', 'success');
+        this.reloadAfterEventMutation(eventRecord.id);
+      },
+      error: () => {
+        this.eventMutationPending = false;
+        this.setFeedback('Failed to set event live — make sure at least one category with products is assigned.', 'error');
+      }
+    });
+  }
+
+  closeLaunchEventDialog(): void {
+    if (!this.eventMutationPending) {
+      this.launchEventDialogOpen = false;
+      this.pendingLaunchEvent = null;
+    }
+  }
+
+  closeEvent(eventRecord: EventRecord): void {
+    this.pendingCloseEvent = eventRecord;
+    this.closeEventDialogOpen = true;
+    this.setFeedback('', undefined);
+  }
+
+  confirmCloseEvent(): void {
+    if (!this.pendingCloseEvent) {
+      return;
+    }
+
+    const eventRecord = this.pendingCloseEvent;
+    this.closeEventDialogOpen = false;
+    this.pendingCloseEvent = null;
+    this.eventMutationPending = true;
+    this.setFeedback('', undefined);
+
+    this.eventService.close(eventRecord.id).subscribe({
+      next: () => {
+        this.eventMutationPending = false;
+        this.setFeedback('Event set to closed.', 'success');
+        this.reloadAfterEventMutation(eventRecord.id);
+      },
+      error: () => {
+        this.eventMutationPending = false;
+        this.setFeedback('Failed to close event.', 'error');
+      }
+    });
+  }
+
+  closeCloseEventDialog(): void {
+    if (!this.eventMutationPending) {
+      this.closeEventDialogOpen = false;
+      this.pendingCloseEvent = null;
+    }
+  }
+
+  canRevertToDraft(eventRecord: EventRecord): boolean {
+    const status = (eventRecord.lifecycleStatus || '').trim().toLowerCase();
+    return REVERTABLE_TO_DRAFT_EVENT_LIFECYCLE_STATUSES.includes(status as never);
+  }
+
+  revertEventToDraft(eventRecord: EventRecord): void {
+    this.pendingRevertEvent = eventRecord;
+    this.revertToDraftDialogOpen = true;
+    this.setFeedback('', undefined);
+  }
+
+  confirmRevertToDraft(): void {
+    if (!this.pendingRevertEvent) {
+      return;
+    }
+
+    const eventRecord = this.pendingRevertEvent;
+    this.revertToDraftDialogOpen = false;
+    this.pendingRevertEvent = null;
+    this.eventMutationPending = true;
+    this.setFeedback('', undefined);
+
+    this.eventService.revertToDraft(eventRecord.id).subscribe({
+      next: () => {
+        this.eventMutationPending = false;
+        this.setFeedback('Event reverted to draft.', 'success');
+        this.reloadAfterEventMutation(eventRecord.id);
+      },
+      error: () => {
+        this.eventMutationPending = false;
+        this.setFeedback('Failed to revert event to draft.', 'error');
+      }
+    });
+  }
+
+  closeRevertToDraftDialog(): void {
+    if (!this.eventMutationPending) {
+      this.revertToDraftDialogOpen = false;
+      this.pendingRevertEvent = null;
+    }
+  }
+
+  setStatusFilter(status: 'all' | 'draft' | 'scheduled' | 'live' | 'closed'): void {
+    this.statusFilter = status;
+  }
+
+  filteredEvents(): EventRecord[] {
+    if (this.statusFilter === 'all') {
+      return this.events;
+    }
+
+    return this.events.filter((e) =>
+      (e.lifecycleStatus || '').trim().toLowerCase() === this.statusFilter
+    );
+  }
+
+  deleteEventMessage(): string {
+    if (!this.pendingDeleteEvent) {
+      return 'This will permanently delete the event container.';
+    }
+
+    return `Delete "${this.pendingDeleteEvent.eventName}"? This removes the event container and cannot be undone.`;
+  }
+
   onAddEvent(payload: EventMutation): void {
     this.eventMutationPending = true;
+    const nextOrder = this.events.length === 0 ? 0 : Math.max(...this.events.map((e) => e.order ?? 0)) + 1;
     this.resolveEventImagePath(payload).pipe(
       switchMap((imageURL) => this.eventService.create({
         ...payload,
-        imageURL
+        imageURL,
+        order: nextOrder
       }))
     ).subscribe({
       next: (createdEvent) => {
@@ -195,6 +433,34 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     this.syncQueryState(this.selectedEvent.id, category.id);
   }
 
+  onMasterCategoryCreated(category: ProductCategory): void {
+    this.masterCategories = [...this.masterCategories, category].sort((left, right) =>
+      (left.productCategoryName || '').localeCompare(right.productCategoryName || '', undefined, { sensitivity: 'base' })
+    );
+
+    const imagePath = (category.productCategoryImageURL || '').trim();
+    if (imagePath) {
+      this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+        next: (imageUrl) => { this.masterCategoryImageUrls[category.id] = imageUrl || ''; },
+        error: () => { this.masterCategoryImageUrls[category.id] = ''; }
+      });
+    }
+  }
+
+  onMasterProductCreated(product: Product): void {
+    this.masterProducts = [...this.masterProducts, product].sort((left, right) =>
+      (left.productName || '').localeCompare(right.productName || '', undefined, { sensitivity: 'base' })
+    );
+
+    const imagePath = (product.imageURL || '').trim();
+    if (imagePath) {
+      this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+        next: (imageUrl) => { this.masterProductImageUrls[product.id] = imageUrl || ''; },
+        error: () => { this.masterProductImageUrls[product.id] = ''; }
+      });
+    }
+  }
+
   openAddCategoryModal(): void {
     this.categoryModalMode = 'add';
     this.selectedCategoryAssignment = null;
@@ -210,7 +476,8 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       partitionKey: assignment.partitionKey,
       eventId: assignment.eventId,
       productCategoryId: assignment.productCategoryId,
-      overrideImageURL: assignment.overrideImageURL,
+      categoryName: assignment.categoryName,
+      imageURL: assignment.imageURL,
       visible: assignment.visible,
       order: assignment.order
     };
@@ -237,19 +504,21 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
     this.categoryMutationPending = true;
     const request = this.resolveEventCategoryImagePath(payload).pipe(
-      switchMap((overrideImageURL) => this.categoryModalMode === 'edit' && this.selectedCategoryAssignment
+      switchMap((imageURL) => this.categoryModalMode === 'edit' && this.selectedCategoryAssignment
         ? this.eventCategoryService.update({
             id: this.selectedCategoryAssignment.id,
             eventId: this.selectedEvent.id,
             productCategoryId: this.selectedCategoryAssignment.productCategoryId,
-            overrideImageURL,
+            categoryName: payload.categoryName,
+            imageURL,
             visible: payload.visible,
             order: assignmentOrder
           })
         : this.eventCategoryService.create({
             eventId: this.selectedEvent.id,
             productCategoryId: payload.productCategoryId,
-            overrideImageURL,
+            categoryName: payload.categoryName,
+            imageURL,
             visible: payload.visible,
             order: assignmentOrder
           }))
@@ -353,7 +622,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       eventId: assignment.eventId,
       eventCategoryId: assignment.eventCategoryId,
       productId: assignment.productId,
-      overrideImageURL: assignment.overrideImageURL,
+      productName: assignment.productName,
+      productDescription: assignment.productDescription,
+      imageURL: assignment.imageURL,
+      displayPercentage: assignment.displayPercentage,
+      displayUnitName: assignment.displayUnitName,
       orignalPrice: assignment.orignalPrice,
       currentPrice: assignment.currentPrice,
       currentCost: assignment.currentCost,
@@ -384,13 +657,17 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
     this.productMutationPending = true;
     const request = this.resolveEventProductImagePath(payload).pipe(
-      switchMap((overrideImageURL) => this.productModalMode === 'edit' && this.selectedProductAssignment
+      switchMap((imageURL) => this.productModalMode === 'edit' && this.selectedProductAssignment
         ? this.eventProductService.update({
             id: this.selectedProductAssignment.id,
             eventId: this.selectedEvent.id,
             eventCategoryId: this.selectedCategory.id,
             productId: this.selectedProductAssignment.productId,
-            overrideImageURL,
+            productName: payload.productName,
+            productDescription: payload.productDescription,
+            imageURL,
+            displayPercentage: payload.displayPercentage,
+            displayUnitName: payload.displayUnitName,
             orignalPrice: payload.orignalPrice,
             currentPrice: payload.currentPrice,
             currentCost: payload.currentCost,
@@ -402,7 +679,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
             eventId: this.selectedEvent.id,
             eventCategoryId: this.selectedCategory.id,
             productId: payload.productId,
-            overrideImageURL,
+            productName: payload.productName,
+            productDescription: payload.productDescription,
+            imageURL,
+            displayPercentage: payload.displayPercentage,
+            displayUnitName: payload.displayUnitName,
             orignalPrice: payload.orignalPrice,
             currentPrice: payload.currentPrice,
             currentCost: payload.currentCost,
@@ -484,6 +765,38 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     });
   }
 
+  onEventDrop(event: CdkDragDrop<EventRecord[]>): void {
+    if (this.eventMutationPending || event.previousIndex === event.currentIndex) {
+      return;
+    }
+
+    const reordered = [...this.events];
+    moveItemInArray(reordered, event.previousIndex, event.currentIndex);
+
+    const updates = reordered.map((eventRecord, index) => ({
+      ...eventRecord,
+      order: index
+    }));
+
+    this.eventMutationPending = true;
+    this.events = updates;
+
+    forkJoin(updates.map((payload) => this.resolveEventImagePath(payload).pipe(
+      switchMap((imageURL) => this.eventService.update({ ...payload, imageURL }))
+    ))).subscribe({
+      next: (saved) => {
+        this.eventMutationPending = false;
+        this.events = [...saved].sort((a, b) => this.compareEvents(a, b));
+        this.hydrateEventImages(this.events);
+        this.setFeedback('Events reordered.', 'success');
+      },
+      error: () => {
+        this.eventMutationPending = false;
+        this.setFeedback('Failed to reorder events.', 'error');
+        this.reload();
+      }
+    });
+  }
   onCategoryDrop(event: CdkDragDrop<EventCategoryDisplayRecord[]>): void {
     if (!this.selectedEvent || this.categoryMutationPending || event.previousIndex === event.currentIndex) {
       return;
@@ -493,11 +806,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     moveItemInArray(reordered, event.previousIndex, event.currentIndex);
 
     const updates = reordered.map((assignment, index) => ({
-      id: assignment.id,
-      eventId: assignment.eventId,
-      productCategoryId: assignment.productCategoryId,
-      overrideImageURL: assignment.overrideImageURL,
-      visible: assignment.visible,
+      ...assignment,
       order: index
     }));
 
@@ -529,16 +838,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     moveItemInArray(reordered, event.previousIndex, event.currentIndex);
 
     const updates = reordered.map((assignment, index) => ({
-      id: assignment.id,
-      eventId: assignment.eventId,
-      eventCategoryId: assignment.eventCategoryId,
-      productId: assignment.productId,
-      overrideImageURL: assignment.overrideImageURL,
-      orignalPrice: assignment.orignalPrice,
-      currentPrice: assignment.currentPrice,
-      currentCost: assignment.currentCost,
-      unitName: assignment.unitName,
-      visible: assignment.visible,
+      ...assignment,
       order: index
     }));
 
@@ -610,9 +910,10 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       return this.availableCategories();
     }
 
-    const selectedMasterCategory = this.eventCategories.find(
+    const assignedMasterCategoryId = this.eventCategories.find(
       (assignment) => assignment.id === this.selectedCategoryAssignment?.id
-    )?.masterCategory;
+    )?.productCategoryId;
+    const selectedMasterCategory = this.masterCategories.find((c) => c.id === assignedMasterCategoryId);
 
     return selectedMasterCategory ? [...this.availableCategories(), selectedMasterCategory] : this.availableCategories();
   }
@@ -622,9 +923,10 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       return this.availableProducts();
     }
 
-    const selectedMasterProduct = this.eventProducts.find(
+    const assignedMasterProductId = this.eventProducts.find(
       (assignment) => assignment.id === this.selectedProductAssignment?.id
-    )?.masterProduct;
+    )?.productId;
+    const selectedMasterProduct = this.masterProducts.find((p) => p.id === assignedMasterProductId);
 
     return selectedMasterProduct ? [...this.availableProducts(), selectedMasterProduct] : this.availableProducts();
   }
@@ -671,27 +973,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
   }
 
   categoryName(assignment: EventCategoryDisplayRecord): string {
-    return assignment.masterCategory?.productCategoryName || 'Unavailable master category';
+    return (assignment.categoryName || '').trim() || 'Unnamed category';
   }
 
   categoryDetail(assignment: EventCategoryDisplayRecord): string {
-    if (!assignment.masterCategory) {
-      return 'The assignment still exists, but the referenced master category could not be loaded.';
-    }
-
-    return 'Master metadata stays on the catalog seam. This record only stores event visibility and order.';
-  }
-
-  categoryMasterStateLabel(assignment: EventCategoryDisplayRecord): string {
-    if (!assignment.masterCategory) {
-      return 'Unavailable';
-    }
-
-    return assignment.masterCategory.visible ? 'Active master record' : 'Retired master record';
-  }
-
-  categoryMasterStateTone(assignment: EventCategoryDisplayRecord): 'success' | 'muted' {
-    return assignment.masterCategory?.visible ? 'success' : 'muted';
+    return assignment.visible ? 'Visible in this event.' : 'Hidden in this event.';
   }
 
   assignmentVisibilityLabel(value: boolean, scope: 'category' | 'product'): string {
@@ -707,20 +993,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
   }
 
   productName(assignment: EventProductDisplayRecord): string {
-    return assignment.masterProduct?.productName || 'Unavailable master product';
+    return (assignment.productName || '').trim() || 'Unnamed product';
   }
 
   productDetail(assignment: EventProductDisplayRecord): string {
-    if (!assignment.masterProduct) {
-      return 'The assignment still exists, but the referenced master product could not be loaded.';
-    }
-
-    const details = [
-      assignment.masterProduct.productDescription || 'No master description available.',
-      this.productPriceSummary(assignment)
-    ].filter(Boolean);
-
-    return `${details.join(' ')} Event composition stores pricing, visibility, and order.`;
+    return this.productPriceSummary(assignment);
   }
 
   productPriceSummary(assignment: EventProductDisplayRecord): string {
@@ -732,28 +1009,18 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     return `Event price ${currentPrice}${unitSuffix}. Original ${originalPrice}. Cost ${currentCost}.`;
   }
 
-  productMasterStateLabel(assignment: EventProductDisplayRecord): string {
-    if (!assignment.masterProduct) {
-      return 'Unavailable';
-    }
 
-    return assignment.masterProduct.visible ? 'Active master record' : 'Retired master record';
-  }
-
-  productMasterStateTone(assignment: EventProductDisplayRecord): 'success' | 'muted' {
-    return assignment.masterProduct?.visible ? 'success' : 'muted';
-  }
 
   eventImageUrl(eventRecord: EventRecord): string {
     return this.eventImageUrls[eventRecord.id] || '';
   }
 
   categoryImageUrl(assignment: EventCategoryDisplayRecord): string {
-    return this.eventCategoryImageUrls[assignment.id] || this.masterCategoryImageUrls[assignment.productCategoryId] || '';
+    return this.eventCategoryImageUrls[assignment.id] || '';
   }
 
   productImageUrl(assignment: EventProductDisplayRecord): string {
-    return this.eventProductImageUrls[assignment.id] || this.masterProductImageUrls[assignment.productId] || '';
+    return this.eventProductImageUrls[assignment.id] || '';
   }
 
   deleteCategoryMessage(): string {
@@ -876,10 +1143,8 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
   private buildAssignedCategories(
     assignments: Array<EventCategoryRecord | EventCategoryMutation>,
-    masterCategories: ProductCategory[]
+    _masterCategories: ProductCategory[]
   ): EventCategoryDisplayRecord[] {
-    const masterCategoryById = new Map(masterCategories.map((category) => [category.id, category]));
-
     return [...assignments]
       .sort((left, right) => {
         const leftOrder = left.order ?? 0;
@@ -896,19 +1161,17 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         partitionKey: assignment.partitionKey,
         eventId: (assignment.eventId || '').trim(),
         productCategoryId: (assignment.productCategoryId || '').trim(),
-        overrideImageURL: (assignment.overrideImageURL || '').trim(),
+        categoryName: (assignment.categoryName || '').trim(),
+        imageURL: (assignment.imageURL || '').trim(),
         visible: !!assignment.visible,
-        order: this.normalizeOrder(assignment.order),
-        masterCategory: masterCategoryById.get((assignment.productCategoryId || '').trim()) || null
+        order: this.normalizeOrder(assignment.order)
       }));
   }
 
   private buildAssignedProducts(
     assignments: Array<EventProductRecord | EventProductMutation>,
-    masterProducts: Product[]
+    _masterProducts: Product[]
   ): EventProductDisplayRecord[] {
-    const masterProductById = new Map(masterProducts.map((product) => [product.id, product]));
-
     return [...assignments]
       .sort((left, right) => {
         const leftOrder = left.order ?? 0;
@@ -926,14 +1189,17 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         eventId: (assignment.eventId || '').trim(),
         eventCategoryId: (assignment.eventCategoryId || '').trim(),
         productId: (assignment.productId || '').trim(),
-        overrideImageURL: (assignment.overrideImageURL || '').trim(),
+        productName: (assignment.productName || '').trim(),
+        productDescription: (assignment.productDescription || '').trim(),
+        imageURL: (assignment.imageURL || '').trim(),
+        displayPercentage: this.normalizeMoney(assignment.displayPercentage),
+        displayUnitName: (assignment.displayUnitName || '').trim(),
         orignalPrice: this.normalizeMoney(assignment.orignalPrice),
         currentPrice: this.normalizeMoney(assignment.currentPrice),
         currentCost: this.normalizeMoney(assignment.currentCost),
         unitName: (assignment.unitName || '').trim(),
         visible: !!assignment.visible,
-        order: this.normalizeOrder(assignment.order),
-        masterProduct: masterProductById.get((assignment.productId || '').trim()) || null
+        order: this.normalizeOrder(assignment.order)
       }));
   }
 
@@ -1025,13 +1291,11 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
   }
 
   private compareEvents(left: EventRecord, right: EventRecord): number {
-    const leftDate = left.startDateUtc ? new Date(left.startDateUtc).getTime() : Number.MAX_SAFE_INTEGER;
-    const rightDate = right.startDateUtc ? new Date(right.startDateUtc).getTime() : Number.MAX_SAFE_INTEGER;
-
-    if (leftDate !== rightDate) {
-      return leftDate - rightDate;
+    const leftOrder = typeof left.order === 'number' ? left.order : 0;
+    const rightOrder = typeof right.order === 'number' ? right.order : 0;
+    if (leftOrder !== rightOrder) {
+      return leftOrder - rightOrder;
     }
-
     return (left.eventName || '').localeCompare(right.eventName || '', undefined, { sensitivity: 'base' });
   }
 
@@ -1046,7 +1310,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     });
   }
 
-  private setFeedback(message: string, tone: 'success' | 'error' | undefined): void {
+  setFeedback(message: string, tone: 'success' | 'error' | undefined): void {
     this.feedbackMessage = message;
     this.feedbackTone = tone || 'success';
   }
@@ -1119,7 +1383,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const imagePath = (assignment.overrideImageURL || '').trim();
+    const imagePath = (assignment.imageURL || '').trim();
     if (!imagePath) {
       this.eventCategoryImageUrls[assignment.id] = '';
       return;
@@ -1146,7 +1410,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const imagePath = (assignment.overrideImageURL || '').trim();
+    const imagePath = (assignment.imageURL || '').trim();
     if (!imagePath) {
       this.eventProductImageUrls[assignment.id] = '';
       return;
@@ -1183,7 +1447,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       return this.blobStorageService.uploadImage(payload.imageFile, 'dukanz/event-categories');
     }
 
-    return of((payload.overrideImageURL || '').trim());
+    return of((payload.imageURL || '').trim());
   }
 
   private resolveEventProductImagePath(payload: EventProductMutation): Observable<string> {
@@ -1195,7 +1459,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       return this.blobStorageService.uploadImage(payload.imageFile, 'dukanz/event-products');
     }
 
-    return of((payload.overrideImageURL || '').trim());
+    return of((payload.imageURL || '').trim());
   }
 
   private normalizeText(value: string | null | undefined): string {

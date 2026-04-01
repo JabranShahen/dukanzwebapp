@@ -32,7 +32,15 @@
         <tbody>
           <tr *ngFor="let category of categories; trackBy: trackById">
             <td>{{ category.productCategoryName }}</td>
-            <td>{{ imageLabel(category) }}</td>
+            <td>
+              <img
+                *ngIf="categoryImageUrl(category)"
+                [src]="categoryImageUrl(category)"
+                [alt]="category.productCategoryName"
+                class="category-thumb"
+              />
+              <span *ngIf="!categoryImageUrl(category)" class="no-image">—</span>
+            </td>
             <td>
               <app-ui-status-pill
                 [label]="statusLabel(category)"

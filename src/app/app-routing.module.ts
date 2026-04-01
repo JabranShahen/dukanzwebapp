@@ -7,7 +7,6 @@ import { DashboardOverviewComponent } from './dashboard/dashboard-overview/dashb
 import { CategoryManagementComponent } from './category-management/category-management.component';
 import { EventCompositionComponent } from './events/event-composition.component';
 import { EventCategoryManagementComponent } from './events/event-category-management.component';
-import { EventManagementComponent } from './events/event-management.component';
 import { ProductManagementComponent } from './products/product-management.component';
 import { SettingsComponent } from './settings/settings.component';
 import { AccountComponent } from './account/account.component';
@@ -45,7 +44,8 @@ const routes: Routes = [
       },
       {
         path: 'events/manage',
-        component: EventManagementComponent
+        redirectTo: 'events',
+        pathMatch: 'full'
       },
       {
         path: 'events',

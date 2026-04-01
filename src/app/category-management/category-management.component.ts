@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Observable, of, Subscription } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 import { ProductCategory, ProductCategoryMutation } from '../models/product-category.model';
@@ -11,7 +11,7 @@ import { ProductCategoryService } from '../services/product-category.service';
   templateUrl: './category-management.component.html',
   styleUrls: ['./category-management.component.scss']
 })
-export class CategoryManagementComponent implements OnInit {
+export class CategoryManagementComponent implements OnInit, OnDestroy {
   loading = true;
   error = '';
   mutationPending = false;
@@ -23,6 +23,8 @@ export class CategoryManagementComponent implements OnInit {
   selectedCategory: ProductCategory | null = null;
   pendingDeleteCategory: ProductCategory | null = null;
   categories: ProductCategory[] = [];
+  categoryImageUrls: Map<string, string> = new Map();
+  private imageSubscriptions: Subscription[] = [];
 
   constructor(
     private readonly categoryService: ProductCategoryService,
@@ -31,6 +33,10 @@ export class CategoryManagementComponent implements OnInit {
 
   ngOnInit(): void {
     this.reload();
+  }
+
+  ngOnDestroy(): void {
+    this.clearImageSubscriptions();
   }
 
   reload(): void {
@@ -43,6 +49,7 @@ export class CategoryManagementComponent implements OnInit {
           (a.productCategoryName || '').localeCompare(b.productCategoryName || '', undefined, { sensitivity: 'base' })
         );
         this.loading = false;
+        this.hydrateImages();
       },
       error: () => {
         this.loading = false;
@@ -197,6 +204,35 @@ export class CategoryManagementComponent implements OnInit {
 
   statusLabel(category: ProductCategory): string {
     return category.visible ? 'Active' : 'Retired';
+  }
+
+  categoryImageUrl(category: ProductCategory): string {
+    return this.categoryImageUrls.get(category.id) || '';
+  }
+
+  private hydrateImages(): void {
+    this.clearImageSubscriptions();
+    this.categoryImageUrls = new Map();
+
+    for (const category of this.categories) {
+      const path = (category.productCategoryImageURL || '').trim();
+      if (!path) {
+        continue;
+      }
+
+      const sub = this.blobStorageService.getDownloadUrl(path).subscribe({
+        next: (url) => {
+          this.categoryImageUrls = new Map(this.categoryImageUrls).set(category.id, url || '');
+        },
+        error: () => {}
+      });
+      this.imageSubscriptions.push(sub);
+    }
+  }
+
+  private clearImageSubscriptions(): void {
+    this.imageSubscriptions.forEach((sub) => sub.unsubscribe());
+    this.imageSubscriptions = [];
   }
 
   private getNextCategoryOrder(): number {

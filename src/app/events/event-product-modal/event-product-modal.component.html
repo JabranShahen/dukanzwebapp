@@ -1,80 +1,132 @@
 <div class="modal-backdrop" role="presentation">
   <form class="modal-card" [formGroup]="assignmentForm" (ngSubmit)="onSubmit()" novalidate>
-    <h3>{{ mode === 'add' ? 'Add event product' : 'Edit event product settings' }}</h3>
-    <p class="hint">
-      This configures event-specific product membership for {{ categoryName || 'the selected category' }} in {{ eventName || 'the selected event' }} only.
-      It does not edit the master product record.
-    </p>
+    <h3>{{ mode === 'add' ? 'Add event product' : 'Edit event product' }}</h3>
 
-    <div class="field-grid">
-      <label class="field-span" *ngIf="mode === 'add'">
-        Master product
-        <select formControlName="productId" (change)="onProductSelectionChange()">
-          <option value="">Select a master product</option>
-          <option *ngFor="let product of availableProducts" [value]="product.id">
-            {{ product.productName }}{{ product.visible ? '' : ' (Retired)' }}
-          </option>
-        </select>
-        <span class="error" *ngIf="assignmentForm.controls.productId.touched && assignmentForm.controls.productId.invalid">
-          Master product selection is required.
-        </span>
-        <span class="error" *ngIf="productError">{{ productError }}</span>
-      </label>
+    <div class="field-list">
 
-      <label class="field-span" *ngIf="mode === 'edit'">
-        Master product
-        <input type="text" [value]="productLabel()" readonly />
-      </label>
+      <div class="field-row field-row--span" *ngIf="mode === 'add'">
+        <span class="field-label">Master product</span>
+        <div class="field-control">
+          <div class="field-with-action">
+            <select formControlName="productId" (change)="onProductSelectionChange()">
+              <option value="">Select a master product</option>
+              <option *ngFor="let product of availableProducts" [value]="product.id">
+                {{ product.productName }}{{ product.visible ? '' : ' (Retired)' }}
+              </option>
+            </select>
+            <app-ui-button variant="ghost" [disabled]="pending" (clicked)="openAddMasterProduct()">+ Add</app-ui-button>
+          </div>
+          <span class="error" *ngIf="assignmentForm.controls.productId.touched && assignmentForm.controls.productId.invalid">
+            Master product selection is required.
+          </span>
+          <span class="error" *ngIf="productError && mode === 'add'">{{ productError }}</span>
+        </div>
+      </div>
 
-      <label>
-        Original price
-        <input type="number" min="0" step="0.01" formControlName="orignalPrice" />
-      </label>
+      <app-add-product-modal
+        *ngIf="addMasterProductOpen"
+        [pending]="addMasterProductPending"
+        (cancelled)="closeAddMasterProduct()"
+        (saved)="onMasterProductSaved($event)"
+      ></app-add-product-modal>
 
-      <label>
-        Current price
-        <input type="number" min="0" step="0.01" formControlName="currentPrice" />
-      </label>
+      <div class="field-row field-row--span">
+        <label class="field-label" for="ep-productName">Product name</label>
+        <div class="field-control">
+          <input id="ep-productName" type="text" formControlName="productName" />
+          <span class="error" *ngIf="assignmentForm.controls.productName.touched && assignmentForm.controls.productName.invalid">
+            Product name is required.
+          </span>
+          <span class="error" *ngIf="productError && mode === 'edit'">{{ productError }}</span>
+        </div>
+      </div>
 
-      <label>
-        Current cost
-        <input type="number" min="0" step="0.01" formControlName="currentCost" />
-      </label>
+      <div class="field-row field-row--span">
+        <label class="field-label" for="ep-description">Description</label>
+        <div class="field-control">
+          <textarea id="ep-description" formControlName="productDescription" rows="2"></textarea>
+        </div>
+      </div>
 
-      <label>
-        Unit
-        <input type="text" formControlName="unitName" placeholder="cup" />
-        <span class="error" *ngIf="unitError">{{ unitError }}</span>
-      </label>
+      <div class="field-row">
+        <label class="field-label" for="ep-orignalPrice">Original price</label>
+        <div class="field-control">
+          <input id="ep-orignalPrice" type="number" min="0" step="0.01" formControlName="orignalPrice" />
+        </div>
+      </div>
 
-      <label>
-        Event visibility
-        <select formControlName="visible">
-          <option [ngValue]="true">Visible in this category</option>
-          <option [ngValue]="false">Hidden in this category</option>
-        </select>
-      </label>
+      <div class="field-row">
+        <label class="field-label" for="ep-currentPrice">Current price</label>
+        <div class="field-control">
+          <input id="ep-currentPrice" type="number" min="0" step="0.01" formControlName="currentPrice" />
+        </div>
+      </div>
 
-      <label class="field-span">
-        Override image
-        <input type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
-        <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
-        <span class="hint" *ngIf="!selectedImageFile && currentOverrideImagePath">Current override image stored.</span>
-        <span class="hint" *ngIf="!selectedImageFile && !currentOverrideImagePath">Leave empty to use the master product image.</span>
-        <span class="error" *ngIf="imageError">{{ imageError }}</span>
-      </label>
+      <div class="field-row">
+        <label class="field-label" for="ep-currentCost">Current cost</label>
+        <div class="field-control">
+          <input id="ep-currentCost" type="number" min="0" step="0.01" formControlName="currentCost" />
+        </div>
+      </div>
 
-      <label class="field-span check-row" *ngIf="currentOverrideImagePath">
-        <input type="checkbox" [checked]="removeCurrentImage" (change)="onRemoveCurrentImageChange($event)" [disabled]="pending" />
-        Remove current override image
-      </label>
+      <div class="field-row">
+        <label class="field-label" for="ep-unitName">Unit</label>
+        <div class="field-control">
+          <input id="ep-unitName" type="text" formControlName="unitName" placeholder="cup" />
+          <span class="error" *ngIf="unitError">{{ unitError }}</span>
+        </div>
+      </div>
 
-      <div class="field-span image-preview" *ngIf="previewImageUrl()">
-        <div>
-          <div class="hint">{{ previewLabel() }}</div>
+      <div class="field-row">
+        <label class="field-label" for="ep-displayPercentage">Display percentage</label>
+        <div class="field-control">
+          <input id="ep-displayPercentage" type="number" min="0" step="0.01" formControlName="displayPercentage" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <label class="field-label" for="ep-displayUnitName">Display unit name</label>
+        <div class="field-control">
+          <input id="ep-displayUnitName" type="text" formControlName="displayUnitName" placeholder="e.g. 250ml" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <label class="field-label" for="ep-visible">Event visibility</label>
+        <div class="field-control">
+          <select id="ep-visible" formControlName="visible">
+            <option [ngValue]="true">Visible in this category</option>
+            <option [ngValue]="false">Hidden in this category</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row field-row--span">
+        <label class="field-label" for="ep-image">Image</label>
+        <div class="field-control">
+          <input id="ep-image" type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
+          <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
+          <span class="hint" *ngIf="!selectedImageFile && currentImagePath">Current image stored.</span>
+          <span class="hint" *ngIf="!selectedImageFile && !currentImagePath">Upload an image for this event product.</span>
+          <span class="error" *ngIf="imageError">{{ imageError }}</span>
+        </div>
+      </div>
+
+      <div class="field-row field-row--span check-row" *ngIf="currentImagePath">
+        <span class="field-label"></span>
+        <div class="field-control field-control--check">
+          <input type="checkbox" id="ep-removeImage" [checked]="removeCurrentImage" (change)="onRemoveCurrentImageChange($event)" [disabled]="pending" />
+          <label for="ep-removeImage">Remove current image</label>
+        </div>
+      </div>
+
+      <div class="field-row field-row--span image-preview" *ngIf="previewImageUrl()">
+        <span class="field-label">{{ previewLabel() }}</span>
+        <div class="field-control">
           <img [src]="previewImageUrl()" [alt]="productLabel() || 'Event product image preview'" />
         </div>
       </div>
+
     </div>
 
     <span class="error" *ngIf="priceError">{{ priceError }}</span>

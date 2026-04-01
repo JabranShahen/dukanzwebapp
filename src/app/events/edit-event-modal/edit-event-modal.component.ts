@@ -62,6 +62,13 @@ export class EditEventModalComponent implements OnChanges, OnDestroy {
         startDateUtc: this.toDateTimeLocalValue(this.eventRecord.startDateUtc),
         endDateUtc: this.toDateTimeLocalValue(this.eventRecord.endDateUtc)
       });
+
+      if (this.isLifecycleLocked(normalizedLifecycle)) {
+        this.eventForm.controls.lifecycleStatus.disable();
+      } else {
+        this.eventForm.controls.lifecycleStatus.enable();
+      }
+
       this.nameError = '';
       this.dateRangeError = '';
       this.imageError = '';
@@ -154,6 +161,11 @@ export class EditEventModalComponent implements OnChanges, OnDestroy {
     });
   }
 
+  isLifecycleLocked(status?: string): boolean {
+    const s = (status || this.normalizeLifecycleStatus(this.eventRecord?.lifecycleStatus)).toLowerCase();
+    return s === 'live';
+  }
+
   private resolveLifecycleOptions(currentLifecycle: string): string[] {
     const baseOptions = [...EDITABLE_EVENT_LIFECYCLE_STATUSES];
     if (
@@ -162,7 +174,6 @@ export class EditEventModalComponent implements OnChanges, OnDestroy {
     ) {
       return [...baseOptions, currentLifecycle];
     }
-
     return baseOptions;
   }
 
@@ -180,12 +191,10 @@ export class EditEventModalComponent implements OnChanges, OnDestroy {
     if (!normalized) {
       return null;
     }
-
     const parsed = new Date(normalized);
     if (Number.isNaN(parsed.getTime())) {
       return null;
     }
-
     return parsed.toISOString();
   }
 
@@ -193,12 +202,10 @@ export class EditEventModalComponent implements OnChanges, OnDestroy {
     if (!value) {
       return '';
     }
-
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) {
       return '';
     }
-
     const offset = parsed.getTimezoneOffset();
     const localDate = new Date(parsed.getTime() - (offset * 60 * 1000));
     return localDate.toISOString().slice(0, 16);
@@ -214,12 +221,8 @@ export class EditEventModalComponent implements OnChanges, OnDestroy {
     }
 
     this.imagePreviewSubscription = this.blobStorageService.getDownloadUrl(imagePath).subscribe({
-      next: (imageUrl) => {
-        this.currentImagePreviewUrl = imageUrl || '';
-      },
-      error: () => {
-        this.currentImagePreviewUrl = '';
-      }
+      next: (imageUrl) => { this.currentImagePreviewUrl = imageUrl || ''; },
+      error: () => { this.currentImagePreviewUrl = ''; }
     });
   }
 

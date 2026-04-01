@@ -93,7 +93,8 @@ export class EventCategoryService {
     const requestPayload: Record<string, unknown> = {
       eventId,
       productCategoryId,
-      overrideImageURL: (payload.overrideImageURL || '').trim(),
+      categoryName: (payload.categoryName || '').trim(),
+      imageURL: (payload.imageURL || '').trim(),
       visible: !!payload.visible,
       order: this.normalizeOrder(payload.order)
     };
@@ -117,7 +118,8 @@ export class EventCategoryService {
       partitionKey: partitionKey || undefined,
       eventId: (record.eventId || '').trim(),
       productCategoryId: (record.productCategoryId || '').trim(),
-      overrideImageURL: (record.overrideImageURL || '').trim(),
+      categoryName: (record.categoryName || '').trim(),
+      imageURL: (record.imageURL || '').trim(),
       visible: !!record.visible,
       order: this.normalizeOrder(record.order)
     };

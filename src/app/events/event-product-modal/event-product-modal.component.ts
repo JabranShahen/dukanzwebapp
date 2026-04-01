@@ -1,10 +1,12 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { of, Subscription } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 import { EventProductMutation, EventProductRecord } from '../../models/event-product.model';
-import { Product } from '../../models/product.model';
+import { Product, ProductMutation } from '../../models/product.model';
 import { BlobStorageService } from '../../services/blob-storage.service';
+import { ProductService } from '../../services/product.service';
 
 @Component({
   selector: 'app-event-product-modal',
@@ -17,11 +19,13 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
   @Input() categoryName = '';
   @Input() assignment: EventProductRecord | null = null;
   @Input() availableProducts: Product[] = [];
+  @Input() allMasterProducts: Product[] = [];
   @Input() existingProductIds: string[] = [];
   @Input() pending = false;
 
   @Output() cancelled = new EventEmitter<void>();
   @Output() saved = new EventEmitter<EventProductMutation>();
+  @Output() masterProductCreated = new EventEmitter<Product>();
 
   productError = '';
   priceError = '';
@@ -29,15 +33,19 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
   imageError = '';
   selectedImageFile: File | null = null;
   removeCurrentImage = false;
-  currentOverrideImagePath = '';
-  currentOverridePreviewUrl = '';
-  masterImagePreviewUrl = '';
+  addMasterProductOpen = false;
+  addMasterProductPending = false;
+  currentImagePath = '';
+  currentImagePreviewUrl = '';
   selectedImagePreviewUrl = '';
-  private currentOverrideImageSubscription: Subscription | null = null;
-  private masterImageSubscription: Subscription | null = null;
+  private currentImageSubscription: Subscription | null = null;
 
   readonly assignmentForm = this.formBuilder.nonNullable.group({
     productId: ['', [Validators.required]],
+    productName: ['', [Validators.required, Validators.maxLength(120)]],
+    productDescription: [''],
+    displayPercentage: [0, [Validators.min(0)]],
+    displayUnitName: [''],
     orignalPrice: [0, [Validators.required, Validators.min(0)]],
     currentPrice: [0, [Validators.required, Validators.min(0)]],
     currentCost: [0, [Validators.required, Validators.min(0)]],
@@ -47,7 +55,8 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
 
   constructor(
     private readonly formBuilder: FormBuilder,
-    private readonly blobStorageService: BlobStorageService
+    private readonly blobStorageService: BlobStorageService,
+    private readonly productService: ProductService
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -55,6 +64,10 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
       if (this.mode === 'edit' && this.assignment) {
         this.assignmentForm.reset({
           productId: this.assignment.productId || '',
+          productName: this.assignment.productName || '',
+          productDescription: this.assignment.productDescription || '',
+          displayPercentage: this.assignment.displayPercentage ?? 0,
+          displayUnitName: this.assignment.displayUnitName || '',
           orignalPrice: this.assignment.orignalPrice ?? 0,
           currentPrice: this.assignment.currentPrice ?? 0,
           currentCost: this.assignment.currentCost ?? 0,
@@ -64,6 +77,10 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
       } else {
         this.assignmentForm.reset({
           productId: '',
+          productName: '',
+          productDescription: '',
+          displayPercentage: 0,
+          displayUnitName: '',
           orignalPrice: 0,
           currentPrice: 0,
           currentCost: 0,
@@ -78,21 +95,67 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
       this.imageError = '';
       this.selectedImageFile = null;
       this.removeCurrentImage = false;
-      this.currentOverrideImagePath = this.assignment?.overrideImageURL || '';
+      this.currentImagePath = this.assignment?.imageURL || '';
       this.revokeSelectedImagePreview();
-      this.loadCurrentOverridePreview();
-      this.loadMasterPreview();
+      this.loadCurrentImagePreview();
     }
   }
 
   ngOnDestroy(): void {
-    this.currentOverrideImageSubscription?.unsubscribe();
-    this.masterImageSubscription?.unsubscribe();
+    this.currentImageSubscription?.unsubscribe();
     this.revokeSelectedImagePreview();
   }
 
   onCancel(): void {
     this.cancelled.emit();
+  }
+
+  openAddMasterProduct(): void {
+    this.addMasterProductOpen = true;
+  }
+
+  closeAddMasterProduct(): void {
+    if (!this.addMasterProductPending) {
+      this.addMasterProductOpen = false;
+    }
+  }
+
+  onMasterProductSaved(payload: ProductMutation): void {
+    this.addMasterProductPending = true;
+
+    const imageUpload$ = payload.imageFile
+      ? this.blobStorageService.uploadImage(payload.imageFile, 'dukanz/products')
+      : of('');
+
+    imageUpload$.pipe(
+      switchMap((imageURL) => this.productService.create({ ...payload, imageURL }))
+    ).subscribe({
+      next: (created) => {
+        this.addMasterProductPending = false;
+        this.addMasterProductOpen = false;
+        this.masterProductCreated.emit(created);
+        this.assignmentForm.controls.productId.setValue(created.id);
+        this.assignmentForm.patchValue({
+          productName: created.productName || '',
+          productDescription: created.productDescription || '',
+          displayPercentage: this.normalizeMoney(created.displayPercentage),
+          displayUnitName: created.displayUnitName || '',
+          orignalPrice: created.orignalPrice ?? 0,
+          currentPrice: created.currentPrice ?? 0,
+          currentCost: created.currentCost ?? 0,
+          unitName: created.unitName || ''
+        });
+        this.currentImagePath = (created.imageURL || '').trim();
+        this.loadCurrentImagePreview();
+      },
+      error: () => {
+        this.addMasterProductPending = false;
+      }
+    });
+  }
+
+  existingMasterProductNames(): string[] {
+    return this.allMasterProducts.map((p) => (p.productName || '').trim().toLowerCase());
   }
 
   onImageSelected(event: Event): void {
@@ -139,6 +202,10 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
 
     const value = this.assignmentForm.getRawValue();
     const productId = this.normalizeText(value.productId);
+    const productName = this.normalizeText(value.productName);
+    const productDescription = this.normalizeText(value.productDescription);
+    const displayUnitName = this.normalizeText(value.displayUnitName);
+    const displayPercentage = this.normalizeMoney(value.displayPercentage);
     const orignalPrice = this.normalizeMoney(value.orignalPrice);
     const currentPrice = this.normalizeMoney(value.currentPrice);
     const currentCost = this.normalizeMoney(value.currentCost);
@@ -151,6 +218,11 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
 
     if (this.mode === 'add' && this.existingProductIds.some((existingId) => existingId === productId.toLowerCase())) {
       this.productError = 'This master product is already assigned to the selected event category.';
+      return;
+    }
+
+    if (!productName) {
+      this.productError = 'Product name is required.';
       return;
     }
 
@@ -167,9 +239,13 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
     this.saved.emit({
       ...(this.assignment ? { id: this.assignment.id } : {}),
       productId,
-      overrideImageURL: this.removeCurrentImage ? '' : this.currentOverrideImagePath,
+      productName,
+      productDescription,
+      imageURL: this.removeCurrentImage ? '' : this.currentImagePath,
       imageFile: this.selectedImageFile,
       clearImage: this.removeCurrentImage,
+      displayPercentage,
+      displayUnitName,
       orignalPrice,
       currentPrice,
       currentCost,
@@ -191,98 +267,81 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
     }
 
     this.assignmentForm.patchValue({
+      productName: selectedProduct.productName || '',
+      productDescription: selectedProduct.productDescription || '',
+      displayPercentage: this.normalizeMoney(selectedProduct.displayPercentage),
+      displayUnitName: selectedProduct.displayUnitName || '',
       orignalPrice: this.normalizeMoney(selectedProduct.orignalPrice),
       currentPrice: this.normalizeMoney(selectedProduct.currentPrice),
       currentCost: this.normalizeMoney(selectedProduct.currentCost),
       unitName: this.normalizeText(selectedProduct.unitName)
     });
-    this.loadMasterPreview();
+
+    this.currentImagePath = (selectedProduct.imageURL || '').trim();
+    this.seedMasterImagePreview(selectedProduct);
   }
 
   productLabel(): string {
     if (this.mode !== 'edit' || !this.assignment) {
       return '';
     }
-
-    const matchedProduct = this.availableProducts.find((product) => product.id === this.assignment?.productId);
-    return matchedProduct?.productName || this.assignment.productId;
+    return this.assignment.productName || this.assignment.productId;
   }
 
   previewImageUrl(): string {
     if (this.selectedImagePreviewUrl) {
       return this.selectedImagePreviewUrl;
     }
-
-    if (!this.removeCurrentImage && this.currentOverridePreviewUrl) {
-      return this.currentOverridePreviewUrl;
+    if (!this.removeCurrentImage && this.currentImagePreviewUrl) {
+      return this.currentImagePreviewUrl;
     }
-
-    return this.masterImagePreviewUrl;
+    return '';
   }
 
   previewLabel(): string {
     if (this.selectedImagePreviewUrl) {
-      return 'Selected override image';
+      return 'Selected image';
     }
-
-    if (!this.removeCurrentImage && this.currentOverridePreviewUrl) {
-      return 'Current override image';
+    if (!this.removeCurrentImage && this.currentImagePreviewUrl) {
+      return 'Current image';
     }
-
-    return this.masterImagePreviewUrl ? 'Master product image' : '';
+    return '';
   }
 
   private normalizeText(value: string): string {
     return (value || '').trim();
   }
 
-  private normalizeMoney(value: number): number {
+  private normalizeMoney(value: number | undefined): number {
     if (typeof value !== 'number' || !Number.isFinite(value)) {
       return 0;
     }
-
     return Math.max(0, value);
   }
 
-  private loadCurrentOverridePreview(): void {
-    this.currentOverridePreviewUrl = '';
-    this.currentOverrideImageSubscription?.unsubscribe();
+  private loadCurrentImagePreview(): void {
+    this.currentImagePreviewUrl = '';
+    this.currentImageSubscription?.unsubscribe();
 
-    const imagePath = (this.currentOverrideImagePath || '').trim();
+    const imagePath = (this.currentImagePath || '').trim();
     if (!imagePath) {
       return;
     }
 
-    this.currentOverrideImageSubscription = this.blobStorageService.getDownloadUrl(imagePath).subscribe({
-      next: (imageUrl) => {
-        this.currentOverridePreviewUrl = imageUrl || '';
-      },
-      error: () => {
-        this.currentOverridePreviewUrl = '';
-      }
+    this.currentImageSubscription = this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+      next: (imageUrl) => { this.currentImagePreviewUrl = imageUrl || ''; },
+      error: () => { this.currentImagePreviewUrl = ''; }
     });
   }
 
-  private loadMasterPreview(): void {
-    this.masterImagePreviewUrl = '';
-    this.masterImageSubscription?.unsubscribe();
-
-    const productId = this.mode === 'edit' && this.assignment
-      ? this.assignment.productId
-      : this.assignmentForm.controls.productId.value;
-    const selectedProduct = this.availableProducts.find((product) => product.id === this.normalizeText(productId));
-    const imagePath = (selectedProduct?.imageURL || '').trim();
+  private seedMasterImagePreview(product: Product): void {
+    const imagePath = (product.imageURL || '').trim();
     if (!imagePath) {
       return;
     }
-
-    this.masterImageSubscription = this.blobStorageService.getDownloadUrl(imagePath).subscribe({
-      next: (imageUrl) => {
-        this.masterImagePreviewUrl = imageUrl || '';
-      },
-      error: () => {
-        this.masterImagePreviewUrl = '';
-      }
+    this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+      next: (imageUrl) => { this.currentImagePreviewUrl = imageUrl || ''; },
+      error: () => {}
     });
   }
 

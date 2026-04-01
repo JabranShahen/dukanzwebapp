@@ -1,62 +1,96 @@
 <div class="page">
-  <app-management-header
-    eyebrow="Events"
-    title="Compose"
-    subtext="Select an event, categories, and products."
-  ></app-management-header>
-
-  <div *ngIf="feedbackMessage" class="feedback" [class.feedback--error]="feedbackTone === 'error'">
-    {{ feedbackMessage }}
-  </div>
-
-  <div *ngIf="rootError" class="error">{{ rootError }}</div>
+<div *ngIf="rootError" class="error">{{ rootError }}</div>
 
   <div class="composition-grid" *ngIf="!rootError">
     <app-management-panel class="panel-shell">
       <div class="panel-header">
         <div>
-          <div class="step-label">Step 1</div>
           <h3>Events</h3>
-          <p>Choose an event.</p>
         </div>
         <div class="panel-actions">
           <app-ui-button variant="secondary" [disabled]="eventMutationPending" (clicked)="openAddEventModal()">
             Create event
           </app-ui-button>
           <app-ui-button variant="secondary" (clicked)="reload()">Refresh</app-ui-button>
-          <app-ui-button variant="ghost" (clicked)="goToEvents()">Event list</app-ui-button>
         </div>
       </div>
 
-      <div class="panel-meta" *ngIf="!rootLoading">{{ eventCountLabel() }}</div>
+      <div class="status-filter" *ngIf="!rootLoading && events.length > 0">
+        <button
+          type="button"
+          class="status-filter__chip"
+          [class.status-filter__chip--active]="statusFilter === 'all'"
+          (click)="setStatusFilter('all')"
+        >All</button>
+        <button
+          type="button"
+          class="status-filter__chip"
+          [class.status-filter__chip--active]="statusFilter === 'draft'"
+          (click)="setStatusFilter('draft')"
+        >Draft</button>
+        <button
+          type="button"
+          class="status-filter__chip"
+          [class.status-filter__chip--active]="statusFilter === 'scheduled'"
+          (click)="setStatusFilter('scheduled')"
+        >Scheduled</button>
+        <button
+          type="button"
+          class="status-filter__chip"
+          [class.status-filter__chip--active]="statusFilter === 'live'"
+          (click)="setStatusFilter('live')"
+        >Live</button>
+        <button
+          type="button"
+          class="status-filter__chip"
+          [class.status-filter__chip--active]="statusFilter === 'closed'"
+          (click)="setStatusFilter('closed')"
+        >Closed</button>
+      </div>
 
       <div class="panel-loading" *ngIf="rootLoading">Loading events, categories, and products...</div>
 
-      <div class="selection-list" *ngIf="!rootLoading && events.length > 0">
-        <button
-          type="button"
+      <div
+        cdkDropList
+        class="selection-list"
+        *ngIf="!rootLoading && events.length > 0"
+        (cdkDropListDropped)="onEventDrop($event)"
+      >
+        <div
           class="selection-card"
-          *ngFor="let eventRecord of events; trackBy: trackById"
+          *ngFor="let eventRecord of filteredEvents(); trackBy: trackById"
           [class.selection-card--selected]="eventRecord.id === selectedEvent?.id"
-          (click)="selectEvent(eventRecord)"
+          cdkDrag
         >
-          <div class="selection-card__layout">
-            <div class="selection-card__media" *ngIf="eventImageUrl(eventRecord)">
-              <img class="selection-card__thumb" [src]="eventImageUrl(eventRecord)" [alt]="eventRecord.eventName" />
-            </div>
-            <div class="selection-card__content">
-              <div class="selection-card__top">
-                <span class="selection-card__title">{{ eventRecord.eventName }}</span>
-                <app-ui-status-pill
-                  [label]="eventLifecycleLabel(eventRecord)"
-                  [tone]="eventLifecycleTone(eventRecord)"
-                ></app-ui-status-pill>
+          <div class="selection-card__top">
+            <button type="button" class="selection-card__select" (click)="selectEvent(eventRecord)">
+              <div class="selection-card__layout">
+                <div class="selection-card__media" *ngIf="eventImageUrl(eventRecord)">
+                  <img class="selection-card__thumb" [src]="eventImageUrl(eventRecord)" [alt]="eventRecord.eventName" />
+                </div>
+                <div class="selection-card__content">
+                  <div class="selection-card__top">
+                    <span class="selection-card__title">{{ eventRecord.eventName }}</span>
+                    <app-ui-status-pill
+                      [label]="eventLifecycleLabel(eventRecord)"
+                      [tone]="eventLifecycleTone(eventRecord)"
+                    ></app-ui-status-pill>
+                  </div>
+                  <div class="selection-card__copy">{{ eventRecord.eventDescription || 'No event description set.' }}</div>
+                  <div class="selection-card__copy selection-card__copy--tight">{{ eventScheduleSummary(eventRecord) }}</div>
+                </div>
               </div>
-              <div class="selection-card__copy">{{ eventRecord.eventDescription || 'No event description set.' }}</div>
-              <div class="selection-card__copy selection-card__copy--tight">{{ eventScheduleSummary(eventRecord) }}</div>
-            </div>
+            </button>
+            <button type="button" class="drag-handle" cdkDragHandle aria-label="Reorder event">::</button>
           </div>
-        </button>
+          <div class="action-row">
+            <app-ui-button variant="ghost" [disabled]="eventMutationPending" (clicked)="openEditEventModal(eventRecord)">Edit</app-ui-button>
+            <app-ui-button variant="danger" [disabled]="eventMutationPending" (clicked)="openDeleteEventDialog(eventRecord)">Delete</app-ui-button>
+            <app-ui-button *ngIf="canLaunch(eventRecord)" variant="primary" [disabled]="eventMutationPending" (clicked)="launchEvent(eventRecord)">Set Live</app-ui-button>
+            <app-ui-button *ngIf="canClose(eventRecord)" variant="secondary" [disabled]="eventMutationPending" (clicked)="closeEvent(eventRecord)">Set Closed</app-ui-button>
+            <app-ui-button *ngIf="canRevertToDraft(eventRecord)" variant="ghost" [disabled]="eventMutationPending" (clicked)="revertEventToDraft(eventRecord)">Set Draft</app-ui-button>
+          </div>
+        </div>
       </div>
 
       <app-ui-empty-state
@@ -64,14 +98,16 @@
         title="No events available"
         body="Create an event before assigning categories and products into an event-specific composition."
       ></app-ui-empty-state>
+
+      <div class="filter-empty" *ngIf="!rootLoading && events.length > 0 && filteredEvents().length === 0">
+        No events match the selected filter.
+      </div>
     </app-management-panel>
 
     <app-management-panel class="panel-shell">
       <div class="panel-header">
         <div>
-          <div class="step-label">Step 2</div>
-          <h3>Event Categories</h3>
-          <p>Assign categories.</p>
+          <h3>Categories</h3>
         </div>
         <div class="panel-actions">
           <app-ui-button variant="secondary" [disabled]="!selectedEvent || categoriesLoading || categoryMutationPending" (clicked)="openAddCategoryModal()">
@@ -81,10 +117,6 @@
         </div>
       </div>
 
-      <div class="panel-meta" *ngIf="selectedEvent && !categoriesLoading">
-        <span>{{ assignedCategoryCountLabel() }}</span>
-        <span>{{ availableCategoryCountLabel() }}</span>
-      </div>
 
       <div *ngIf="categoriesError" class="error error--local">{{ categoriesError }}</div>
 
@@ -102,12 +134,16 @@
         *ngIf="selectedEvent && !categoriesLoading && eventCategories.length > 0"
         (cdkDropListDropped)="onCategoryDrop($event)"
       >
-        <div class="selection-card selection-card--nested" *ngFor="let assignment of eventCategories; trackBy: trackById" cdkDrag>
+        <div
+          class="selection-card selection-card--nested"
+          *ngFor="let assignment of eventCategories; trackBy: trackById"
+          [class.selection-card--selected]="assignment.id === selectedCategory?.id"
+          cdkDrag
+        >
           <div class="selection-card__top">
             <button
               type="button"
               class="selection-card__select"
-              [class.selection-card__select--selected]="assignment.id === selectedCategory?.id"
               (click)="selectCategory(assignment)"
             >
               <div class="selection-card__layout">
@@ -116,7 +152,6 @@
                 </div>
                 <div class="selection-card__content">
                   <span class="selection-card__title">{{ categoryName(assignment) }}</span>
-                  <span class="selection-card__copy">{{ categoryDetail(assignment) }}</span>
                 </div>
               </div>
             </button>
@@ -124,10 +159,6 @@
           </div>
 
           <div class="pill-row">
-            <app-ui-status-pill
-              [label]="categoryMasterStateLabel(assignment)"
-              [tone]="categoryMasterStateTone(assignment)"
-            ></app-ui-status-pill>
             <app-ui-status-pill
               [label]="assignmentVisibilityLabel(assignment.visible, 'category')"
               [tone]="assignmentVisibilityTone(assignment.visible)"
@@ -152,9 +183,7 @@
     <app-management-panel class="panel-shell">
       <div class="panel-header">
         <div>
-          <div class="step-label">Step 3</div>
-          <h3>Event Products</h3>
-          <p>Assign products.</p>
+          <h3>Products</h3>
         </div>
         <div class="panel-actions">
           <app-ui-button
@@ -168,10 +197,6 @@
         </div>
       </div>
 
-      <div class="panel-meta" *ngIf="selectedCategory && !productsLoading">
-        <span>{{ assignedProductCountLabel() }}</span>
-        <span>{{ availableProductCountLabel() }}</span>
-      </div>
 
       <div *ngIf="productsError" class="error error--local">{{ productsError }}</div>
 
@@ -195,7 +220,11 @@
         *ngIf="selectedCategory && !productsLoading && eventProducts.length > 0"
         (cdkDropListDropped)="onProductDrop($event)"
       >
-        <div class="selection-card selection-card--nested" *ngFor="let assignment of eventProducts; trackBy: trackById" cdkDrag>
+        <div
+          class="selection-card selection-card--nested"
+          *ngFor="let assignment of eventProducts; trackBy: trackById"
+          cdkDrag
+        >
           <div class="selection-card__top">
             <div class="selection-card__layout">
               <div class="selection-card__media" *ngIf="productImageUrl(assignment)">
@@ -210,10 +239,6 @@
           </div>
 
           <div class="pill-row">
-            <app-ui-status-pill
-              [label]="productMasterStateLabel(assignment)"
-              [tone]="productMasterStateTone(assignment)"
-            ></app-ui-status-pill>
             <app-ui-status-pill
               [label]="assignmentVisibilityLabel(assignment.visible, 'product')"
               [tone]="assignmentVisibilityTone(assignment.visible)"
@@ -242,10 +267,12 @@
     [eventName]="selectedEvent?.eventName || ''"
     [assignment]="selectedCategoryAssignment"
     [availableCategories]="availableCategoriesForModal()"
+    [allMasterCategories]="masterCategories"
     [existingProductCategoryIds]="existingAssignedCategoryIds()"
     [pending]="categoryMutationPending"
     (cancelled)="closeCategoryModal()"
     (saved)="onSaveCategoryAssignment($event)"
+    (masterCategoryCreated)="onMasterCategoryCreated($event)"
   ></app-event-category-modal>
 
   <app-add-event-modal
@@ -255,6 +282,62 @@
     (saved)="onAddEvent($event)"
   ></app-add-event-modal>
 
+  <app-edit-event-modal
+    *ngIf="editEventModalOpen && selectedEventForEdit"
+    [eventRecord]="selectedEventForEdit"
+    [pending]="eventMutationPending"
+    (cancelled)="closeEditEventModal()"
+    (saved)="onEditEvent($event)"
+  ></app-edit-event-modal>
+
+  <app-confirm-dialog
+    *ngIf="launchEventDialogOpen && pendingLaunchEvent"
+    title="Set event live?"
+    [message]="'Set &quot;' + pendingLaunchEvent.eventName + '&quot; to Live? It will become visible to customers.'"
+    confirmLabel="Set Live"
+    cancelLabel="Cancel"
+    [destructive]="false"
+    [pending]="eventMutationPending"
+    (cancelled)="closeLaunchEventDialog()"
+    (confirmed)="confirmLaunchEvent()"
+  ></app-confirm-dialog>
+
+  <app-confirm-dialog
+    *ngIf="closeEventDialogOpen && pendingCloseEvent"
+    title="Set event closed?"
+    [message]="'Set &quot;' + pendingCloseEvent.eventName + '&quot; to Closed? It will no longer be visible to customers.'"
+    confirmLabel="Set Closed"
+    cancelLabel="Cancel"
+    [destructive]="false"
+    [pending]="eventMutationPending"
+    (cancelled)="closeCloseEventDialog()"
+    (confirmed)="confirmCloseEvent()"
+  ></app-confirm-dialog>
+
+  <app-confirm-dialog
+    *ngIf="revertToDraftDialogOpen && pendingRevertEvent"
+    title="Revert event to Draft?"
+    [message]="'Set &quot;' + pendingRevertEvent.eventName + '&quot; back to Draft? It will no longer be visible to customers until relaunched.'"
+    confirmLabel="Set Draft"
+    cancelLabel="Cancel"
+    [destructive]="false"
+    [pending]="eventMutationPending"
+    (cancelled)="closeRevertToDraftDialog()"
+    (confirmed)="confirmRevertToDraft()"
+  ></app-confirm-dialog>
+
+  <app-confirm-dialog
+    *ngIf="deleteEventDialogOpen && pendingDeleteEvent"
+    title="Delete event?"
+    [message]="deleteEventMessage()"
+    confirmLabel="Delete event"
+    cancelLabel="Keep event"
+    [destructive]="true"
+    [pending]="eventMutationPending"
+    (cancelled)="closeDeleteEventDialog()"
+    (confirmed)="confirmDeleteEvent()"
+  ></app-confirm-dialog>
+
   <app-event-product-modal
     *ngIf="productModalOpen"
     [mode]="productModalMode"
@@ -262,10 +345,12 @@
     [categoryName]="selectedCategory ? categoryName(selectedCategory) : ''"
     [assignment]="selectedProductAssignment"
     [availableProducts]="availableProductsForModal()"
+    [allMasterProducts]="masterProducts"
     [existingProductIds]="existingAssignedProductIds()"
     [pending]="productMutationPending"
     (cancelled)="closeProductModal()"
     (saved)="onSaveProductAssignment($event)"
+    (masterProductCreated)="onMasterProductCreated($event)"
   ></app-event-product-modal>
 
   <app-confirm-dialog
@@ -291,4 +376,10 @@
     (cancelled)="closeDeleteProductDialog()"
     (confirmed)="confirmDeleteProduct()"
   ></app-confirm-dialog>
+
+  <app-ui-snackbar
+    [message]="feedbackMessage"
+    [tone]="feedbackTone"
+    (dismissed)="setFeedback('', undefined)"
+  ></app-ui-snackbar>
 </div>

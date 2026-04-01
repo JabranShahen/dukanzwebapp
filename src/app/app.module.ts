@@ -11,7 +11,6 @@ import { LoginComponent } from './login/login.component';
 import { CategoryManagementComponent } from './category-management/category-management.component';
 import { AddCategoryModalComponent } from './category-management/add-category-modal/add-category-modal.component';
 import { EditCategoryModalComponent } from './category-management/edit-category-modal/edit-category-modal.component';
-import { EventManagementComponent } from './events/event-management.component';
 import { EventCompositionComponent } from './events/event-composition.component';
 import { EventCategoryManagementComponent } from './events/event-category-management.component';
 import { EventCategoryModalComponent } from './events/event-category-modal/event-category-modal.component';
@@ -30,6 +29,7 @@ import { UiButtonComponent } from './shared/ui/ui-button/ui-button.component';
 import { ConfirmDialogComponent } from './shared/ui/confirm-dialog/confirm-dialog.component';
 import { UiEmptyStateComponent } from './shared/ui/ui-empty-state/ui-empty-state.component';
 import { UiStatusPillComponent } from './shared/ui/ui-status-pill/ui-status-pill.component';
+import { UiSnackbarComponent } from './shared/ui/ui-snackbar/ui-snackbar.component';
 
 @NgModule({
   declarations: [
@@ -40,7 +40,6 @@ import { UiStatusPillComponent } from './shared/ui/ui-status-pill/ui-status-pill
     CategoryManagementComponent,
     AddCategoryModalComponent,
     EditCategoryModalComponent,
-    EventManagementComponent,
     EventCompositionComponent,
     EventCategoryManagementComponent,
     EventCategoryModalComponent,
@@ -57,7 +56,8 @@ import { UiStatusPillComponent } from './shared/ui/ui-status-pill/ui-status-pill
     UiButtonComponent,
     ConfirmDialogComponent,
     UiEmptyStateComponent,
-    UiStatusPillComponent
+    UiStatusPillComponent,
+    UiSnackbarComponent
   ],
   imports: [
     BrowserModule,

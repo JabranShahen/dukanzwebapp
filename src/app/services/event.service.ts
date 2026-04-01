@@ -1,6 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 import {
   DISPLAYABLE_EVENT_LIFECYCLE_STATUSES,
@@ -70,10 +71,40 @@ export class EventService {
       );
   }
 
+  getActive(): Observable<EventRecord[]> {
+    return this.api.get<EventRecord[] | null>(`${this.endpoint}/active`).pipe(
+      map((response) => Array.isArray(response) ? response.map((eventRecord) => this.normalizeEvent(eventRecord)) : [])
+    );
+  }
+
+  launch(eventId: string): Observable<{ id: string; launched: boolean; lifecycleStatus: string }> {
+    const normalizedId = (eventId || '').trim();
+    return this.api.post<{ id: string; launched: boolean; lifecycleStatus: string }>(
+      `${this.endpoint}/${encodeURIComponent(normalizedId)}/launch`,
+      {}
+    );
+  }
+
+  close(eventId: string): Observable<{ id: string; closed: boolean; lifecycleStatus: string }> {
+    const normalizedId = (eventId || '').trim();
+    return this.api.post<{ id: string; closed: boolean; lifecycleStatus: string }>(
+      `${this.endpoint}/${encodeURIComponent(normalizedId)}/close`,
+      {}
+    );
+  }
+
+  revertToDraft(eventId: string): Observable<{ id: string; reverted: boolean; lifecycleStatus: string }> {
+    const normalizedId = (eventId || '').trim();
+    return this.api.post<{ id: string; reverted: boolean; lifecycleStatus: string }>(
+      `${this.endpoint}/${encodeURIComponent(normalizedId)}/revert-to-draft`,
+      {}
+    );
+  }
+
   delete(eventId: string): Observable<boolean> {
     const normalizedId = (eventId || '').trim();
     return this.api
-      .delete<{ deleted?: boolean } | string>(`${this.endpoint}/${encodeURIComponent(normalizedId)}`)
+      .delete<{ deleted?: boolean; reason?: string } | string>(`${this.endpoint}/${encodeURIComponent(normalizedId)}`)
       .pipe(
         map((response) => {
           if (typeof response === 'string') {
@@ -85,6 +116,10 @@ export class EventService {
           }
 
           return true;
+        }),
+        catchError((error: HttpErrorResponse) => {
+          const reason = (error?.error?.reason as string) || '';
+          return throwError(() => new Error(reason));
         })
       );
   }
@@ -97,7 +132,8 @@ export class EventService {
       imageURL: (payload.imageURL || '').trim(),
       lifecycleStatus: this.normalizeLifecycleStatus(payload.lifecycleStatus),
       startDateUtc: this.normalizeDate(payload.startDateUtc),
-      endDateUtc: this.normalizeDate(payload.endDateUtc)
+      endDateUtc: this.normalizeDate(payload.endDateUtc),
+      order: this.normalizeOrder(payload.order)
     };
 
     if (id) {
@@ -122,8 +158,16 @@ export class EventService {
       imageURL: (eventRecord.imageURL || '').trim(),
       lifecycleStatus: this.normalizeLifecycleStatus(eventRecord.lifecycleStatus),
       startDateUtc: this.normalizeDate(eventRecord.startDateUtc),
-      endDateUtc: this.normalizeDate(eventRecord.endDateUtc)
+      endDateUtc: this.normalizeDate(eventRecord.endDateUtc),
+      order: this.normalizeOrder((eventRecord as Partial<EventRecord>).order)
     };
+  }
+
+  private normalizeOrder(value: number | undefined): number {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return 0;
+    }
+    return Math.max(0, Math.trunc(value));
   }
 
   private normalizeLifecycleStatus(value: string | undefined): string {

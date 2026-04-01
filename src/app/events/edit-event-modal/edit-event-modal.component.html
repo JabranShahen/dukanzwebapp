@@ -42,6 +42,7 @@
             {{ option | titlecase }}
           </option>
         </select>
+        <span class="hint" *ngIf="isLifecycleLocked()">Event is live — use the Set Closed button to change its status.</span>
       </label>
 
       <label>

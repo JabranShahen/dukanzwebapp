@@ -1,29 +1,39 @@
 <div class="modal-backdrop" role="presentation">
   <form class="modal-card" [formGroup]="assignmentForm" (ngSubmit)="onSubmit()" novalidate>
     <h3>{{ mode === 'add' ? 'Add event category' : 'Edit event category settings' }}</h3>
-    <p class="hint">
-      This screen configures event-specific category membership for {{ eventName || 'the selected event' }} only.
-      It does not edit the master category record.
-    </p>
 
     <div class="field-grid">
-      <label class="field-span" *ngIf="mode === 'add'">
-        Master category
-        <select formControlName="productCategoryId" (change)="onCategorySelectionChange()">
-          <option value="">Select a master category</option>
-          <option *ngFor="let category of availableCategories" [value]="category.id">
-            {{ category.productCategoryName }}{{ category.visible ? '' : ' (Retired)' }}
-          </option>
-        </select>
-        <span class="error" *ngIf="assignmentForm.controls.productCategoryId.touched && assignmentForm.controls.productCategoryId.invalid">
-          Master category selection is required.
-        </span>
-        <span class="error" *ngIf="categoryError">{{ categoryError }}</span>
-      </label>
+      <div class="field-span field-with-action" *ngIf="mode === 'add'">
+        <label>
+          Master category
+          <select formControlName="productCategoryId" (change)="onCategorySelectionChange()">
+            <option value="">Select a master category</option>
+            <option *ngFor="let category of availableCategories" [value]="category.id">
+              {{ category.productCategoryName }}{{ category.visible ? '' : ' (Retired)' }}
+            </option>
+          </select>
+          <span class="error" *ngIf="assignmentForm.controls.productCategoryId.touched && assignmentForm.controls.productCategoryId.invalid">
+            Master category selection is required.
+          </span>
+          <span class="error" *ngIf="categoryError">{{ categoryError }}</span>
+        </label>
+        <app-ui-button variant="ghost" [disabled]="pending" (clicked)="openAddMasterCategory()">+ Add master category</app-ui-button>
+      </div>
+
+      <app-add-category-modal
+        *ngIf="addMasterCategoryOpen"
+        [existingNames]="existingMasterCategoryNames()"
+        [pending]="addMasterCategoryPending"
+        (cancelled)="closeAddMasterCategory()"
+        (saved)="onMasterCategorySaved($event)"
+      ></app-add-category-modal>
 
       <label class="field-span" *ngIf="mode === 'edit'">
-        Master category
-        <input type="text" [value]="categoryLabel()" readonly />
+        Category name
+        <input type="text" formControlName="categoryName" />
+        <span class="error" *ngIf="assignmentForm.controls.categoryName.touched && assignmentForm.controls.categoryName.invalid">
+          Category name is required.
+        </span>
       </label>
 
       <label>
@@ -35,17 +45,17 @@
       </label>
 
       <label class="field-span">
-        Override image
+        Image
         <input type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
         <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
-        <span class="hint" *ngIf="!selectedImageFile && currentOverrideImagePath">Current override image stored.</span>
-        <span class="hint" *ngIf="!selectedImageFile && !currentOverrideImagePath">Leave empty to use the master category image.</span>
+        <span class="hint" *ngIf="!selectedImageFile && currentOverrideImagePath">Current image stored.</span>
+        <span class="hint" *ngIf="!selectedImageFile && !currentOverrideImagePath">Upload an image for this event category.</span>
         <span class="error" *ngIf="imageError">{{ imageError }}</span>
       </label>
 
       <label class="field-span check-row" *ngIf="currentOverrideImagePath">
         <input type="checkbox" [checked]="removeCurrentImage" (change)="onRemoveCurrentImageChange($event)" [disabled]="pending" />
-        Remove current override image
+        Remove current image
       </label>
 
       <div class="field-span image-preview" *ngIf="previewImageUrl()">
