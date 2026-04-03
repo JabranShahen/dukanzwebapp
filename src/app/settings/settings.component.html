@@ -1,9 +1,131 @@
 <div class="page">
-  <app-management-header eyebrow="Dukanz" title="Settings"></app-management-header>
+  <app-management-header eyebrow="Dukanz" title="Configuration"></app-management-header>
+
   <app-management-panel>
-    <app-ui-empty-state
-      title="Settings"
-      body="Move DukanzConfig forms here as source components."
-    ></app-ui-empty-state>
+
+    <div *ngIf="loading" class="state-message">Loading configuration…</div>
+
+    <div *ngIf="!loading && loadError" class="state-message error">
+      {{ loadError }}
+      <app-ui-button variant="ghost" (clicked)="loadConfig()">Retry</app-ui-button>
+    </div>
+
+    <form
+      *ngIf="!loading && !loadError"
+      class="config-form"
+      [formGroup]="configForm"
+      (ngSubmit)="onSave()"
+      novalidate
+    >
+
+      <section class="form-section">
+        <h3 class="section-title">General</h3>
+
+        <label>
+          Store message
+          <input type="text" formControlName="message" placeholder="Shown to customers in the app" />
+          <span class="hint">Optional message displayed to customers on the ordering screen.</span>
+        </label>
+
+        <label>
+          Contact phone number
+          <input type="text" formControlName="contactPhoneNumber" placeholder="+1 555 000 0000" />
+        </label>
+
+        <label>
+          Cutoff time
+          <input type="text" formControlName="cutoffTime" placeholder="e.g. 22:00" />
+          <span class="hint">Orders are not accepted after this time.</span>
+        </label>
+      </section>
+
+      <section class="form-section">
+        <h3 class="section-title">Order limits</h3>
+
+        <div class="field-row">
+          <label>
+            Minimum order size
+            <input type="number" formControlName="minOrderSize" min="0" step="0.01" />
+            <span class="error" *ngIf="configForm.controls.minOrderSize.touched && configForm.controls.minOrderSize.invalid">
+              Must be 0 or greater.
+            </span>
+          </label>
+
+          <label>
+            Maximum order size
+            <input type="number" formControlName="maxOrderSize" min="0" step="0.01" />
+            <span class="error" *ngIf="configForm.controls.maxOrderSize.touched && configForm.controls.maxOrderSize.invalid">
+              Must be 0 or greater.
+            </span>
+          </label>
+        </div>
+
+        <div class="field-row">
+          <label>
+            Max active orders
+            <input type="number" formControlName="maxNumberOfActiveOrders" min="0" step="1" />
+            <span class="hint">Maximum simultaneous active orders allowed.</span>
+            <span class="error" *ngIf="configForm.controls.maxNumberOfActiveOrders.touched && configForm.controls.maxNumberOfActiveOrders.invalid">
+              Must be 0 or greater.
+            </span>
+          </label>
+
+          <label>
+            Max history orders shown
+            <input type="number" formControlName="maxNumberOfHistoryOrders" min="0" step="1" />
+            <span class="hint">Maximum past orders shown in order history.</span>
+            <span class="error" *ngIf="configForm.controls.maxNumberOfHistoryOrders.touched && configForm.controls.maxNumberOfHistoryOrders.invalid">
+              Must be 0 or greater.
+            </span>
+          </label>
+        </div>
+
+        <label>
+          Min hours order stays active on screen
+          <input type="number" formControlName="minOrderActiveScreenPresenseHours" min="0" step="1" />
+          <span class="hint">How many hours an active order remains visible before being archived.</span>
+          <span class="error" *ngIf="configForm.controls.minOrderActiveScreenPresenseHours.touched && configForm.controls.minOrderActiveScreenPresenseHours.invalid">
+            Must be 0 or greater.
+          </span>
+        </label>
+      </section>
+
+      <section class="form-section">
+        <h3 class="section-title">Delivery charges</h3>
+
+        <div class="field-row">
+          <label>
+            Delivery charge
+            <input type="number" formControlName="deliveryCharges" min="0" step="0.01" />
+            <span class="error" *ngIf="configForm.controls.deliveryCharges.touched && configForm.controls.deliveryCharges.invalid">
+              Must be 0 or greater.
+            </span>
+          </label>
+
+          <label>
+            Free delivery above
+            <input type="number" formControlName="freeDeliveryOrderSize" min="0" step="0.01" />
+            <span class="hint">Orders above this amount get free delivery. Set to 0 to disable.</span>
+            <span class="error" *ngIf="configForm.controls.freeDeliveryOrderSize.touched && configForm.controls.freeDeliveryOrderSize.invalid">
+              Must be 0 or greater.
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <app-ui-button buttonType="submit" [disabled]="saving">
+          {{ saving ? 'Saving…' : 'Save configuration' }}
+        </app-ui-button>
+      </div>
+
+    </form>
+
   </app-management-panel>
+
+  <app-ui-snackbar
+    [message]="feedbackMessage"
+    [tone]="feedbackTone"
+    (dismissed)="onFeedbackDismissed()"
+  ></app-ui-snackbar>
 </div>
