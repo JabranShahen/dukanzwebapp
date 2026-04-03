@@ -1,0 +1,100 @@
+<div class="page">
+  <app-management-header eyebrow="Purchasing" title="Create Purchase"></app-management-header>
+
+  <app-management-panel>
+
+    <div *ngIf="loading" class="state-message">Loading order window…</div>
+
+    <div *ngIf="!loading && loadError" class="state-message error">
+      {{ loadError }}
+      <app-ui-button variant="ghost" (clicked)="loadPreview()">Retry</app-ui-button>
+    </div>
+
+    <ng-container *ngIf="!loading && !loadError && preview">
+
+      <!-- Window info bar -->
+      <div class="window-bar">
+        <div class="window-bar__info">
+          <span class="window-bar__label">Order window</span>
+          <span class="window-bar__value">{{ formatDate(preview.windowStart) }} → {{ formatDate(preview.windowEnd) }}</span>
+        </div>
+        <div class="window-bar__info">
+          <span class="window-bar__label">Delivery date</span>
+          <span class="window-bar__value">{{ formatDate(preview.deliveryDate) }}</span>
+        </div>
+        <div class="window-bar__info">
+          <span class="window-bar__label">Orders</span>
+          <span class="window-bar__value">{{ preview.orderCount }}</span>
+        </div>
+        <div class="window-bar__info">
+          <span class="window-bar__label">Products</span>
+          <span class="window-bar__value">{{ totalItems }}</span>
+        </div>
+
+        <div class="window-bar__status">
+          <span *ngIf="!preview.windowClosed" class="status-pill status-pill--warning">
+            Window still open — orders may still arrive
+          </span>
+          <span *ngIf="preview.windowClosed && !preview.alreadyCreated" class="status-pill status-pill--ready">
+            Ready to create
+          </span>
+          <span *ngIf="preview.alreadyCreated" class="status-pill status-pill--done">
+            Purchase already created
+          </span>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div *ngIf="preview.orderCount === 0" class="state-message">
+        No orders found in this window.
+      </div>
+
+      <!-- Category groups -->
+      <div *ngFor="let category of preview.categories" class="category-group">
+        <div class="category-header">
+          <span class="category-name">{{ category.categoryName }}</span>
+          <span class="category-count">{{ category.items.length }} item{{ category.items.length !== 1 ? 's' : '' }}</span>
+        </div>
+
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th class="col-qty">Qty needed</th>
+              <th class="col-unit">Unit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of category.items">
+              <td>{{ item.productName }}</td>
+              <td class="col-qty">{{ item.totalQuantity }}</td>
+              <td class="col-unit">{{ item.unitName }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Action -->
+      <div class="form-actions">
+        <app-ui-button
+          [disabled]="creating || preview.alreadyCreated || preview.orderCount === 0"
+          (clicked)="onCreatePurchase()"
+        >
+          {{ creating ? 'Creating…' : preview.alreadyCreated ? 'Purchase Created' : 'Create Purchase' }}
+        </app-ui-button>
+
+        <app-ui-button variant="ghost" [disabled]="loading" (clicked)="loadPreview()">
+          Refresh
+        </app-ui-button>
+      </div>
+
+    </ng-container>
+
+  </app-management-panel>
+
+  <app-ui-snackbar
+    [message]="feedbackMessage"
+    [tone]="feedbackTone"
+    (dismissed)="onFeedbackDismissed()"
+  ></app-ui-snackbar>
+</div>

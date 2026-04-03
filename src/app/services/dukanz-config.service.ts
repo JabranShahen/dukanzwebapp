@@ -54,7 +54,7 @@ export class DukanzConfigService {
       minOrderActiveScreenPresenseHours: this.normalizeInt(payload.minOrderActiveScreenPresenseHours),
       maxNumberOfHistoryOrders: this.normalizeInt(payload.maxNumberOfHistoryOrders),
       contactPhoneNumber: (payload.contactPhoneNumber || '').trim(),
-      deliveryOffsetDays: this.normalizeInt(payload.deliveryOffsetDays) || 1
+      deliveryOffsetDays: this.normalizeInt(payload.deliveryOffsetDays) ?? 1
     };
 
     if (payload.id) {
@@ -84,7 +84,7 @@ export class DukanzConfigService {
       minOrderActiveScreenPresenseHours: this.normalizeInt(raw.minOrderActiveScreenPresenseHours),
       maxNumberOfHistoryOrders: this.normalizeInt(raw.maxNumberOfHistoryOrders),
       contactPhoneNumber: (raw.contactPhoneNumber || '').trim(),
-      deliveryOffsetDays: this.normalizeInt(raw.deliveryOffsetDays) || 1
+      deliveryOffsetDays: this.normalizeInt(raw.deliveryOffsetDays) ?? 1
     };
   }
 

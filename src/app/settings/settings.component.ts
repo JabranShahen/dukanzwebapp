@@ -29,7 +29,7 @@ export class SettingsComponent implements OnInit {
     maxNumberOfActiveOrders: [0, [Validators.required, Validators.min(0)]],
     minOrderActiveScreenPresenseHours: [0, [Validators.required, Validators.min(0)]],
     maxNumberOfHistoryOrders: [0, [Validators.required, Validators.min(0)]],
-    deliveryOffsetDays: [1, [Validators.required, Validators.min(1)]]
+    deliveryOffsetDays: [1, [Validators.required, Validators.min(0)]]
   });
 
   constructor(

@@ -40,10 +40,10 @@
 
         <label>
           Delivery offset days
-          <input type="number" formControlName="deliveryOffsetDays" min="1" step="1" />
-          <span class="hint">Days between order cutoff and delivery. 1 = next day delivery.</span>
+          <input type="number" formControlName="deliveryOffsetDays" min="0" step="1" />
+          <span class="hint">Days between order cutoff and delivery. 0 = same-day, 1 = next day.</span>
           <span class="error" *ngIf="configForm.controls.deliveryOffsetDays.touched && configForm.controls.deliveryOffsetDays.invalid">
-            Must be 1 or greater.
+            Must be 0 or greater.
           </span>
         </label>
       </section>

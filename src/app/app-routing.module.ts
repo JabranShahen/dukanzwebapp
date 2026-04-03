@@ -11,6 +11,8 @@ import { ProductManagementComponent } from './products/product-management.compon
 import { SettingsComponent } from './settings/settings.component';
 import { AccountComponent } from './account/account.component';
 import { DriverOrdersComponent } from './driver/driver-orders.component';
+import { PurchaseCreateComponent } from './purchase/purchase-create.component';
+import { PurchaseProcessComponent } from './purchase/purchase-process.component';
 import { LoginComponent } from './login/login.component';
 
 const routes: Routes = [
@@ -63,6 +65,14 @@ const routes: Routes = [
       {
         path: 'driver',
         component: DriverOrdersComponent
+      },
+      {
+        path: 'purchase',
+        component: PurchaseCreateComponent
+      },
+      {
+        path: 'purchase-process',
+        component: PurchaseProcessComponent
       },
       {
         path: 'settings',
