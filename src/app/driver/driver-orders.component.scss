@@ -80,6 +80,14 @@
   margin-right: auto;
 }
 
+.status-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+  object-fit: contain;
+}
+
 /* Status badge */
 .status-badge {
   display: inline-block;
@@ -113,6 +121,11 @@
   &--muted {
     background: #e9ecef;
     color: #555;
+  }
+
+  &--danger {
+    background: #f8d7da;
+    color: #721c24;
   }
 }
 

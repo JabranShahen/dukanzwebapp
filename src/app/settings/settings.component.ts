@@ -86,6 +86,14 @@ export class SettingsComponent implements OnInit {
         next: (saved) => {
           this.saving = false;
           this.currentConfigId = saved.id || this.currentConfigId;
+          // Reload from the server to confirm the save persisted.
+          this.configService.getConfig().subscribe({
+            next: (confirmed) => {
+              if (confirmed) {
+                this.applyConfigToForm(confirmed);
+              }
+            }
+          });
           this.feedbackTone = 'success';
           this.feedbackMessage = 'Configuration saved.';
         },

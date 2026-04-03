@@ -38,6 +38,7 @@
           <span class="order-id">{{ shortId(order.id) }}</span>
           <span class="order-time">{{ formatTime(order.orderDeviceDttm) }}</span>
           <span class="status-badge status-badge--{{ statusTone(order.status) }}">
+            <img *ngIf="statusIcon(order.status)" [src]="statusIcon(order.status)" [alt]="order.status" class="status-icon" />
             {{ order.status }}
           </span>
         </div>
@@ -95,6 +96,7 @@
             <span class="order-id">{{ shortId(order.id) }}</span>
             <span class="order-time">{{ formatTime(order.orderDeviceDttm) }}</span>
             <span class="status-badge status-badge--{{ statusTone(order.status) }}">
+              <img *ngIf="statusIcon(order.status)" [src]="statusIcon(order.status)" [alt]="order.status" class="status-icon" />
               {{ order.status }}
             </span>
           </div>

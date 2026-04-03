@@ -27,30 +27,17 @@ export class DukanzConfigService {
   save(payload: DukanzConfigMutation): Observable<DukanzConfig> {
     const requestPayload = this.toMutationPayload(payload);
 
-    if (payload.id) {
-      return this.api
-        .put<{ updated?: boolean; entity?: DukanzConfig } | DukanzConfig>(this.endpoint, requestPayload)
-        .pipe(
-          map((response) => {
-            const entity = (response as { entity?: DukanzConfig })?.entity;
-            if (entity) {
-              return this.normalizeConfig(entity);
-            }
-            return this.normalizeConfig({ ...payload, id: payload.id! });
-          })
-        );
-    }
-
+    // Always PUT — the backend resolves the authoritative id from the DB and
+    // falls back to insert when no config exists yet.
     return this.api
-      .post<{ id?: string; entity?: DukanzConfig } | DukanzConfig>(this.endpoint, requestPayload)
+      .put<{ updated?: boolean; entity?: DukanzConfig } | DukanzConfig>(this.endpoint, requestPayload)
       .pipe(
         map((response) => {
           const entity = (response as { entity?: DukanzConfig })?.entity;
           if (entity) {
             return this.normalizeConfig(entity);
           }
-          const id = (response as { id?: string })?.id || '';
-          return this.normalizeConfig({ ...payload, id });
+          return this.normalizeConfig({ ...payload, id: payload.id ?? '' });
         })
       );
   }
