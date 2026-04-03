@@ -28,7 +28,8 @@ export class SettingsComponent implements OnInit {
     freeDeliveryOrderSize: [0, [Validators.required, Validators.min(0)]],
     maxNumberOfActiveOrders: [0, [Validators.required, Validators.min(0)]],
     minOrderActiveScreenPresenseHours: [0, [Validators.required, Validators.min(0)]],
-    maxNumberOfHistoryOrders: [0, [Validators.required, Validators.min(0)]]
+    maxNumberOfHistoryOrders: [0, [Validators.required, Validators.min(0)]],
+    deliveryOffsetDays: [1, [Validators.required, Validators.min(1)]]
   });
 
   constructor(
@@ -80,7 +81,8 @@ export class SettingsComponent implements OnInit {
         freeDeliveryOrderSize: value.freeDeliveryOrderSize,
         maxNumberOfActiveOrders: value.maxNumberOfActiveOrders,
         minOrderActiveScreenPresenseHours: value.minOrderActiveScreenPresenseHours,
-        maxNumberOfHistoryOrders: value.maxNumberOfHistoryOrders
+        maxNumberOfHistoryOrders: value.maxNumberOfHistoryOrders,
+        deliveryOffsetDays: value.deliveryOffsetDays
       })
       .subscribe({
         next: (saved) => {
@@ -121,7 +123,8 @@ export class SettingsComponent implements OnInit {
       freeDeliveryOrderSize: config.freeDeliveryOrderSize ?? 0,
       maxNumberOfActiveOrders: config.maxNumberOfActiveOrders ?? 0,
       minOrderActiveScreenPresenseHours: config.minOrderActiveScreenPresenseHours ?? 0,
-      maxNumberOfHistoryOrders: config.maxNumberOfHistoryOrders ?? 0
+      maxNumberOfHistoryOrders: config.maxNumberOfHistoryOrders ?? 0,
+      deliveryOffsetDays: config.deliveryOffsetDays ?? 1
     });
   }
 }

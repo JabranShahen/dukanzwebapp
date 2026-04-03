@@ -37,6 +37,15 @@
           <input type="text" formControlName="cutoffTime" placeholder="e.g. 22:00" />
           <span class="hint">Orders are not accepted after this time.</span>
         </label>
+
+        <label>
+          Delivery offset days
+          <input type="number" formControlName="deliveryOffsetDays" min="1" step="1" />
+          <span class="hint">Days between order cutoff and delivery. 1 = next day delivery.</span>
+          <span class="error" *ngIf="configForm.controls.deliveryOffsetDays.touched && configForm.controls.deliveryOffsetDays.invalid">
+            Must be 1 or greater.
+          </span>
+        </label>
       </section>
 
       <section class="form-section">

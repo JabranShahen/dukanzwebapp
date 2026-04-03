@@ -12,6 +12,7 @@ export interface DukanzConfig {
   minOrderActiveScreenPresenseHours: number;
   maxNumberOfHistoryOrders: number;
   contactPhoneNumber: string;
+  deliveryOffsetDays: number;
 }
 
 export interface DukanzConfigMutation {
@@ -28,4 +29,5 @@ export interface DukanzConfigMutation {
   minOrderActiveScreenPresenseHours: number;
   maxNumberOfHistoryOrders: number;
   contactPhoneNumber: string;
+  deliveryOffsetDays: number;
 }
