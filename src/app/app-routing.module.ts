@@ -10,6 +10,7 @@ import { EventCategoryManagementComponent } from './events/event-category-manage
 import { ProductManagementComponent } from './products/product-management.component';
 import { SettingsComponent } from './settings/settings.component';
 import { AccountComponent } from './account/account.component';
+import { DriverOrdersComponent } from './driver/driver-orders.component';
 import { LoginComponent } from './login/login.component';
 
 const routes: Routes = [
@@ -58,6 +59,10 @@ const routes: Routes = [
       {
         path: 'products',
         component: ProductManagementComponent
+      },
+      {
+        path: 'driver',
+        component: DriverOrdersComponent
       },
       {
         path: 'settings',

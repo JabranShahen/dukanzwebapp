@@ -1,0 +1,121 @@
+<div class="page">
+  <app-management-header eyebrow="Dukanz" title="Driver — Today's Orders"></app-management-header>
+
+  <app-management-panel>
+
+    <div class="toolbar">
+      <span class="order-count" *ngIf="!loading">
+        {{ activeOrders.length }} outstanding order{{ activeOrders.length !== 1 ? 's' : '' }}
+      </span>
+      <app-ui-button variant="ghost" (clicked)="load()">↻ Refresh</app-ui-button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="state-message">Loading orders…</div>
+
+    <!-- Error -->
+    <div *ngIf="!loading && error" class="state-message state-message--error">
+      {{ error }}
+      <app-ui-button variant="ghost" (clicked)="load()">Retry</app-ui-button>
+    </div>
+
+    <!-- Empty -->
+    <app-ui-empty-state
+      *ngIf="!loading && !error && activeOrders.length === 0 && doneOrders.length === 0"
+      title="No orders today"
+      body="There are no orders for today yet."
+    ></app-ui-empty-state>
+
+    <!-- Active orders -->
+    <div *ngIf="activeOrders.length > 0" class="order-list">
+      <div
+        *ngFor="let order of activeOrders"
+        class="order-card"
+        [class.order-card--updating]="isUpdating(order)"
+      >
+        <!-- Card header -->
+        <div class="card-header">
+          <span class="order-id">{{ shortId(order.id) }}</span>
+          <span class="order-time">{{ formatTime(order.orderDeviceDttm) }}</span>
+          <span class="status-badge status-badge--{{ statusTone(order.status) }}">
+            {{ order.status }}
+          </span>
+        </div>
+
+        <!-- Customer info -->
+        <div class="customer-info" *ngIf="order.user">
+          <span class="customer-name">{{ order.user.name }}</span>
+          <span class="customer-detail" *ngIf="order.user.phoneNumber">{{ order.user.phoneNumber }}</span>
+          <span class="customer-detail address" *ngIf="order.user.address">{{ order.user.address }}</span>
+        </div>
+
+        <!-- Items -->
+        <ul class="items-list" *ngIf="order.orderItems && order.orderItems.length > 0">
+          <li *ngFor="let item of order.orderItems" class="item-row">
+            <span class="item-name">{{ item.product?.productName }}</span>
+            <span class="item-qty">× {{ item.quantity }}</span>
+          </li>
+        </ul>
+
+        <!-- Totals -->
+        <div class="totals">
+          <span *ngIf="order.deliveryChargeApplied > 0" class="total-row">
+            Delivery: <strong>{{ order.deliveryChargeApplied | number:'1.2-2' }}</strong>
+          </span>
+          <span class="total-row total-row--gross">
+            Total: <strong>{{ order.orderGrossPrice | number:'1.2-2' }}</strong>
+          </span>
+        </div>
+
+        <!-- Actions -->
+        <div class="card-actions" *ngIf="getActions(order).length > 0">
+          <app-ui-button
+            *ngFor="let action of getActions(order)"
+            [variant]="action.variant"
+            [disabled]="isUpdating(order)"
+            (clicked)="applyAction(order, action)"
+          >
+            {{ action.label }}
+          </app-ui-button>
+        </div>
+
+        <div class="updating-indicator" *ngIf="isUpdating(order)">Updating…</div>
+      </div>
+    </div>
+
+    <!-- Done orders toggle -->
+    <div *ngIf="doneOrders.length > 0" class="done-section">
+      <button type="button" class="done-toggle" (click)="showDone = !showDone">
+        {{ showDone ? '▲' : '▼' }} Completed today ({{ doneOrders.length }})
+      </button>
+
+      <div *ngIf="showDone" class="order-list order-list--done">
+        <div *ngFor="let order of doneOrders" class="order-card order-card--done">
+          <div class="card-header">
+            <span class="order-id">{{ shortId(order.id) }}</span>
+            <span class="order-time">{{ formatTime(order.orderDeviceDttm) }}</span>
+            <span class="status-badge status-badge--{{ statusTone(order.status) }}">
+              {{ order.status }}
+            </span>
+          </div>
+          <div class="customer-info" *ngIf="order.user">
+            <span class="customer-name">{{ order.user.name }}</span>
+            <span class="customer-detail" *ngIf="order.user.phoneNumber">{{ order.user.phoneNumber }}</span>
+          </div>
+          <div class="totals">
+            <span class="total-row total-row--gross">
+              Total: <strong>{{ order.orderGrossPrice | number:'1.2-2' }}</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </app-management-panel>
+
+  <app-ui-snackbar
+    [message]="feedbackMessage"
+    [tone]="feedbackTone"
+    (dismissed)="onFeedbackDismissed()"
+  ></app-ui-snackbar>
+</div>

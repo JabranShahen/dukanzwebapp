@@ -21,6 +21,7 @@ import { EditProductModalComponent } from './products/edit-product-modal/edit-pr
 import { AddEventModalComponent } from './events/add-event-modal/add-event-modal.component';
 import { EditEventModalComponent } from './events/edit-event-modal/edit-event-modal.component';
 import { SettingsComponent } from './settings/settings.component';
+import { DriverOrdersComponent } from './driver/driver-orders.component';
 import { AccountComponent } from './account/account.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ManagementHeaderComponent } from './shared/management-header/management-header.component';
@@ -50,6 +51,7 @@ import { UiSnackbarComponent } from './shared/ui/ui-snackbar/ui-snackbar.compone
     AddProductModalComponent,
     EditProductModalComponent,
     SettingsComponent,
+    DriverOrdersComponent,
     AccountComponent,
     ManagementHeaderComponent,
     ManagementPanelComponent,
