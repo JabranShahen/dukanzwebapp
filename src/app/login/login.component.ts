@@ -30,7 +30,7 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     this.errorMessage = '';
     this.loginForm.markAllAsTouched();
 
@@ -41,15 +41,26 @@ export class LoginComponent implements OnInit {
     const { email, password } = this.loginForm.getRawValue();
     this.loading = true;
 
-    const loginSucceeded = this.authService.login(email, password);
-
-    this.loading = false;
-
-    if (!loginSucceeded) {
-      this.errorMessage = 'Login failed. Provide a valid email and password.';
-      return;
+    try {
+      await this.authService.login(email, password);
+      this.router.navigate(['/dashboard/categories']);
+    } catch (err: unknown) {
+      this.errorMessage = this.friendlyError(err);
+    } finally {
+      this.loading = false;
     }
+  }
 
-    this.router.navigate(['/dashboard/categories']);
+  private friendlyError(err: unknown): string {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const code = (err as { code: string }).code;
+      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        return 'Incorrect email or password.';
+      }
+      if (code === 'auth/too-many-requests') {
+        return 'Too many failed attempts. Please try again later.';
+      }
+    }
+    return 'Login failed. Please check your connection and try again.';
   }
 }

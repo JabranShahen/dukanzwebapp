@@ -36,6 +36,6 @@ export class DashboardComponent {
 
   logout(): void {
     this.closeNav();
-    this.authService.logout();
+    void this.authService.logout();
   }
 }
