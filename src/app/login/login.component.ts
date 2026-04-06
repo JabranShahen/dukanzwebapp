@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { take } from 'rxjs/operators';
 
 import { AuthService } from '../auth.service';
 
@@ -25,9 +26,11 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/dashboard/categories']);
-    }
+    this.authService.user$.pipe(take(1)).subscribe((user) => {
+      if (user) {
+        void this.router.navigate(['/dashboard/categories']);
+      }
+    });
   }
 
   async submit(): Promise<void> {
