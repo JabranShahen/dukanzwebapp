@@ -2,10 +2,125 @@
   <app-management-header
     eyebrow="Dukanz"
     title="Dashboard"
-    subtext="Overview"
+    subtext="Live overview"
   ></app-management-header>
 
+  <!-- ── Stat cards ────────────────────────────────────────── -->
+  <div class="stat-grid">
+    <div class="stat-card stat-card--blue">
+      <div class="stat-label">Orders Today</div>
+      <div class="stat-value">{{ loading ? '—' : ordersToday.length }}</div>
+      <div class="stat-hint">outstanding</div>
+    </div>
+    <div class="stat-card stat-card--amber">
+      <div class="stat-label">Pending Deliveries</div>
+      <div class="stat-value">{{ loading ? '—' : pendingOrders.length }}</div>
+      <div class="stat-hint">active orders</div>
+    </div>
+    <div class="stat-card stat-card--teal">
+      <div class="stat-label">Active Customers</div>
+      <div class="stat-value">{{ loading ? '—' : activeCustomerCount }}</div>
+      <div class="stat-hint">with open orders</div>
+    </div>
+    <div class="stat-card stat-card--red">
+      <div class="stat-label">Late Orders</div>
+      <div class="stat-value">{{ loading ? '—' : lateOrders.length }}</div>
+      <div class="stat-hint">over 24 hours</div>
+    </div>
+  </div>
+
+  <!-- ── Error ─────────────────────────────────────────────── -->
+  <div *ngIf="error" class="error-bar">{{ error }}</div>
+
+  <!-- ── Late orders list ───────────────────────────────────── -->
+  <app-management-panel *ngIf="!loading && lateOrders.length > 0">
+    <div class="panel-header">
+      <span class="section-title section-title--danger">⚠ Late Orders</span>
+      <span class="section-count">{{ lateOrders.length }}</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Address</th>
+            <th>Status</th>
+            <th>Age</th>
+            <th class="col-right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of lateOrders; trackBy: trackById"
+              class="row--late row--clickable"
+              (click)="openOrder(order)">
+            <td class="col-id">{{ order.id | slice:0:8 }}…</td>
+            <td>{{ order.user?.name || '—' }}</td>
+            <td class="col-address">{{ order.user?.address || '—' }}</td>
+            <td>
+              <span class="status-badge status-badge--{{ statusTone(order.status) }}">
+                {{ order.status }}
+              </span>
+            </td>
+            <td class="col-age col-age--late">{{ formatAge(order.orderDeviceDttm) }}</td>
+            <td class="col-right">Rs {{ order.orderGrossPrice | number:'1.0-0' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-management-panel>
+
+  <!-- ── Recent orders list ─────────────────────────────────── -->
   <app-management-panel>
-    <p>Use the left menu to manage categories, products, account, and settings.</p>
+    <div class="panel-header">
+      <span class="section-title">Recent Orders</span>
+      <button class="refresh-btn" type="button" (click)="load()" [disabled]="loading">
+        ↺ Refresh
+      </button>
+    </div>
+
+    <div *ngIf="loading" class="state-msg">Loading…</div>
+
+    <div *ngIf="!loading && recentOrders.length === 0" class="state-msg">
+      No outstanding orders right now.
+    </div>
+
+    <div *ngIf="!loading && recentOrders.length > 0" class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Address</th>
+            <th>Status</th>
+            <th>Time</th>
+            <th class="col-right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of recentOrders; trackBy: trackById"
+              class="row--clickable"
+              (click)="openOrder(order)">
+            <td class="col-id">{{ order.id | slice:0:8 }}…</td>
+            <td>{{ order.user?.name || '—' }}</td>
+            <td class="col-address">{{ order.user?.address || '—' }}</td>
+            <td>
+              <span class="status-badge status-badge--{{ statusTone(order.status) }}">
+                {{ order.status }}
+              </span>
+            </td>
+            <td class="col-age">{{ formatAge(order.orderDeviceDttm) }}</td>
+            <td class="col-right">Rs {{ order.orderGrossPrice | number:'1.0-0' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </app-management-panel>
 </div>
+
+<!-- Order detail modal -->
+<app-order-detail-modal
+  *ngIf="selectedOrder"
+  [order]="selectedOrder"
+  (closed)="closeOrder()"
+></app-order-detail-modal>

@@ -1,0 +1,149 @@
+<div class="modal-backdrop" role="presentation" (click)="onBackdropClick($event)">
+  <div class="modal-card">
+
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="header-left">
+        <span class="status-badge status-badge--{{ statusTone(order.status) }}">
+          {{ order.status }}
+        </span>
+        <span *ngIf="isLate" class="late-chip">⚠ Late</span>
+      </div>
+      <button class="close-btn" type="button" (click)="closed.emit()" aria-label="Close">✕</button>
+    </div>
+
+    <!-- Order meta -->
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">Order ID</span>
+        <span class="meta-value mono">{{ order.id }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Placed</span>
+        <span class="meta-value">{{ formatDateTime(order.orderDeviceDttm) }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Age</span>
+        <span class="meta-value" [class.text-danger]="isLate">{{ formatAge(order.orderDeviceDttm) }}</span>
+      </div>
+      <div class="meta-item" *ngIf="order.deviceID">
+        <span class="meta-label">Device ID</span>
+        <span class="meta-value mono">{{ order.deviceID }}</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Customer -->
+    <section class="section">
+      <div class="section-label">Customer</div>
+      <div class="info-grid" *ngIf="order.user; else noCustomer">
+        <div class="info-row">
+          <span class="info-key">Name</span>
+          <span class="info-val">{{ order.user.name || '—' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Phone</span>
+          <span class="info-val mono">{{ order.user.phoneNumber || '—' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Address</span>
+          <span class="info-val">{{ order.user.address || '—' }}</span>
+        </div>
+        <div class="info-row" *ngIf="order.user.isDriver">
+          <span class="info-key">Role</span>
+          <span class="info-val">Driver</span>
+        </div>
+      </div>
+      <ng-template #noCustomer>
+        <span class="empty-hint">No customer info attached.</span>
+      </ng-template>
+    </section>
+
+    <!-- Driver -->
+    <section class="section" *ngIf="order.driver">
+      <div class="section-label">Driver</div>
+      <div class="info-grid">
+        <div class="info-row">
+          <span class="info-key">Name</span>
+          <span class="info-val">{{ order.driver!.name || '—' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Phone</span>
+          <span class="info-val mono">{{ order.driver!.phoneNumber || '—' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Items -->
+    <section class="section">
+      <div class="section-label">
+        Items
+        <span class="item-count" *ngIf="order.orderItems?.length">
+          {{ order.orderItems!.length }}
+        </span>
+      </div>
+
+      <div class="items-scroll" *ngIf="order.orderItems && order.orderItems.length > 0; else noItems">
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Unit</th>
+              <th class="col-right">Qty</th>
+              <th class="col-right">Line Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of order.orderItems">
+              <td class="item-name">{{ item.product?.productName || '—' }}</td>
+              <td class="item-unit">{{ item.product?.unitName || '—' }}</td>
+              <td class="col-right item-qty">{{ item.quantity }}</td>
+              <td class="col-right item-total">Rs {{ item.orderItemTotalPrice | number:'1.0-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noItems>
+        <span class="empty-hint">No items recorded.</span>
+      </ng-template>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Pricing -->
+    <section class="section">
+      <div class="section-label">Pricing</div>
+      <div class="pricing-rows">
+        <div class="pricing-row">
+          <span>Subtotal</span>
+          <span>Rs {{ order.orderTotalPrice | number:'1.0-2' }}</span>
+        </div>
+        <div class="pricing-row">
+          <span>Delivery charge</span>
+          <span>Rs {{ order.deliveryChargeApplied | number:'1.0-2' }}</span>
+        </div>
+        <div class="pricing-row pricing-row--total">
+          <span>Total</span>
+          <span>Rs {{ order.orderGrossPrice | number:'1.0-2' }}</span>
+        </div>
+        <div class="pricing-row pricing-hint" *ngIf="order.freeDeliveryOrderSize">
+          <span>Free delivery from</span>
+          <span>Rs {{ order.freeDeliveryOrderSize | number:'1.0-0' }}</span>
+        </div>
+        <div class="pricing-row pricing-hint" *ngIf="order.maxOrderSize">
+          <span>Max order size</span>
+          <span>Rs {{ order.maxOrderSize | number:'1.0-0' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button class="close-text-btn" type="button" (click)="closed.emit()">Close</button>
+    </div>
+
+  </div>
+</div>
