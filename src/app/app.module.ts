@@ -28,6 +28,7 @@ import { PurchaseCreateComponent } from './purchase/purchase-create.component';
 import { PurchaseProcessComponent } from './purchase/purchase-process.component';
 import { AccountComponent } from './account/account.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { NgChartsModule } from 'ng2-charts';
 import { ManagementHeaderComponent } from './shared/management-header/management-header.component';
 import { ManagementPanelComponent } from './shared/management-panel/management-panel.component';
 import { UiButtonComponent } from './shared/ui/ui-button/ui-button.component';
@@ -71,6 +72,7 @@ import { UiSnackbarComponent } from './shared/ui/ui-snackbar/ui-snackbar.compone
   imports: [
     BrowserModule,
     DragDropModule,
+    NgChartsModule,
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,

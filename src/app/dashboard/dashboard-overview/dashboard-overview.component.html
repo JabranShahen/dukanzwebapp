@@ -29,6 +29,23 @@
     </div>
   </div>
 
+  <!-- ── Orders last 24h chart ────────────────────────────── -->
+  <app-management-panel>
+    <div class="panel-header">
+      <span class="section-title">Orders in the last 24 hours</span>
+      <span class="section-subtitle">{{ loading ? '' : ordersLast24h + ' total' }}</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas *ngIf="!loading"
+        baseChart
+        [data]="hourlyChartData"
+        [options]="chartOptions"
+        type="bar">
+      </canvas>
+      <div *ngIf="loading" class="chart-loading">Loading…</div>
+    </div>
+  </app-management-panel>
+
   <!-- ── Error ─────────────────────────────────────────────── -->
   <div *ngIf="error" class="error-bar">{{ error }}</div>
 

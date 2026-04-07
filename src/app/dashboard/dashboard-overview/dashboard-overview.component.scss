@@ -54,6 +54,27 @@
   color: var(--tone-muted);
 }
 
+// ── Chart ────────────────────────────────────────────────────
+.chart-wrap {
+  position: relative;
+  height: 180px;
+}
+
+.chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 0.875rem;
+  color: var(--tone-muted);
+}
+
+.section-subtitle {
+  font-size: 0.8rem;
+  color: var(--tone-muted);
+  font-weight: 500;
+}
+
 // ── Error bar ────────────────────────────────────────────────
 .error-bar {
   padding: 0.75rem 1rem;
