@@ -213,6 +213,7 @@ export class EventProductService {
       productName: (record.productName || '').trim(),
       productDescription: (record.productDescription || '').trim(),
       imageURL: (record.imageURL || record.overrideImageURL || '').trim(),
+      imagePublicUrl: (record.imagePublicUrl || '').trim(),
       overrideImageURL: (record.overrideImageURL || record.imageURL || '').trim(),
       displayPercentage: this.normalizeMoney(record.displayPercentage),
       displayUnitName: (record.displayUnitName || '').trim(),

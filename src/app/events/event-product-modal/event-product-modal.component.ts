@@ -50,6 +50,7 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
     currentPrice: [0, [Validators.required, Validators.min(0)]],
     currentCost: [0, [Validators.required, Validators.min(0)]],
     unitName: ['', [Validators.required]],
+    imagePublicUrl: ['', [Validators.maxLength(2048)]],
     visible: [true]
   });
 
@@ -72,6 +73,7 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
           currentPrice: this.assignment.currentPrice ?? 0,
           currentCost: this.assignment.currentCost ?? 0,
           unitName: this.assignment.unitName || '',
+          imagePublicUrl: this.assignment.imagePublicUrl || '',
           visible: this.assignment.visible
         });
       } else {
@@ -84,6 +86,7 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
           orignalPrice: 0,
           currentPrice: 0,
           currentCost: 0,
+          imagePublicUrl: '',
           unitName: '',
           visible: true
         });
@@ -143,7 +146,8 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
           orignalPrice: created.orignalPrice ?? 0,
           currentPrice: created.currentPrice ?? 0,
           currentCost: created.currentCost ?? 0,
-          unitName: created.unitName || ''
+          unitName: created.unitName || '',
+          imagePublicUrl: created.imagePublicUrl || ''
         });
         this.currentImagePath = (created.imageURL || '').trim();
         this.loadCurrentImagePreview();
@@ -210,6 +214,7 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
     const currentPrice = this.normalizeMoney(value.currentPrice);
     const currentCost = this.normalizeMoney(value.currentCost);
     const unitName = this.normalizeText(value.unitName);
+    const imagePublicUrl = this.normalizeText(value.imagePublicUrl);
 
     if (!productId) {
       this.productError = 'A master product selection is required.';
@@ -236,12 +241,18 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
       return;
     }
 
+    if (imagePublicUrl && !this.isValidPublicUrl(imagePublicUrl)) {
+      this.imageError = 'Enter a valid public image URL.';
+      return;
+    }
+
     this.saved.emit({
       ...(this.assignment ? { id: this.assignment.id } : {}),
       productId,
       productName,
       productDescription,
       imageURL: this.removeCurrentImage ? '' : this.currentImagePath,
+      imagePublicUrl,
       imageFile: this.selectedImageFile,
       clearImage: this.removeCurrentImage,
       displayPercentage,
@@ -274,7 +285,8 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
       orignalPrice: this.normalizeMoney(selectedProduct.orignalPrice),
       currentPrice: this.normalizeMoney(selectedProduct.currentPrice),
       currentCost: this.normalizeMoney(selectedProduct.currentCost),
-      unitName: this.normalizeText(selectedProduct.unitName)
+      unitName: this.normalizeText(selectedProduct.unitName),
+      imagePublicUrl: selectedProduct.imagePublicUrl || ''
     });
 
     this.currentImagePath = (selectedProduct.imageURL || '').trim();
@@ -292,6 +304,12 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
     if (this.selectedImagePreviewUrl) {
       return this.selectedImagePreviewUrl;
     }
+
+    const publicUrl = this.normalizeText(this.assignmentForm.controls.imagePublicUrl.value);
+    if (publicUrl && this.isValidPublicUrl(publicUrl)) {
+      return publicUrl;
+    }
+
     if (!this.removeCurrentImage && this.currentImagePreviewUrl) {
       return this.currentImagePreviewUrl;
     }
@@ -301,6 +319,10 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
   previewLabel(): string {
     if (this.selectedImagePreviewUrl) {
       return 'Selected image';
+    }
+    const publicUrl = this.normalizeText(this.assignmentForm.controls.imagePublicUrl.value);
+    if (publicUrl && this.isValidPublicUrl(publicUrl)) {
+      return 'Public image';
     }
     if (!this.removeCurrentImage && this.currentImagePreviewUrl) {
       return 'Current image';
@@ -319,6 +341,15 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
     return Math.max(0, value);
   }
 
+  private isValidPublicUrl(value: string): boolean {
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
   private loadCurrentImagePreview(): void {
     this.currentImagePreviewUrl = '';
     this.currentImageSubscription?.unsubscribe();
@@ -335,6 +366,12 @@ export class EventProductModalComponent implements OnChanges, OnDestroy {
   }
 
   private seedMasterImagePreview(product: Product): void {
+    const publicUrl = this.normalizeText(product.imagePublicUrl || '');
+    if (publicUrl && this.isValidPublicUrl(publicUrl)) {
+      this.currentImagePreviewUrl = publicUrl;
+      return;
+    }
+
     const imagePath = (product.imageURL || '').trim();
     if (!imagePath) {
       return;

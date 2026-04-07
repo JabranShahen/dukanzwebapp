@@ -455,13 +455,10 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       (left.productName || '').localeCompare(right.productName || '', undefined, { sensitivity: 'base' })
     );
 
-    const imagePath = (product.imageURL || '').trim();
-    if (imagePath) {
-      this.blobStorageService.getDownloadUrl(imagePath).subscribe({
-        next: (imageUrl) => { this.masterProductImageUrls[product.id] = imageUrl || ''; },
-        error: () => { this.masterProductImageUrls[product.id] = ''; }
-      });
-    }
+    this.resolveProductDisplayImageUrl(product.imagePublicUrl, product.imageURL).subscribe({
+      next: (imageUrl) => { this.masterProductImageUrls[product.id] = imageUrl || ''; },
+      error: () => { this.masterProductImageUrls[product.id] = ''; }
+    });
   }
 
   openAddCategoryModal(): void {
@@ -628,6 +625,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       productName: assignment.productName,
       productDescription: assignment.productDescription,
       imageURL: assignment.imageURL,
+      imagePublicUrl: assignment.imagePublicUrl,
       displayPercentage: assignment.displayPercentage,
       displayUnitName: assignment.displayUnitName,
       orignalPrice: assignment.orignalPrice,
@@ -669,6 +667,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
             productName: payload.productName,
             productDescription: payload.productDescription,
             imageURL,
+            imagePublicUrl: payload.imagePublicUrl,
             displayPercentage: payload.displayPercentage,
             displayUnitName: payload.displayUnitName,
             orignalPrice: payload.orignalPrice,
@@ -685,6 +684,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
             productName: payload.productName,
             productDescription: payload.productDescription,
             imageURL,
+            imagePublicUrl: payload.imagePublicUrl,
             displayPercentage: payload.displayPercentage,
             displayUnitName: payload.displayUnitName,
             orignalPrice: payload.orignalPrice,
@@ -1170,6 +1170,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
         productName: (assignment.productName || '').trim(),
         productDescription: (assignment.productDescription || '').trim(),
         imageURL: (assignment.imageURL || '').trim(),
+        imagePublicUrl: (assignment.imagePublicUrl || '').trim(),
         displayPercentage: this.normalizeMoney(assignment.displayPercentage),
         displayUnitName: (assignment.displayUnitName || '').trim(),
         orignalPrice: this.normalizeMoney(assignment.orignalPrice),
@@ -1379,13 +1380,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
 
   private hydrateMasterProductImages(products: Product[]): void {
     for (const product of products) {
-      const imagePath = (product.imageURL || '').trim();
-      if (!imagePath) {
-        this.masterProductImageUrls[product.id] = '';
-        continue;
-      }
-
-      this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+      this.resolveProductDisplayImageUrl(product.imagePublicUrl, product.imageURL).subscribe({
         next: (imageUrl) => {
           this.masterProductImageUrls[product.id] = imageUrl || '';
         },
@@ -1434,13 +1429,7 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const imagePath = (assignment.imageURL || '').trim();
-    if (!imagePath) {
-      this.eventProductImageUrls[assignment.id] = '';
-      return;
-    }
-
-    this.blobStorageService.getDownloadUrl(imagePath).subscribe({
+    this.resolveProductDisplayImageUrl(assignment.imagePublicUrl, assignment.imageURL).subscribe({
       next: (imageUrl) => {
         this.eventProductImageUrls[assignment.id] = imageUrl || '';
       },
@@ -1484,6 +1473,20 @@ export class EventCompositionComponent implements OnInit, OnDestroy {
     }
 
     return of((payload.imageURL || '').trim());
+  }
+
+  private resolveProductDisplayImageUrl(imagePublicUrl: string | undefined, imageURL: string | undefined): Observable<string> {
+    const publicUrl = (imagePublicUrl || '').trim();
+    if (publicUrl) {
+      return of(publicUrl);
+    }
+
+    const imagePath = (imageURL || '').trim();
+    if (!imagePath) {
+      return of('');
+    }
+
+    return this.blobStorageService.getDownloadUrl(imagePath);
   }
 
   private normalizeText(value: string | null | undefined): string {

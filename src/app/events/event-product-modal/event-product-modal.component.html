@@ -112,6 +112,14 @@
         </div>
       </div>
 
+      <div class="field-row field-row--span">
+        <label class="field-label" for="ep-imagePublicUrl">Public image URL</label>
+        <div class="field-control">
+          <input id="ep-imagePublicUrl" type="url" formControlName="imagePublicUrl" placeholder="https://example.com/product.jpg" />
+          <span class="hint">Optional. When present, this URL is used before the stored blob image.</span>
+        </div>
+      </div>
+
       <div class="field-row field-row--span check-row" *ngIf="currentImagePath">
         <span class="field-label"></span>
         <div class="field-control field-control--check">

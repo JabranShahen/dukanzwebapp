@@ -56,6 +56,12 @@
         <span class="error" *ngIf="imageError">{{ imageError }}</span>
       </label>
 
+      <label class="field-span">
+        Public image URL
+        <input type="url" formControlName="imagePublicUrl" placeholder="https://example.com/product.jpg" />
+        <span class="hint">Optional. When present, this URL is used before the stored blob image.</span>
+      </label>
+
       <div class="field-span image-preview" *ngIf="selectedImagePreviewUrl">
         <img [src]="selectedImagePreviewUrl" [alt]="productForm.controls.productName.value || 'Selected product image'" />
       </div>

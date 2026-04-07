@@ -8,6 +8,7 @@ export interface EventProductRecord {
   productName?: string;
   productDescription?: string;
   imageURL?: string;
+  imagePublicUrl?: string;
   overrideImageURL?: string;
   displayPercentage?: number;
   displayUnitName?: string;
@@ -29,6 +30,7 @@ export interface EventProductMutation {
   productName?: string;
   productDescription?: string;
   imageURL?: string;
+  imagePublicUrl?: string;
   overrideImageURL?: string;
   imageFile?: File | null;
   clearImage?: boolean;

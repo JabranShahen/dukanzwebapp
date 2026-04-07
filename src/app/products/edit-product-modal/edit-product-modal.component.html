@@ -53,18 +53,25 @@
         Product image
         <input type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
         <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
-        <span class="hint" *ngIf="!selectedImageFile && currentImagePath">Current image stored.</span>
+        <span class="hint" *ngIf="!selectedImageFile && currentImagePath">Stored blob image available.</span>
         <span class="error" *ngIf="imageError">{{ imageError }}</span>
+      </label>
+
+      <label class="field-span">
+        Public image URL
+        <input type="url" formControlName="imagePublicUrl" placeholder="https://example.com/product.jpg" />
+        <span class="hint">Optional. When present, this URL is used before the stored blob image.</span>
       </label>
 
       <label class="field-span check-row" *ngIf="currentImagePath">
         <input type="checkbox" [(ngModel)]="removeCurrentImage" [ngModelOptions]="{ standalone: true }" [disabled]="pending" />
-        Remove current image
+        Remove stored blob image
       </label>
 
-      <div class="field-span image-preview" *ngIf="selectedImagePreviewUrl || (currentImagePreviewUrl && !removeCurrentImage)">
+      <div class="field-span image-preview" *ngIf="previewImageUrl()">
+        <span class="hint">{{ previewLabel() }}</span>
         <img
-          [src]="selectedImagePreviewUrl || currentImagePreviewUrl"
+          [src]="previewImageUrl()"
           [alt]="productForm.controls.productName.value || 'Product image preview'"
         />
       </div>

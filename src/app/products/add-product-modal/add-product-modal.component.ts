@@ -24,7 +24,8 @@ export class AddProductModalComponent implements OnDestroy {
     orignalPrice: [0, [Validators.required, Validators.min(0)]],
     currentPrice: [0, [Validators.required, Validators.min(0)]],
     currentCost: [0, [Validators.required, Validators.min(0)]],
-    unitName: ['', [Validators.required, Validators.maxLength(40)]]
+    unitName: ['', [Validators.required, Validators.maxLength(40)]],
+    imagePublicUrl: ['', [Validators.maxLength(2048)]]
   });
 
   constructor(private readonly formBuilder: FormBuilder) {}
@@ -74,9 +75,15 @@ export class AddProductModalComponent implements OnDestroy {
 
     const value = this.productForm.getRawValue();
     const normalizedName = this.normalizeText(value.productName);
+    const imagePublicUrl = this.normalizeText(value.imagePublicUrl);
 
     if (!normalizedName) {
       this.nameError = 'Master product name is required.';
+      return;
+    }
+
+    if (imagePublicUrl && !this.isValidPublicUrl(imagePublicUrl)) {
+      this.imageError = 'Enter a valid public image URL.';
       return;
     }
 
@@ -88,6 +95,7 @@ export class AddProductModalComponent implements OnDestroy {
       currentCost: Number(value.currentCost),
       unitName: this.normalizeText(value.unitName),
       imageURL: '',
+      imagePublicUrl,
       imageFile: this.selectedImageFile,
       visible: true,
       productCategory: createEmptyProductCategory()
@@ -96,6 +104,15 @@ export class AddProductModalComponent implements OnDestroy {
 
   private normalizeText(value: string): string {
     return (value || '').trim();
+  }
+
+  private isValidPublicUrl(value: string): boolean {
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
   }
 
   private revokeSelectedImagePreview(): void {

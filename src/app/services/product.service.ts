@@ -101,6 +101,7 @@ export class ProductService {
       displayPercentage: this.normalizeNumber(payload.displayPercentage),
       displayUnitName: (payload.displayUnitName || '').trim(),
       imageURL: (payload.imageURL || '').trim(),
+      imagePublicUrl: (payload.imagePublicUrl || '').trim(),
       visible: !!payload.visible,
       productCategory: this.normalizeProductCategory(payload.productCategory)
     };
@@ -135,6 +136,7 @@ export class ProductService {
       displayPercentage: this.normalizeNumber(product.displayPercentage),
       displayUnitName: (product.displayUnitName || '').trim(),
       imageURL: (product.imageURL || '').trim(),
+      imagePublicUrl: (product.imagePublicUrl || '').trim(),
       visible: !!product.visible,
       productCategory: this.normalizeProductCategory(product.productCategory),
       ...(typeof product.order === 'number' ? { order: product.order } : {})
