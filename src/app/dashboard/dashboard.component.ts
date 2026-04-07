@@ -21,6 +21,7 @@ export class DashboardComponent {
     { key: 'categories', label: 'Categories', route: '/dashboard/categories' },
     { key: 'events', label: 'Events', route: '/dashboard/events' },
     { key: 'products', label: 'Products', route: '/dashboard/products' },
+    { key: 'users', label: 'Users', route: '/dashboard/users' },
     { key: 'driver', label: 'Driver', route: '/dashboard/driver' },
     { key: 'purchase', label: 'Create Purchase', route: '/dashboard/purchase' },
     { key: 'purchase-process', label: 'Process Purchase', route: '/dashboard/purchase-process' },

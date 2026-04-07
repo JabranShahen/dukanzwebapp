@@ -27,6 +27,7 @@ import { DriverOrdersComponent } from './driver/driver-orders.component';
 import { PurchaseCreateComponent } from './purchase/purchase-create.component';
 import { PurchaseProcessComponent } from './purchase/purchase-process.component';
 import { AccountComponent } from './account/account.component';
+import { UserManagementComponent } from './users/user-management.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { NgChartsModule } from 'ng2-charts';
 import { ManagementHeaderComponent } from './shared/management-header/management-header.component';
@@ -61,6 +62,7 @@ import { UiSnackbarComponent } from './shared/ui/ui-snackbar/ui-snackbar.compone
     PurchaseCreateComponent,
     PurchaseProcessComponent,
     AccountComponent,
+    UserManagementComponent,
     ManagementHeaderComponent,
     ManagementPanelComponent,
     UiButtonComponent,

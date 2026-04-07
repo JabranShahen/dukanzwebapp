@@ -13,6 +13,7 @@ import { AccountComponent } from './account/account.component';
 import { DriverOrdersComponent } from './driver/driver-orders.component';
 import { PurchaseCreateComponent } from './purchase/purchase-create.component';
 import { PurchaseProcessComponent } from './purchase/purchase-process.component';
+import { UserManagementComponent } from './users/user-management.component';
 import { LoginComponent } from './login/login.component';
 
 const routes: Routes = [
@@ -77,6 +78,10 @@ const routes: Routes = [
       {
         path: 'settings',
         component: SettingsComponent
+      },
+      {
+        path: 'users',
+        component: UserManagementComponent
       },
       {
         path: 'account',

@@ -1,0 +1,134 @@
+<div class="page">
+  <app-management-header
+    eyebrow="Dukanz"
+    title="Users"
+    subtext="Manage customer and driver accounts"
+  ></app-management-header>
+
+  <app-management-panel>
+
+    <!-- ── Filters ─────────────────────────────────────────── -->
+    <div class="filters">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input
+          class="search-input"
+          type="text"
+          placeholder="Search by name, phone, address or email…"
+          [(ngModel)]="filterText"
+        />
+        <button *ngIf="filterText" class="clear-input" type="button" (click)="filterText = ''">✕</button>
+      </div>
+
+      <div class="filter-pills">
+        <span class="filter-label">Status</span>
+        <button
+          *ngFor="let opt of ['all', 'enabled', 'disabled']"
+          class="pill"
+          [class.pill--active]="filterStatus === opt"
+          type="button"
+          (click)="filterStatus = $any(opt)"
+        >{{ opt | titlecase }}</button>
+
+        <span class="filter-label filter-label--gap">Role</span>
+        <button
+          *ngFor="let opt of ['all', 'customer', 'driver']"
+          class="pill"
+          [class.pill--active]="filterRole === opt"
+          type="button"
+          (click)="filterRole = $any(opt)"
+        >{{ opt | titlecase }}</button>
+
+        <button *ngIf="hasActiveFilter" class="clear-filters" type="button" (click)="clearFilters()">
+          Clear filters
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Toolbar ──────────────────────────────────────────── -->
+    <div class="toolbar">
+      <span class="count">{{ loading ? '—' : userCountLabel }}</span>
+      <app-ui-button variant="secondary" (clicked)="load()">↺ Refresh</app-ui-button>
+    </div>
+
+    <!-- ── Feedback ─────────────────────────────────────────── -->
+    <div *ngIf="error" class="feedback feedback--error">{{ error }}</div>
+    <div *ngIf="successMessage" class="feedback feedback--success">{{ successMessage }}</div>
+
+    <!-- ── Loading ───────────────────────────────────────────── -->
+    <div *ngIf="loading" class="state-msg">Loading users…</div>
+
+    <!-- ── Empty ─────────────────────────────────────────────── -->
+    <app-ui-empty-state
+      *ngIf="!loading && filteredUsers.length === 0 && allUsers.length === 0"
+      title="No users yet"
+      body="Users will appear here once customers sign up."
+    ></app-ui-empty-state>
+
+    <div *ngIf="!loading && filteredUsers.length === 0 && allUsers.length > 0" class="state-msg">
+      No users match the current filters.
+    </div>
+
+    <!-- ── Table ──────────────────────────────────────────────── -->
+    <div *ngIf="!loading && filteredUsers.length > 0" class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let user of filteredUsers; trackBy: trackById"
+            [class.row--disabled]="!user.enable"
+            [class.row--updating]="updatingId === user.id"
+          >
+            <td class="col-name">{{ user.name || '—' }}</td>
+            <td class="col-mono">{{ user.phoneNumber || '—' }}</td>
+            <td class="col-address">{{ user.address || '—' }}</td>
+            <td class="col-mono col-email">{{ user.email || '—' }}</td>
+            <td>
+              <span class="role-badge" [class.role-badge--driver]="user.isDriver">
+                {{ user.isDriver ? 'Driver' : 'Customer' }}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge" [class.status-badge--enabled]="user.enable" [class.status-badge--disabled]="!user.enable">
+                {{ user.enable ? 'Enabled' : 'Disabled' }}
+              </span>
+            </td>
+            <td class="col-actions">
+              <div class="action-group">
+                <button
+                  class="action-btn"
+                  [class.action-btn--danger]="user.enable"
+                  [class.action-btn--success]="!user.enable"
+                  type="button"
+                  [disabled]="updatingId === user.id"
+                  (click)="toggleEnable(user)"
+                >
+                  {{ user.enable ? 'Disable' : 'Enable' }}
+                </button>
+                <button
+                  class="action-btn action-btn--ghost"
+                  type="button"
+                  [disabled]="updatingId === user.id"
+                  (click)="toggleDriver(user)"
+                >
+                  {{ user.isDriver ? 'Make Customer' : 'Make Driver' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </app-management-panel>
+</div>
