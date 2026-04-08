@@ -1,8 +1,22 @@
 import { Component, OnInit } from '@angular/core';
 import { ChartData, ChartOptions } from 'chart.js';
 
-import { Order, ACTIVE_ORDER_STATUSES } from '../../models/order.model';
+import { Order, OrderStatus, ACTIVE_ORDER_STATUSES } from '../../models/order.model';
 import { OrderService } from '../../services/order.service';
+
+// All statuses in display order with their chart colours
+const STATUS_PALETTE: Record<OrderStatus, string> = {
+  Sending:    '#2563eb',  // blue
+  Approved:   '#0d9488',  // teal
+  Processing: '#f59e0b',  // amber
+  Dispatched: '#f97316',  // orange
+  Delivered:  '#16a34a',  // green
+  Declined:   '#dc2626',  // red
+  Cancelled:  '#6b7280',  // gray
+  Canceling:  '#e11d48',  // rose
+};
+
+const ALL_STATUSES = Object.keys(STATUS_PALETTE) as OrderStatus[];
 
 @Component({
   selector: 'app-dashboard-overview',
@@ -16,17 +30,38 @@ export class DashboardOverviewComponent implements OnInit {
   selectedOrder: Order | null = null;
 
   // ── Chart ──────────────────────────────────────────────────
-  hourlyChartData: ChartData<'bar'> = { labels: [], datasets: [] };
+  hourlyChartData: ChartData<'line'> = { labels: [], datasets: [] };
 
-  readonly chartOptions: ChartOptions<'bar'> = {
+  readonly chartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
     plugins: {
-      legend: { display: false },
+      legend: {
+        display: true,
+        position: 'top',
+        labels: {
+          color: '#3d5a57',
+          font: { size: 11 },
+          boxWidth: 12,
+          padding: 16,
+          usePointStyle: true,
+          pointStyleWidth: 8,
+          filter: (item) => {
+            // Hide legend entries for statuses with no data
+            const ds = this.hourlyChartData.datasets[item.datasetIndex!];
+            return ds ? (ds.data as number[]).some((v) => v > 0) : false;
+          }
+        }
+      },
       tooltip: {
         callbacks: {
           title: (items) => items[0].label,
-          label: (item) => ` ${item.parsed.y} order${item.parsed.y === 1 ? '' : 's'}`
+          label: (item) =>
+            ` ${item.dataset.label}: ${item.parsed.y} order${item.parsed.y === 1 ? '' : 's'}`
         }
       }
     },
@@ -36,7 +71,8 @@ export class DashboardOverviewComponent implements OnInit {
         ticks: {
           color: '#7a9490',
           font: { size: 11 },
-          maxRotation: 0
+          maxRotation: 0,
+          maxTicksLimit: 12,
         }
       },
       y: {
@@ -54,9 +90,9 @@ export class DashboardOverviewComponent implements OnInit {
 
   private buildHourlyChartData(): void {
     const now = new Date();
-    const buckets = Array(24).fill(0);
     const labels: string[] = [];
 
+    // Build the 24 hour-slot labels
     for (let i = 23; i >= 0; i--) {
       const d = new Date(now);
       d.setHours(d.getHours() - i, 0, 0, 0);
@@ -66,30 +102,40 @@ export class DashboardOverviewComponent implements OnInit {
       labels.push(display);
     }
 
+    // One bucket array per status
+    const statusBuckets: Record<string, number[]> = {};
+    for (const s of ALL_STATUSES) {
+      statusBuckets[s] = Array(24).fill(0);
+    }
+
     const windowStart = Date.now() - 24 * 3_600_000;
     for (const order of this.outstandingOrders) {
       const t = new Date(order.orderDeviceDttm).getTime();
       if (t < windowStart) continue;
       const diffH = Math.floor((Date.now() - t) / 3_600_000);
       const slot = 23 - diffH;
-      if (slot >= 0 && slot < 24) buckets[slot]++;
+      if (slot >= 0 && slot < 24 && statusBuckets[order.status]) {
+        statusBuckets[order.status][slot]++;
+      }
     }
-
-    const maxVal = Math.max(...buckets, 1);
 
     this.hourlyChartData = {
       labels,
-      datasets: [
-        {
-          data: buckets,
-          backgroundColor: buckets.map((v) =>
-            v === maxVal && v > 0 ? 'rgba(37, 99, 235, 0.85)' : 'rgba(37, 99, 235, 0.35)'
-          ),
-          hoverBackgroundColor: 'rgba(37, 99, 235, 0.75)',
-          borderRadius: 4,
-          borderSkipped: false
-        }
-      ]
+      datasets: ALL_STATUSES.map((status) => {
+        const colour = STATUS_PALETTE[status];
+        return {
+          label: status,
+          data: statusBuckets[status],
+          borderColor: colour,
+          backgroundColor: colour + '1a',   // 10% opacity fill
+          pointBackgroundColor: colour,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          tension: 0.35,
+          fill: false,
+        };
+      })
     };
   }
 
