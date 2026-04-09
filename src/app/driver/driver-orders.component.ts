@@ -110,6 +110,7 @@ export class DriverOrdersComponent implements OnInit, OnDestroy {
     this.feedbackMessage = '';
   }
 
+
   statusIcon(status: string): string {
     switch (status) {
       case 'Approved':  return 'assets/approved.png';

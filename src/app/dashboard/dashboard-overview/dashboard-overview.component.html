@@ -32,8 +32,8 @@
   <!-- ── Orders last 24h chart ────────────────────────────── -->
   <app-management-panel>
     <div class="panel-header">
-      <span class="section-title">Orders in the last 24 hours</span>
-      <span class="section-subtitle">{{ loading ? '' : ordersLast24h + ' total' }}</span>
+      <span class="section-title">Orders in the last 7 days</span>
+      <span class="section-subtitle">{{ loading ? '' : ordersLast7d + ' total' }}</span>
     </div>
     <div class="chart-wrap">
       <canvas *ngIf="!loading"

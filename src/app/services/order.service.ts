@@ -5,6 +5,17 @@ import { catchError, map } from 'rxjs/operators';
 import { Order } from '../models/order.model';
 import { ApiService } from './api.service';
 
+export interface NotificationTestResult {
+  userFound: boolean;
+  hasToken: boolean;
+  tokenPreview: string | null;
+  sendResult: string;
+}
+
+function toIsoDate(d: Date): string {
+  return d.toISOString().split('T')[0];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -17,6 +28,17 @@ export class OrderService {
     return this.api.get<Order[] | null>(`${this.endpoint}/outstanding`).pipe(
       map((response) => (Array.isArray(response) ? response : []))
     );
+  }
+
+  getOrdersForDate(date: Date): Observable<Order[]> {
+    return this.api.get<Order[] | null>(`${this.endpoint}/getListOfOrdersForDate/${toIsoDate(date)}`).pipe(
+      map((response) => (Array.isArray(response) ? response : [])),
+      catchError(() => of([]))
+    );
+  }
+
+  testPushNotification(userId: string): Observable<NotificationTestResult> {
+    return this.api.get<NotificationTestResult>(`Notification/test/${userId}`);
   }
 
   updateStatus(order: Order, newStatus: string): Observable<boolean> {

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { ChartData, ChartOptions } from 'chart.js';
 
 import { Order, OrderStatus, ACTIVE_ORDER_STATUSES } from '../../models/order.model';
@@ -26,7 +27,8 @@ const ALL_STATUSES = Object.keys(STATUS_PALETTE) as OrderStatus[];
 export class DashboardOverviewComponent implements OnInit {
   loading = true;
   error = '';
-  outstandingOrders: Order[] = [];
+  outstandingOrders: Order[] = [];   // active only — used for stat cards + table
+  allRecentOrders: Order[] = [];     // all statuses, last 7 days — used for chart
   selectedOrder: Order | null = null;
 
   // ── Chart ──────────────────────────────────────────────────
@@ -49,7 +51,6 @@ export class DashboardOverviewComponent implements OnInit {
           boxWidth: 12,
           padding: 16,
           usePointStyle: true,
-          pointStyleWidth: 8,
           filter: (item) => {
             // Hide legend entries for statuses with no data
             const ds = this.hourlyChartData.datasets[item.datasetIndex!];
@@ -72,7 +73,6 @@ export class DashboardOverviewComponent implements OnInit {
           color: '#7a9490',
           font: { size: 11 },
           maxRotation: 0,
-          maxTicksLimit: 12,
         }
       },
       y: {
@@ -90,31 +90,31 @@ export class DashboardOverviewComponent implements OnInit {
 
   private buildHourlyChartData(): void {
     const now = new Date();
+    const DAYS = 7;
     const labels: string[] = [];
+    const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    // Build the 24 hour-slot labels
-    for (let i = 23; i >= 0; i--) {
+    // Build 7 day-slot labels (oldest → today)
+    for (let i = DAYS - 1; i >= 0; i--) {
       const d = new Date(now);
-      d.setHours(d.getHours() - i, 0, 0, 0);
-      const h = d.getHours();
-      const suffix = h >= 12 ? 'pm' : 'am';
-      const display = h === 0 ? '12am' : h <= 12 ? `${h}${suffix}` : `${h - 12}${suffix}`;
-      labels.push(display);
+      d.setDate(d.getDate() - i);
+      const label = i === 0 ? 'Today' : i === 1 ? 'Yesterday' : DAY_NAMES[d.getDay()];
+      labels.push(label);
     }
 
     // One bucket array per status
     const statusBuckets: Record<string, number[]> = {};
     for (const s of ALL_STATUSES) {
-      statusBuckets[s] = Array(24).fill(0);
+      statusBuckets[s] = Array(DAYS).fill(0);
     }
 
-    const windowStart = Date.now() - 24 * 3_600_000;
-    for (const order of this.outstandingOrders) {
+    const windowStart = Date.now() - DAYS * 24 * 3_600_000;
+    for (const order of this.allRecentOrders) {
       const t = new Date(order.orderDeviceDttm).getTime();
       if (t < windowStart) continue;
-      const diffH = Math.floor((Date.now() - t) / 3_600_000);
-      const slot = 23 - diffH;
-      if (slot >= 0 && slot < 24 && statusBuckets[order.status]) {
+      const diffDays = Math.floor((Date.now() - t) / (24 * 3_600_000));
+      const slot = (DAYS - 1) - diffDays;
+      if (slot >= 0 && slot < DAYS && statusBuckets[order.status]) {
         statusBuckets[order.status][slot]++;
       }
     }
@@ -149,9 +149,28 @@ export class DashboardOverviewComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.error = '';
-    this.orderService.getOutstandingOrders().subscribe({
-      next: (orders) => {
-        this.outstandingOrders = orders;
+
+    // Build requests for each of the last 7 days
+    const today = new Date();
+    const dailyRequests = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      return this.orderService.getOrdersForDate(d);
+    });
+
+    forkJoin({
+      outstanding: this.orderService.getOutstandingOrders(),
+      daily: forkJoin(dailyRequests),
+    }).subscribe({
+      next: ({ outstanding, daily }) => {
+        this.outstandingOrders = outstanding;
+        // Deduplicate across day boundaries using order id
+        const seen = new Set<string>();
+        this.allRecentOrders = daily.flat().filter((o) => {
+          if (seen.has(o.id)) return false;
+          seen.add(o.id);
+          return true;
+        });
         this.buildHourlyChartData();
         this.loading = false;
       },
@@ -201,11 +220,8 @@ export class DashboardOverviewComponent implements OnInit {
       .slice(0, 15);
   }
 
-  get ordersLast24h(): number {
-    const windowStart = Date.now() - 24 * 3_600_000;
-    return this.outstandingOrders.filter(
-      (o) => new Date(o.orderDeviceDttm).getTime() >= windowStart
-    ).length;
+  get ordersLast7d(): number {
+    return this.allRecentOrders.length;
   }
 
   formatAge(dttm: string): string {
