@@ -86,14 +86,26 @@
     <ng-container *ngIf="activeTab === 'history'">
 
       <div class="history-controls">
-        <label class="date-label" for="historyDate">Date</label>
-        <input
-          id="historyDate"
-          type="date"
-          class="date-input"
-          [(ngModel)]="selectedDate"
-          (change)="onDateChange()"
-        />
+        <div class="history-field">
+          <label class="date-label" for="historyStartDate">From</label>
+          <input
+            id="historyStartDate"
+            type="date"
+            class="date-input"
+            [(ngModel)]="historyStartDate"
+            (change)="onDateChange()"
+          />
+        </div>
+        <div class="history-field">
+          <label class="date-label" for="historyEndDate">To</label>
+          <input
+            id="historyEndDate"
+            type="date"
+            class="date-input"
+            [(ngModel)]="historyEndDate"
+            (change)="onDateChange()"
+          />
+        </div>
       </div>
 
       <div *ngIf="loading" class="state-msg">Loading orders…</div>
@@ -101,7 +113,7 @@
 
       <app-ui-empty-state
         *ngIf="!loading && !error && historyOrders.length === 0"
-        title="No orders found for this date."
+        title="No orders found for this date range."
         body=""
       ></app-ui-empty-state>
 

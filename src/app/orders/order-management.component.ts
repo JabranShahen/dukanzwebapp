@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { forkJoin } from 'rxjs';
 
 import { Order } from '../models/order.model';
 import { OrderService } from '../services/order.service';
@@ -13,7 +14,8 @@ export class OrderManagementComponent implements OnInit, OnDestroy {
   liveOrders: Order[] = [];
   historyOrders: Order[] = [];
   selectedOrder: Order | null = null;
-  selectedDate: string = this.todayIso();
+  historyStartDate: string = this.todayIso();
+  historyEndDate: string = this.todayIso();
   loading = false;
   error = '';
 
@@ -59,11 +61,28 @@ export class OrderManagementComponent implements OnInit, OnDestroy {
   loadHistory(): void {
     this.loading = true;
     this.error = '';
-    const date = new Date(this.selectedDate);
-    this.orderService.getOrdersForDate(date).subscribe({
-      next: (orders) => {
+    this.normalizeHistoryRange();
+
+    const requests = this.getHistoryDatesInRange().map((date) =>
+      this.orderService.getOrdersForDate(date)
+    );
+
+    forkJoin(requests).subscribe({
+      next: (dailyOrders) => {
         this.loading = false;
-        this.historyOrders = orders;
+        const seen = new Set<string>();
+        this.historyOrders = dailyOrders
+          .flat()
+          .filter((order) => {
+            if (seen.has(order.id)) return false;
+            seen.add(order.id);
+            return true;
+          })
+          .sort(
+            (a, b) =>
+              new Date(b.orderDeviceDttm).getTime() -
+              new Date(a.orderDeviceDttm).getTime()
+          );
       },
       error: () => {
         this.loading = false;
@@ -150,5 +169,43 @@ export class OrderManagementComponent implements OnInit, OnDestroy {
 
   private todayIso(): string {
     return new Date().toISOString().split('T')[0];
+  }
+
+  private normalizeHistoryRange(): void {
+    if (!this.historyStartDate && !this.historyEndDate) {
+      const today = this.todayIso();
+      this.historyStartDate = today;
+      this.historyEndDate = today;
+      return;
+    }
+
+    if (!this.historyStartDate) {
+      this.historyStartDate = this.historyEndDate || this.todayIso();
+    }
+
+    if (!this.historyEndDate) {
+      this.historyEndDate = this.historyStartDate;
+    }
+
+    if (this.historyStartDate > this.historyEndDate) {
+      [this.historyStartDate, this.historyEndDate] = [
+        this.historyEndDate,
+        this.historyStartDate
+      ];
+    }
+  }
+
+  private getHistoryDatesInRange(): Date[] {
+    const start = new Date(`${this.historyStartDate}T00:00:00`);
+    const end = new Date(`${this.historyEndDate}T00:00:00`);
+    const dates: Date[] = [];
+    const cursor = new Date(start);
+
+    while (cursor.getTime() <= end.getTime()) {
+      dates.push(new Date(cursor));
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return dates;
   }
 }
