@@ -23,6 +23,7 @@ export class DashboardComponent {
     { key: 'products', label: 'Products', route: '/dashboard/products' },
     { key: 'users', label: 'Users', route: '/dashboard/users' },
     { key: 'driver', label: 'Driver', route: '/dashboard/driver' },
+    { key: 'orders', label: 'Orders', route: '/dashboard/orders' },
     { key: 'purchase', label: 'Create Purchase', route: '/dashboard/purchase' },
     { key: 'purchase-process', label: 'Process Purchase', route: '/dashboard/purchase-process' },
     { key: 'account', label: 'Account', route: '/dashboard/account' },

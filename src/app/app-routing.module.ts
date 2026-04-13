@@ -15,6 +15,7 @@ import { PurchaseCreateComponent } from './purchase/purchase-create.component';
 import { PurchaseProcessComponent } from './purchase/purchase-process.component';
 import { UserManagementComponent } from './users/user-management.component';
 import { LoginComponent } from './login/login.component';
+import { OrderManagementComponent } from './orders/order-management.component';
 
 const routes: Routes = [
   {
@@ -66,6 +67,10 @@ const routes: Routes = [
       {
         path: 'driver',
         component: DriverOrdersComponent
+      },
+      {
+        path: 'orders',
+        component: OrderManagementComponent
       },
       {
         path: 'purchase',

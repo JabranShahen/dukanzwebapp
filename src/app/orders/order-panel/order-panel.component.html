@@ -1,0 +1,176 @@
+<div class="panel-overlay" (click)="closed.emit()"></div>
+
+<div class="panel" role="dialog" aria-modal="true">
+
+  <!-- Header -->
+  <div class="panel-header">
+    <span class="panel-order-id">{{ order.id }}</span>
+    <app-ui-status-pill
+      [label]="order.status"
+      [tone]="statusTone(order.status)"
+    ></app-ui-status-pill>
+    <button class="close-btn" type="button" (click)="closed.emit()">✕</button>
+  </div>
+
+  <!-- Body -->
+  <div class="panel-body">
+
+    <!-- Meta -->
+    <section class="panel-section">
+      <h3 class="section-title">Meta</h3>
+      <div class="detail-row">
+        <span>Placed</span>
+        <span>{{ formatDateTime(order.orderDeviceDttm) }}</span>
+      </div>
+      <div class="detail-row" [class.detail-row--old]="isOld()">
+        <span>Age</span>
+        <span>{{ ageLabel() }}</span>
+      </div>
+    </section>
+
+    <!-- Customer -->
+    <section class="panel-section">
+      <h3 class="section-title">Customer</h3>
+      <div class="detail-row">
+        <span>Name</span>
+        <span>{{ order.user?.name || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span>Phone</span>
+        <span>{{ order.user?.phoneNumber || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span>Address</span>
+        <span>{{ order.user?.address || '—' }}</span>
+      </div>
+    </section>
+
+    <!-- Driver -->
+    <section class="panel-section">
+      <h3 class="section-title">Driver</h3>
+      <ng-container *ngIf="order.driver; else noDriver">
+        <div class="detail-row">
+          <span>Name</span>
+          <span>{{ order.driver.name }}</span>
+        </div>
+        <div class="detail-row">
+          <span>Phone</span>
+          <span>{{ order.driver.phoneNumber }}</span>
+        </div>
+      </ng-container>
+      <ng-template #noDriver>
+        <p class="muted-text">No driver assigned</p>
+      </ng-template>
+    </section>
+
+    <!-- Items -->
+    <section class="panel-section">
+      <h3 class="section-title">Items</h3>
+      <table class="items-table" *ngIf="order.orderItems && order.orderItems.length > 0">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Unit</th>
+            <th>Qty</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of order.orderItems">
+            <td>{{ item.product?.productName }}</td>
+            <td>{{ item.product?.unitName || '—' }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>Rs {{ item.orderItemTotalPrice | number:'1.0-0' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="muted-text" *ngIf="!order.orderItems || order.orderItems.length === 0">No items</p>
+    </section>
+
+    <!-- Pricing -->
+    <section class="panel-section">
+      <h3 class="section-title">Pricing</h3>
+      <div class="detail-row">
+        <span>Subtotal</span>
+        <span>Rs {{ order.orderGrossPrice | number:'1.0-0' }}</span>
+      </div>
+      <div class="detail-row">
+        <span>Delivery</span>
+        <span>Rs {{ order.deliveryChargeApplied | number:'1.0-0' }}</span>
+      </div>
+      <div class="detail-row detail-row--total">
+        <span>Total</span>
+        <span>Rs {{ order.orderTotalPrice | number:'1.0-0' }}</span>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <section class="panel-section">
+      <h3 class="section-title">Actions</h3>
+      <ng-container *ngIf="getActions().length > 0; else noActions">
+        <div class="action-group">
+          <app-ui-button
+            *ngFor="let action of getActions()"
+            [variant]="action.variant"
+            [disabled]="updatingStatus"
+            (clicked)="applyAction(action)"
+          >
+            {{ action.label }}
+          </app-ui-button>
+          <span *ngIf="updatingStatus" class="updating-text">Updating…</span>
+        </div>
+      </ng-container>
+      <ng-template #noActions>
+        <p class="muted-text">No further actions available.</p>
+      </ng-template>
+    </section>
+
+    <!-- Driver Assignment -->
+    <section class="panel-section">
+      <h3 class="section-title">Driver Assignment</h3>
+
+      <div *ngIf="driverLoading" class="muted-text">Loading drivers…</div>
+
+      <div *ngIf="driverError && !driverLoading" class="driver-error">
+        {{ driverError }}
+        <button type="button" class="retry-link" (click)="loadDrivers()">Retry</button>
+      </div>
+
+      <ng-container *ngIf="!driverLoading && !driverError">
+        <div class="driver-assign-row">
+          <select
+            class="driver-select"
+            [(ngModel)]="selectedDriverId"
+            [disabled]="updatingDriver"
+          >
+            <option value="">— Select driver —</option>
+            <option *ngFor="let d of drivers" [value]="d.id">
+              {{ d.name }} ({{ d.phoneNumber }})
+            </option>
+          </select>
+          <app-ui-button
+            variant="primary"
+            [disabled]="!canAssign() || updatingDriver"
+            (clicked)="assignDriver()"
+          >Assign</app-ui-button>
+        </div>
+
+        <div *ngIf="order.driver" class="unassign-row">
+          <app-ui-button
+            variant="ghost"
+            [disabled]="updatingDriver"
+            (clicked)="unassignDriver()"
+          >Unassign</app-ui-button>
+        </div>
+      </ng-container>
+    </section>
+
+  </div>
+
+  <app-ui-snackbar
+    [message]="feedbackMessage"
+    [tone]="feedbackTone"
+    (dismissed)="onFeedbackDismissed()"
+  ></app-ui-snackbar>
+
+</div>

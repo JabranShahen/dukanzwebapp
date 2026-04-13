@@ -3,6 +3,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { Order } from '../models/order.model';
+import { DukanzUser } from '../models/user.model';
 import { ApiService } from './api.service';
 
 export interface NotificationTestResult {
@@ -39,6 +40,27 @@ export class OrderService {
 
   testPushNotification(userId: string): Observable<NotificationTestResult> {
     return this.api.get<NotificationTestResult>(`Notification/test/${userId}`);
+  }
+
+  assignDriver(order: Order, driver: DukanzUser | null): Observable<boolean> {
+    const driverPayload = driver
+      ? {
+          id: driver.id,
+          PartitionKey: driver.id,
+          name: driver.name,
+          address: driver.address,
+          phoneNumber: driver.phoneNumber,
+          isDriver: true
+        }
+      : null;
+    const payload = { ...order, driver: driverPayload };
+    return this.api.put<string | boolean | object>(this.endpoint, payload).pipe(
+      map(() => true),
+      catchError((error) => {
+        if (error?.status === 200) return of(true);
+        throw error;
+      })
+    );
   }
 
   updateStatus(order: Order, newStatus: string): Observable<boolean> {

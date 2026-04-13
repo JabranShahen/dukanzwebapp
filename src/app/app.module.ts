@@ -37,6 +37,8 @@ import { ConfirmDialogComponent } from './shared/ui/confirm-dialog/confirm-dialo
 import { UiEmptyStateComponent } from './shared/ui/ui-empty-state/ui-empty-state.component';
 import { UiStatusPillComponent } from './shared/ui/ui-status-pill/ui-status-pill.component';
 import { UiSnackbarComponent } from './shared/ui/ui-snackbar/ui-snackbar.component';
+import { OrderManagementComponent } from './orders/order-management.component';
+import { OrderPanelComponent } from './orders/order-panel/order-panel.component';
 
 @NgModule({
   declarations: [
@@ -69,7 +71,9 @@ import { UiSnackbarComponent } from './shared/ui/ui-snackbar/ui-snackbar.compone
     ConfirmDialogComponent,
     UiEmptyStateComponent,
     UiStatusPillComponent,
-    UiSnackbarComponent
+    UiSnackbarComponent,
+    OrderManagementComponent,
+    OrderPanelComponent
   ],
   imports: [
     BrowserModule,

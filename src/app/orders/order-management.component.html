@@ -1,0 +1,157 @@
+<div class="page">
+
+  <app-management-header
+    eyebrow="Dukanz"
+    title="Order Management"
+    subtext="Manage and track all orders"
+  ></app-management-header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button
+      type="button"
+      class="tab"
+      [class.tab--active]="activeTab === 'live'"
+      (click)="switchTab('live')"
+    >Live Orders</button>
+    <button
+      type="button"
+      class="tab"
+      [class.tab--active]="activeTab === 'history'"
+      (click)="switchTab('history')"
+    >Order History</button>
+  </div>
+
+  <app-management-panel>
+
+    <!-- ── Live Orders ─────────────────────────────── -->
+    <ng-container *ngIf="activeTab === 'live'">
+
+      <div class="toolbar">
+        <span class="count" *ngIf="!loading">
+          {{ liveOrders.length }} order{{ liveOrders.length !== 1 ? 's' : '' }}
+        </span>
+        <app-ui-button variant="ghost" (clicked)="loadLive(true)">↺ Refresh</app-ui-button>
+      </div>
+
+      <div *ngIf="loading" class="state-msg">Loading orders…</div>
+      <div *ngIf="!loading && error" class="state-msg state-msg--error">{{ error }}</div>
+
+      <app-ui-empty-state
+        *ngIf="!loading && !error && liveOrders.length === 0"
+        title="No active orders right now."
+        body=""
+      ></app-ui-empty-state>
+
+      <div *ngIf="!loading && liveOrders.length > 0" class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Address</th>
+              <th>Status</th>
+              <th>Driver</th>
+              <th>Age</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let order of liveOrders"
+              class="row--clickable"
+              [class.row--selected]="selectedOrder?.id === order.id"
+              (click)="openPanel(order)"
+            >
+              <td class="col-mono">{{ shortId(order.id) }}</td>
+              <td>{{ order.user?.name || '—' }}</td>
+              <td class="col-address">{{ order.user?.address || '—' }}</td>
+              <td>
+                <app-ui-status-pill
+                  [label]="order.status"
+                  [tone]="statusTone(order.status)"
+                ></app-ui-status-pill>
+              </td>
+              <td>{{ order.driver?.name || 'Unassigned' }}</td>
+              <td class="col-age">{{ ageLabel(order.orderDeviceDttm) }}</td>
+              <td class="col-price">{{ formatPrice(order.orderTotalPrice) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </ng-container>
+
+    <!-- ── Order History ───────────────────────────── -->
+    <ng-container *ngIf="activeTab === 'history'">
+
+      <div class="history-controls">
+        <label class="date-label" for="historyDate">Date</label>
+        <input
+          id="historyDate"
+          type="date"
+          class="date-input"
+          [(ngModel)]="selectedDate"
+          (change)="onDateChange()"
+        />
+      </div>
+
+      <div *ngIf="loading" class="state-msg">Loading orders…</div>
+      <div *ngIf="!loading && error" class="state-msg state-msg--error">{{ error }}</div>
+
+      <app-ui-empty-state
+        *ngIf="!loading && !error && historyOrders.length === 0"
+        title="No orders found for this date."
+        body=""
+      ></app-ui-empty-state>
+
+      <div *ngIf="!loading && historyOrders.length > 0" class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Address</th>
+              <th>Status</th>
+              <th>Driver</th>
+              <th>Age</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let order of historyOrders"
+              class="row--clickable"
+              [class.row--selected]="selectedOrder?.id === order.id"
+              (click)="openPanel(order)"
+            >
+              <td class="col-mono">{{ shortId(order.id) }}</td>
+              <td>{{ order.user?.name || '—' }}</td>
+              <td class="col-address">{{ order.user?.address || '—' }}</td>
+              <td>
+                <app-ui-status-pill
+                  [label]="order.status"
+                  [tone]="statusTone(order.status)"
+                ></app-ui-status-pill>
+              </td>
+              <td>{{ order.driver?.name || 'Unassigned' }}</td>
+              <td class="col-age">{{ ageLabel(order.orderDeviceDttm) }}</td>
+              <td class="col-price">{{ formatPrice(order.orderTotalPrice) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </ng-container>
+
+  </app-management-panel>
+
+</div>
+
+<!-- Slide-over panel -->
+<app-order-panel
+  *ngIf="selectedOrder"
+  [order]="selectedOrder"
+  (closed)="closePanel()"
+  (orderUpdated)="onOrderUpdated()"
+></app-order-panel>
