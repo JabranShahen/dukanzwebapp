@@ -119,20 +119,16 @@ export class DriverOrdersComponent implements OnInit, OnDestroy {
       case 'Delivered':  return 'assets/delivered.png';
       case 'Declined':   return 'assets/declined.png';
       case 'Cancelled':  return 'assets/cancelled.png';
-      case 'Sending':    return 'assets/sending.gif';
-      case 'Canceling':  return 'assets/canceling.gif';
       default:           return '';
     }
   }
 
   statusTone(status: string): string {
     switch (status) {
-      case 'Sending': return 'pending';
       case 'Approved': return 'pending';
       case 'Processing': return 'info';
       case 'Dispatched': return 'warning';
       case 'Delivered': return 'success';
-      case 'Canceling': return 'danger';
       case 'Declined':
       case 'Cancelled': return 'muted';
       default: return 'muted';

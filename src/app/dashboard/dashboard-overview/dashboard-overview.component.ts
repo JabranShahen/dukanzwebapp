@@ -7,14 +7,12 @@ import { OrderService } from '../../services/order.service';
 
 // All statuses in display order with their chart colours
 const STATUS_PALETTE: Record<OrderStatus, string> = {
-  Sending:    '#2563eb',  // blue
   Approved:   '#0d9488',  // teal
   Processing: '#f59e0b',  // amber
   Dispatched: '#f97316',  // orange
   Delivered:  '#16a34a',  // green
   Declined:   '#dc2626',  // red
   Cancelled:  '#6b7280',  // gray
-  Canceling:  '#e11d48',  // rose
 };
 
 const ALL_STATUSES = Object.keys(STATUS_PALETTE) as OrderStatus[];
@@ -236,15 +234,12 @@ export class DashboardOverviewComponent implements OnInit {
 
   statusTone(status: string): string {
     switch (status) {
-      case 'Sending':
       case 'Approved':
         return 'pending';
       case 'Processing':
         return 'info';
       case 'Dispatched':
         return 'warning';
-      case 'Canceling':
-        return 'danger';
       case 'Delivered':
         return 'success';
       default:

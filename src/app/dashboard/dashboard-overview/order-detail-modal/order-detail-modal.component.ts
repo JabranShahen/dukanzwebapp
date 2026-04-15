@@ -30,15 +30,12 @@ export class OrderDetailModalComponent {
 
   statusTone(status: string): string {
     switch (status) {
-      case 'Sending':
       case 'Approved':
         return 'pending';
       case 'Processing':
         return 'info';
       case 'Dispatched':
         return 'warning';
-      case 'Canceling':
-        return 'danger';
       case 'Delivered':
         return 'success';
       default:

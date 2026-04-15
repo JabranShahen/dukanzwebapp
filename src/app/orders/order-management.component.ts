@@ -156,11 +156,9 @@ export class OrderManagementComponent implements OnInit, OnDestroy {
 
   statusTone(status: string): 'success' | 'muted' {
     switch (status) {
-      case 'Sending':
       case 'Approved':
       case 'Processing':
       case 'Dispatched':
-      case 'Canceling':
         return 'success';
       default:
         return 'muted';

@@ -4,11 +4,9 @@ export type OrderStatus =
   | 'Dispatched'
   | 'Delivered'
   | 'Declined'
-  | 'Cancelled'
-  | 'Sending'
-  | 'Canceling';
+  | 'Cancelled';
 
-export const ACTIVE_ORDER_STATUSES: OrderStatus[] = ['Sending', 'Approved', 'Processing', 'Dispatched', 'Canceling'];
+export const ACTIVE_ORDER_STATUSES: OrderStatus[] = ['Approved', 'Processing', 'Dispatched'];
 export const DONE_ORDER_STATUSES: OrderStatus[] = ['Delivered', 'Declined', 'Cancelled'];
 
 export interface OrderStatusAction {
@@ -18,11 +16,6 @@ export interface OrderStatusAction {
 }
 
 export const STATUS_ACTIONS: Record<string, OrderStatusAction[]> = {
-  // Customer submitted — driver starts or declines
-  Sending: [
-    { label: 'Start Processing', nextStatus: 'Processing', variant: 'primary' },
-    { label: 'Decline', nextStatus: 'Declined', variant: 'danger' }
-  ],
   Approved: [
     { label: 'Start Processing', nextStatus: 'Processing', variant: 'primary' },
     { label: 'Decline', nextStatus: 'Declined', variant: 'danger' }
@@ -34,11 +27,6 @@ export const STATUS_ACTIONS: Record<string, OrderStatusAction[]> = {
   Dispatched: [
     { label: 'Mark Delivered', nextStatus: 'Delivered', variant: 'primary' },
     { label: 'Cancel', nextStatus: 'Cancelled', variant: 'danger' }
-  ],
-  // Customer requested cancellation — driver confirms or continues
-  Canceling: [
-    { label: 'Confirm Cancel', nextStatus: 'Cancelled', variant: 'danger' },
-    { label: 'Continue Processing', nextStatus: 'Processing', variant: 'secondary' }
   ]
 };
 
