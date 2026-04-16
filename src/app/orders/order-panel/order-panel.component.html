@@ -6,7 +6,7 @@
   <div class="panel-header">
     <span class="panel-order-id">{{ order.id }}</span>
     <app-ui-status-pill
-      [label]="order.status"
+      [label]="displayStatus(order.status)"
       [tone]="statusTone(order.status)"
     ></app-ui-status-pill>
     <button class="close-btn" type="button" (click)="closed.emit()">✕</button>

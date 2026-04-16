@@ -2,13 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { ChartData, ChartOptions } from 'chart.js';
 
-import { Order, OrderStatus, ACTIVE_ORDER_STATUSES } from '../../models/order.model';
+import {
+  ACTIVE_ORDER_STATUSES,
+  isActiveOrderStatus,
+  normalizeOrderStatus,
+  Order,
+  OrderStatus
+} from '../../models/order.model';
 import { OrderService } from '../../services/order.service';
 
 // All statuses in display order with their chart colours
 const STATUS_PALETTE: Record<OrderStatus, string> = {
   Approved:   '#0d9488',  // teal
-  Processing: '#f59e0b',  // amber
+  Packed: '#f59e0b',  // amber
   Dispatched: '#f97316',  // orange
   Delivered:  '#16a34a',  // green
   Declined:   '#dc2626',  // red
@@ -112,8 +118,9 @@ export class DashboardOverviewComponent implements OnInit {
       if (t < windowStart) continue;
       const diffDays = Math.floor((Date.now() - t) / (24 * 3_600_000));
       const slot = (DAYS - 1) - diffDays;
-      if (slot >= 0 && slot < DAYS && statusBuckets[order.status]) {
-        statusBuckets[order.status][slot]++;
+      const normalizedStatus = normalizeOrderStatus(order.status);
+      if (slot >= 0 && slot < DAYS && statusBuckets[normalizedStatus]) {
+        statusBuckets[normalizedStatus][slot]++;
       }
     }
 
@@ -187,17 +194,13 @@ export class DashboardOverviewComponent implements OnInit {
   }
 
   get pendingOrders(): Order[] {
-    return this.outstandingOrders.filter((o) =>
-      ACTIVE_ORDER_STATUSES.includes(o.status as any)
-    );
+    return this.outstandingOrders.filter((o) => isActiveOrderStatus(o.status));
   }
 
   get lateOrders(): Order[] {
     const cutoff = Date.now() - 24 * 60 * 60 * 1000;
     return this.outstandingOrders.filter(
-      (o) =>
-        ACTIVE_ORDER_STATUSES.includes(o.status as any) &&
-        new Date(o.orderDeviceDttm).getTime() < cutoff
+      (o) => isActiveOrderStatus(o.status) && new Date(o.orderDeviceDttm).getTime() < cutoff
     );
   }
 
@@ -233,10 +236,10 @@ export class DashboardOverviewComponent implements OnInit {
   }
 
   statusTone(status: string): string {
-    switch (status) {
+    switch (normalizeOrderStatus(status)) {
       case 'Approved':
         return 'pending';
-      case 'Processing':
+      case 'Packed':
         return 'info';
       case 'Dispatched':
         return 'warning';
@@ -245,6 +248,10 @@ export class DashboardOverviewComponent implements OnInit {
       default:
         return 'muted';
     }
+  }
+
+  displayStatus(status: string): string {
+    return normalizeOrderStatus(status) || status;
   }
 
   openOrder(order: Order): void {

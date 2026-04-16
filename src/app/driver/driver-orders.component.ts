@@ -1,9 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import {
+  getStatusActions,
+  isPackedStatus,
+  normalizeOrderStatus,
   Order,
-  OrderStatusAction,
-  STATUS_ACTIONS
+  OrderStatusAction
 } from '../models/order.model';
 import { OrderService } from '../services/order.service';
 
@@ -48,7 +50,9 @@ export class DriverOrdersComponent implements OnInit, OnDestroy {
     this.orderService.getOutstandingOrders().subscribe({
       next: (orders) => {
         this.loading = false;
-        this.activeOrders = [...orders].sort(
+        this.activeOrders = [...orders]
+          .filter((order) => isPackedStatus(order.status) || order.status === 'Dispatched')
+          .sort(
           (a, b) =>
             new Date(a.orderDeviceDttm).getTime() - new Date(b.orderDeviceDttm).getTime()
         );
@@ -64,7 +68,7 @@ export class DriverOrdersComponent implements OnInit, OnDestroy {
   }
 
   getActions(order: Order): OrderStatusAction[] {
-    return STATUS_ACTIONS[order.status] ?? [];
+    return getStatusActions(order.status);
   }
 
   applyAction(order: Order, action: OrderStatusAction): void {
@@ -112,9 +116,9 @@ export class DriverOrdersComponent implements OnInit, OnDestroy {
 
 
   statusIcon(status: string): string {
-    switch (status) {
+    switch (normalizeOrderStatus(status)) {
       case 'Approved':  return 'assets/approved.png';
-      case 'Processing': return 'assets/processing.png';
+      case 'Packed': return 'assets/processing.png';
       case 'Dispatched': return 'assets/dispatched.png';
       case 'Delivered':  return 'assets/delivered.png';
       case 'Declined':   return 'assets/declined.png';
@@ -124,14 +128,18 @@ export class DriverOrdersComponent implements OnInit, OnDestroy {
   }
 
   statusTone(status: string): string {
-    switch (status) {
+    switch (normalizeOrderStatus(status)) {
       case 'Approved': return 'pending';
-      case 'Processing': return 'info';
+      case 'Packed': return 'info';
       case 'Dispatched': return 'warning';
       case 'Delivered': return 'success';
       case 'Declined':
       case 'Cancelled': return 'muted';
       default: return 'muted';
     }
+  }
+
+  displayStatus(status: string): string {
+    return normalizeOrderStatus(status) || status;
   }
 }

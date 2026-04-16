@@ -1,0 +1,262 @@
+.page {
+  display: grid;
+  gap: 1rem;
+}
+
+.toolbar,
+.batch-selector,
+.card-header,
+.customer-info,
+.form-actions,
+.summary-bar {
+  display: flex;
+}
+
+.toolbar {
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.batch-count,
+.selection-summary {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.batch-selector {
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.selector-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #888;
+}
+
+.selector-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.selector-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  background: #fff;
+  color: #1a1a2e;
+  cursor: pointer;
+
+  &--active {
+    background: #1a1a2e;
+    border-color: #1a1a2e;
+    color: #fff;
+
+    .selector-pill__badge,
+    .selector-pill__meta {
+      color: inherit;
+    }
+  }
+}
+
+.selector-pill__badge,
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.selector-pill__meta {
+  font-size: 0.72rem;
+  color: #666;
+}
+
+.summary-bar {
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #e0e4ea;
+  border-radius: 12px;
+  background: #fafbfc;
+}
+
+.summary-bar__info {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.summary-bar__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-bar__value {
+  font-size: 0.9rem;
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.state-message {
+  padding: 1.5rem 0;
+  color: #666;
+  text-align: center;
+
+  &.error {
+    color: #721c24;
+  }
+
+  &--compact {
+    padding-top: 0;
+  }
+}
+
+.order-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.order-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e0e4ea;
+  border-radius: 12px;
+  background: #fff;
+
+  &--disabled {
+    background: #fbfbfb;
+  }
+}
+
+.card-header {
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.order-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.order-time {
+  margin-right: auto;
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.customer-info {
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid #f0f2f5;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.customer-detail,
+.block-reason {
+  font-size: 0.82rem;
+  color: #666;
+}
+
+.block-reason {
+  color: #9f3a38;
+  font-weight: 600;
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th {
+    text-align: left;
+    padding: 0.45rem 0.6rem;
+    color: #666;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e0e4ea;
+  }
+
+  td {
+    padding: 0.55rem 0.6rem;
+    border-bottom: 1px solid #f0f2f5;
+    color: #1a1a2e;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  .col-qty {
+    width: 80px;
+    text-align: right;
+    font-weight: 600;
+  }
+
+  .col-unit {
+    width: 90px;
+    color: #666;
+  }
+
+  .col-status {
+    width: 160px;
+  }
+}
+
+.form-actions {
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e4ea;
+}
+
+.status-pill--success,
+.selector-pill__badge--success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-pill--warning,
+.selector-pill__badge--warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-pill--danger,
+.selector-pill__badge--danger {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-pill--pending,
+.selector-pill__badge--pending {
+  background: #e2e3e5;
+  color: #383d41;
+}

@@ -6,6 +6,7 @@ import {
   Output
 } from '@angular/core';
 
+import { normalizeOrderStatus } from '../../../models/order.model';
 import { Order } from '../../../models/order.model';
 
 @Component({
@@ -29,10 +30,10 @@ export class OrderDetailModalComponent {
   }
 
   statusTone(status: string): string {
-    switch (status) {
+    switch (normalizeOrderStatus(status)) {
       case 'Approved':
         return 'pending';
-      case 'Processing':
+      case 'Packed':
         return 'info';
       case 'Dispatched':
         return 'warning';
@@ -41,6 +42,10 @@ export class OrderDetailModalComponent {
       default:
         return 'muted';
     }
+  }
+
+  displayStatus(status: string): string {
+    return normalizeOrderStatus(status) || status;
   }
 
   formatDateTime(dttm: string): string {

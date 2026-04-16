@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
-import { Order } from '../models/order.model';
+import { normalizeOrderStatus, Order } from '../models/order.model';
 import { OrderService } from '../services/order.service';
 
 @Component({
@@ -155,14 +155,18 @@ export class OrderManagementComponent implements OnInit, OnDestroy {
   }
 
   statusTone(status: string): 'success' | 'muted' {
-    switch (status) {
+    switch (normalizeOrderStatus(status)) {
       case 'Approved':
-      case 'Processing':
+      case 'Packed':
       case 'Dispatched':
         return 'success';
       default:
         return 'muted';
     }
+  }
+
+  displayStatus(status: string): string {
+    return normalizeOrderStatus(status) || status;
   }
 
   private todayIso(): string {

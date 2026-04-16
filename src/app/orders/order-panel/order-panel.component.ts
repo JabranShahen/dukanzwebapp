@@ -9,7 +9,12 @@ import {
   SimpleChanges
 } from '@angular/core';
 
-import { Order, OrderStatusAction, STATUS_ACTIONS } from '../../models/order.model';
+import {
+  getStatusActions,
+  normalizeOrderStatus,
+  Order,
+  OrderStatusAction
+} from '../../models/order.model';
 import { DukanzUser } from '../../models/user.model';
 import { OrderService } from '../../services/order.service';
 import { UserService } from '../../services/user.service';
@@ -77,7 +82,7 @@ export class OrderPanelComponent implements OnInit, OnChanges {
   }
 
   getActions(): OrderStatusAction[] {
-    return STATUS_ACTIONS[this.order.status] ?? [];
+    return getStatusActions(this.order.status);
   }
 
   applyAction(action: OrderStatusAction): void {
@@ -148,14 +153,18 @@ export class OrderPanelComponent implements OnInit, OnChanges {
   }
 
   statusTone(status: string): 'success' | 'muted' {
-    switch (status) {
+    switch (normalizeOrderStatus(status)) {
       case 'Approved':
-      case 'Processing':
+      case 'Packed':
       case 'Dispatched':
         return 'success';
       default:
         return 'muted';
     }
+  }
+
+  displayStatus(status: string): string {
+    return normalizeOrderStatus(status) || status;
   }
 
   shortId(id: string): string {

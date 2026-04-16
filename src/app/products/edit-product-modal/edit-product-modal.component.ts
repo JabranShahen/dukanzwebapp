@@ -198,6 +198,10 @@ export class EditProductModalComponent implements OnChanges, OnDestroy {
     return '';
   }
 
+  get currentImagePreviewUrl(): string {
+    return this.storedImagePreviewUrl;
+  }
+
   private isValidPublicUrl(value: string): boolean {
     try {
       const parsed = new URL(value);

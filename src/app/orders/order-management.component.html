@@ -68,7 +68,7 @@
               <td class="col-address">{{ order.user?.address || '—' }}</td>
               <td>
                 <app-ui-status-pill
-                  [label]="order.status"
+                  [label]="displayStatus(order.status)"
                   [tone]="statusTone(order.status)"
                 ></app-ui-status-pill>
               </td>
@@ -142,7 +142,7 @@
               <td class="col-address">{{ order.user?.address || '—' }}</td>
               <td>
                 <app-ui-status-pill
-                  [label]="order.status"
+                  [label]="displayStatus(order.status)"
                   [tone]="statusTone(order.status)"
                 ></app-ui-status-pill>
               </td>

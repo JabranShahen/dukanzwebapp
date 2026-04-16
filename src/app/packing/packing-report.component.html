@@ -1,0 +1,158 @@
+<div class="page">
+  <app-management-header eyebrow="Packing" title="Packing Queue"></app-management-header>
+
+  <app-management-panel>
+    <div class="toolbar">
+      <span class="batch-count" *ngIf="!loadingList">
+        {{ batches.length }} batch{{ batches.length !== 1 ? 'es' : '' }}
+      </span>
+      <app-ui-button variant="ghost" [disabled]="loadingList || loadingDetail || saving" (clicked)="loadBatches()">Refresh</app-ui-button>
+    </div>
+
+    <div *ngIf="loadingList" class="state-message">Loading packing batches…</div>
+
+    <div *ngIf="!loadingList && listError" class="state-message error">
+      {{ listError }}
+      <app-ui-button variant="ghost" (clicked)="loadBatches()">Retry</app-ui-button>
+    </div>
+
+    <div *ngIf="!loadingList && !listError && batches.length === 0" class="state-message">
+      No purchased or partial batches are ready for packing yet.
+    </div>
+
+    <ng-container *ngIf="!loadingList && !listError && batches.length > 0">
+      <div class="batch-selector">
+        <span class="selector-label">Packing batch</span>
+        <div class="selector-pills">
+          <button
+            *ngFor="let batch of batches"
+            class="selector-pill"
+            [class.selector-pill--active]="batch.purchaseDateKey === selectedBatchKey"
+            (click)="selectBatch(batch.purchaseDateKey)"
+          >
+            {{ formatDate(batch.purchaseDate) }}
+            <span class="selector-pill__badge" [class]="'selector-pill__badge--' + statusTone(batch.purchaseStatus)">
+              {{ batch.purchaseStatus }}
+            </span>
+            <span class="selector-pill__meta">{{ batch.readyOrderCount }} ready</span>
+            <span class="selector-pill__meta">{{ batch.blockedOrderCount }} blocked</span>
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="loadingDetail" class="state-message">Loading packing detail…</div>
+
+      <div *ngIf="!loadingDetail && detailError" class="state-message error">
+        {{ detailError }}
+        <app-ui-button variant="ghost" (clicked)="loadBatchDetail(selectedBatchKey)">Retry</app-ui-button>
+      </div>
+
+      <ng-container *ngIf="!loadingDetail && !detailError && detail">
+        <div class="summary-bar">
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Purchase date</span>
+            <span class="summary-bar__value">{{ formatDate(detail.purchaseDate) }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Delivery date</span>
+            <span class="summary-bar__value">{{ formatDate(detail.deliveryDate) }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Purchase status</span>
+            <span class="status-pill" [class]="'status-pill--' + statusTone(detail.purchaseStatus)">{{ detail.purchaseStatus }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Orders</span>
+            <span class="summary-bar__value">{{ detail.orderCount }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Ready</span>
+            <span class="summary-bar__value">{{ detail.readyOrderCount }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Blocked</span>
+            <span class="summary-bar__value">{{ detail.blockedOrderCount }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Packed</span>
+            <span class="summary-bar__value">{{ detail.packedOrderCount }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="detail.orders.length === 0" class="state-message">
+          This batch has no orders.
+        </div>
+
+        <div *ngIf="detail.orders.length > 0 && !hasReadyOrders" class="state-message state-message--compact">
+          This batch has orders, but none are ready to pack.
+        </div>
+
+        <div *ngIf="detail.orders.length > 0" class="order-list">
+          <div *ngFor="let order of detail.orders" class="order-card" [class.order-card--disabled]="!isSelectable(order)">
+            <div class="card-header">
+              <label class="order-checkbox">
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(order.orderId)"
+                  [disabled]="!isSelectable(order) || saving"
+                  (change)="toggleOrder(order.orderId, $any($event.target).checked)"
+                />
+                <span>{{ shortOrderId(order.orderId) }}</span>
+              </label>
+              <span class="order-time">{{ formatDate(order.orderDate, true) }}</span>
+              <span class="status-pill" [class]="'status-pill--' + statusTone(order.packingState)">{{ order.packingState }}</span>
+              <span class="status-pill" [class]="'status-pill--' + statusTone(order.orderStatus)">{{ order.orderStatus }}</span>
+            </div>
+
+            <div class="customer-info">
+              <span class="customer-name">{{ order.customerName || 'Unknown customer' }}</span>
+              <span class="customer-detail" *ngIf="order.customerPhone">{{ order.customerPhone }}</span>
+              <span class="customer-detail" *ngIf="order.customerAddress">{{ order.customerAddress }}</span>
+              <span class="customer-detail">Items: {{ order.itemCount }} · Gross: {{ order.grossTotal | number:'1.2-2' }}</span>
+              <span *ngIf="order.blockReason" class="block-reason">{{ stateDescription(order.blockReason) || order.blockReason }}</span>
+            </div>
+
+            <table class="items-table" *ngIf="order.items.length > 0">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th class="col-qty">Qty</th>
+                  <th class="col-unit">Unit</th>
+                  <th class="col-status">Purchase status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of order.items">
+                  <td>{{ item.productName }}</td>
+                  <td class="col-qty">{{ item.quantity }}</td>
+                  <td class="col-unit">{{ item.unitName || '—' }}</td>
+                  <td class="col-status">
+                    <span class="status-pill" [class]="'status-pill--' + statusTone(item.purchaseStatus)">{{ item.purchaseStatus }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <app-ui-button [disabled]="saving || selectedCount === 0" (clicked)="markPacked()">
+            {{ saving ? 'Marking…' : 'Mark Packed' }}
+          </app-ui-button>
+          <app-ui-button variant="ghost" [disabled]="loadingDetail || saving" (clicked)="loadBatchDetail(selectedBatchKey)">
+            Refresh Batch
+          </app-ui-button>
+          <span class="selection-summary" *ngIf="selectedCount > 0">
+            {{ selectedCount }} selected
+          </span>
+        </div>
+      </ng-container>
+    </ng-container>
+  </app-management-panel>
+
+  <app-ui-snackbar
+    [message]="feedbackMessage"
+    [tone]="feedbackTone"
+    (dismissed)="onFeedbackDismissed()"
+  ></app-ui-snackbar>
+</div>

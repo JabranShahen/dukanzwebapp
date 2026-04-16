@@ -5,7 +5,7 @@
     <div class="modal-header">
       <div class="header-left">
         <span class="status-badge status-badge--{{ statusTone(order.status) }}">
-          {{ order.status }}
+          {{ displayStatus(order.status) }}
         </span>
         <span *ngIf="isLate" class="late-chip">⚠ Late</span>
       </div>

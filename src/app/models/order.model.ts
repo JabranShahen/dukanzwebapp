@@ -1,12 +1,12 @@
 export type OrderStatus =
   | 'Approved'
-  | 'Processing'
+  | 'Packed'
   | 'Dispatched'
   | 'Delivered'
   | 'Declined'
   | 'Cancelled';
 
-export const ACTIVE_ORDER_STATUSES: OrderStatus[] = ['Approved', 'Processing', 'Dispatched'];
+export const ACTIVE_ORDER_STATUSES: OrderStatus[] = ['Approved', 'Packed', 'Dispatched'];
 export const DONE_ORDER_STATUSES: OrderStatus[] = ['Delivered', 'Declined', 'Cancelled'];
 
 export interface OrderStatusAction {
@@ -17,10 +17,9 @@ export interface OrderStatusAction {
 
 export const STATUS_ACTIONS: Record<string, OrderStatusAction[]> = {
   Approved: [
-    { label: 'Start Processing', nextStatus: 'Processing', variant: 'primary' },
     { label: 'Decline', nextStatus: 'Declined', variant: 'danger' }
   ],
-  Processing: [
+  Packed: [
     { label: 'Dispatch', nextStatus: 'Dispatched', variant: 'primary' },
     { label: 'Cancel', nextStatus: 'Cancelled', variant: 'danger' }
   ],
@@ -29,6 +28,29 @@ export const STATUS_ACTIONS: Record<string, OrderStatusAction[]> = {
     { label: 'Cancel', nextStatus: 'Cancelled', variant: 'danger' }
   ]
 };
+
+const LEGACY_PACKED_STATUSES = new Set(['Packed', 'Processing']);
+
+export function normalizeOrderStatus(status: string | null | undefined): OrderStatus | string {
+  const normalizedStatus = (status ?? '').trim();
+  if (LEGACY_PACKED_STATUSES.has(normalizedStatus)) {
+    return 'Packed';
+  }
+
+  return normalizedStatus;
+}
+
+export function isPackedStatus(status: string | null | undefined): boolean {
+  return normalizeOrderStatus(status) === 'Packed';
+}
+
+export function isActiveOrderStatus(status: string | null | undefined): boolean {
+  return ACTIVE_ORDER_STATUSES.includes(normalizeOrderStatus(status) as OrderStatus);
+}
+
+export function getStatusActions(status: string | null | undefined): OrderStatusAction[] {
+  return STATUS_ACTIONS[normalizeOrderStatus(status)] ?? [];
+}
 
 export interface OrderUser {
   id: string;

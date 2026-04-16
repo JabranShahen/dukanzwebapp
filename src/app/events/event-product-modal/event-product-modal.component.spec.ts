@@ -127,6 +127,7 @@ describe('EventProductModalComponent', () => {
       productName: 'Espresso',
       productDescription: '',
       imageURL: '',
+      imagePublicUrl: '',
       imageFile: null,
       clearImage: false,
       displayPercentage: 0,

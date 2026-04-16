@@ -24,6 +24,7 @@ import { AddEventModalComponent } from './events/add-event-modal/add-event-modal
 import { EditEventModalComponent } from './events/edit-event-modal/edit-event-modal.component';
 import { SettingsComponent } from './settings/settings.component';
 import { DriverOrdersComponent } from './driver/driver-orders.component';
+import { PackingReportComponent } from './packing/packing-report.component';
 import { PurchaseCreateComponent } from './purchase/purchase-create.component';
 import { PurchaseProcessComponent } from './purchase/purchase-process.component';
 import { AccountComponent } from './account/account.component';
@@ -61,6 +62,7 @@ import { OrderPanelComponent } from './orders/order-panel/order-panel.component'
     EditProductModalComponent,
     SettingsComponent,
     DriverOrdersComponent,
+    PackingReportComponent,
     PurchaseCreateComponent,
     PurchaseProcessComponent,
     AccountComponent,
