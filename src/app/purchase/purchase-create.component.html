@@ -77,6 +77,15 @@
       <!-- Action -->
       <div class="form-actions">
         <app-ui-button
+          variant="ghost"
+          *ngIf="preview.alreadyCreated"
+          [disabled]="exportingPdf"
+          (clicked)="downloadPdf()"
+        >
+          {{ exportingPdf ? 'Generating PDF…' : 'Download PDF' }}
+        </app-ui-button>
+
+        <app-ui-button
           [disabled]="creating || preview.alreadyCreated || preview.orderCount === 0"
           (clicked)="onCreatePurchase()"
         >

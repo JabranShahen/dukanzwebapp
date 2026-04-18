@@ -1,0 +1,80 @@
+<div class="page">
+  <app-management-header eyebrow="Monitoring" title="Executive Monitoring"></app-management-header>
+
+  <app-management-panel>
+    <div class="toolbar">
+      <div class="toolbar__controls">
+        <label class="date-field">
+          <span class="date-field__label">Selected date</span>
+          <input type="date" [ngModel]="selectedDate" (ngModelChange)="selectedDate = $event; onDateChange()" />
+        </label>
+        <app-ui-button variant="ghost" [disabled]="loading" (clicked)="load()">Refresh</app-ui-button>
+      </div>
+      <span class="toolbar__date">{{ selectedDateLabel }}</span>
+    </div>
+
+    <div *ngIf="loading" class="state-message">Loading monitoring view…</div>
+
+    <div *ngIf="!loading && error" class="state-message error">
+      {{ error }}
+      <app-ui-button variant="ghost" (clicked)="load()">Retry</app-ui-button>
+    </div>
+
+    <ng-container *ngIf="!loading && !error">
+      <section class="hero-summary">
+        <div class="hero-summary__copy">
+          <span class="hero-summary__eyebrow">Top-level view</span>
+          <h2>CEO dashboard for daily system pulse</h2>
+          <p>{{ summaryHeadline }}</p>
+        </div>
+        <div class="hero-summary__meta">
+          <span class="hero-chip">Latest order {{ latestOrderTime }}</span>
+          <span class="hero-chip">Total orders {{ totalOrders }}</span>
+        </div>
+      </section>
+
+      <section class="stage-rail">
+        <article *ngFor="let stage of stageMetrics; let last = last" class="stage-card" [class]="'stage-card--' + stage.tone">
+          <span class="stage-card__label">{{ stage.label }}</span>
+          <strong class="stage-card__value">{{ stage.value }}</strong>
+          <span class="stage-card__hint">{{ stage.hint }}</span>
+          <span *ngIf="!last" class="stage-card__arrow" aria-hidden="true">→</span>
+        </article>
+      </section>
+
+      <section class="summary-grid">
+        <article *ngFor="let metric of summaryMetrics" class="summary-card" [class]="'summary-card--' + metric.tone">
+          <span class="summary-card__label">{{ metric.label }}</span>
+          <strong class="summary-card__value">{{ metric.value }}</strong>
+          <span class="summary-card__hint">{{ metric.hint }}</span>
+        </article>
+      </section>
+
+      <section class="insight-panel">
+        <div class="insight-panel__copy">
+          <span class="insight-panel__eyebrow">Leadership readout</span>
+          <h3>What to watch next</h3>
+          <p>
+            The stage rail shows whether demand is converting into completed deliveries. The summary cards expose whether
+            basket value, fulfilment pace, and delivered revenue are moving in step.
+          </p>
+        </div>
+
+        <div class="insight-panel__list">
+          <div class="insight-item">
+            <span class="insight-item__label">Operational risk</span>
+            <strong class="insight-item__value">{{ inFlightOrders }} orders not yet delivered</strong>
+          </div>
+          <div class="insight-item">
+            <span class="insight-item__label">Revenue quality</span>
+            <strong class="insight-item__value">{{ formatMoney(averageOrderValue) }} average order value</strong>
+          </div>
+          <div class="insight-item">
+            <span class="insight-item__label">Throughput</span>
+            <strong class="insight-item__value">{{ stageMetrics[1].value }} packed, {{ stageMetrics[2].value }} dispatched</strong>
+          </div>
+        </div>
+      </section>
+    </ng-container>
+  </app-management-panel>
+</div>

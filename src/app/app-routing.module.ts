@@ -3,7 +3,6 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { AuthGuard } from './auth.guard';
 import { DashboardComponent } from './dashboard/dashboard.component';
-import { DashboardOverviewComponent } from './dashboard/dashboard-overview/dashboard-overview.component';
 import { CategoryManagementComponent } from './category-management/category-management.component';
 import { EventCompositionComponent } from './events/event-composition.component';
 import { EventCategoryManagementComponent } from './events/event-category-management.component';
@@ -11,6 +10,7 @@ import { ProductManagementComponent } from './products/product-management.compon
 import { SettingsComponent } from './settings/settings.component';
 import { AccountComponent } from './account/account.component';
 import { DriverOrdersComponent } from './driver/driver-orders.component';
+import { MonitoringDashboardComponent } from './monitoring/monitoring-dashboard.component';
 import { PurchaseCreateComponent } from './purchase/purchase-create.component';
 import { PurchaseProcessComponent } from './purchase/purchase-process.component';
 import { PackingReportComponent } from './packing/packing-report.component';
@@ -21,7 +21,7 @@ import { OrderManagementComponent } from './orders/order-management.component';
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'dashboard/categories',
+    redirectTo: 'dashboard/monitoring',
     pathMatch: 'full'
   },
   {
@@ -36,7 +36,7 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        component: DashboardOverviewComponent,
+        redirectTo: 'monitoring',
         pathMatch: 'full'
       },
       {
@@ -72,6 +72,10 @@ const routes: Routes = [
       {
         path: 'orders',
         component: OrderManagementComponent
+      },
+      {
+        path: 'monitoring',
+        component: MonitoringDashboardComponent
       },
       {
         path: 'purchase',

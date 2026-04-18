@@ -13,6 +13,10 @@ export interface DukanzConfig {
   maxNumberOfHistoryOrders: number;
   contactPhoneNumber: string;
   deliveryOffsetDays: number;
+  latestAppVersion: string;
+  minimumSupportedAppVersion: string;
+  appUpgradePlayStoreUrl: string;
+  forceAppUpgrade: boolean;
 }
 
 export interface DukanzConfigMutation {
@@ -30,4 +34,8 @@ export interface DukanzConfigMutation {
   maxNumberOfHistoryOrders: number;
   contactPhoneNumber: string;
   deliveryOffsetDays: number;
+  latestAppVersion: string;
+  minimumSupportedAppVersion: string;
+  appUpgradePlayStoreUrl: string;
+  forceAppUpgrade: boolean;
 }

@@ -29,7 +29,11 @@ export class SettingsComponent implements OnInit {
     maxNumberOfActiveOrders: [0, [Validators.required, Validators.min(0)]],
     minOrderActiveScreenPresenseHours: [0, [Validators.required, Validators.min(0)]],
     maxNumberOfHistoryOrders: [0, [Validators.required, Validators.min(0)]],
-    deliveryOffsetDays: [1, [Validators.required, Validators.min(0)]]
+    deliveryOffsetDays: [1, [Validators.required, Validators.min(0)]],
+    latestAppVersion: ['', [Validators.maxLength(50)]],
+    minimumSupportedAppVersion: ['', [Validators.maxLength(50)]],
+    appUpgradePlayStoreUrl: ['', [Validators.maxLength(500)]],
+    forceAppUpgrade: [false]
   });
 
   constructor(
@@ -82,7 +86,11 @@ export class SettingsComponent implements OnInit {
         maxNumberOfActiveOrders: value.maxNumberOfActiveOrders,
         minOrderActiveScreenPresenseHours: value.minOrderActiveScreenPresenseHours,
         maxNumberOfHistoryOrders: value.maxNumberOfHistoryOrders,
-        deliveryOffsetDays: value.deliveryOffsetDays
+        deliveryOffsetDays: value.deliveryOffsetDays,
+        latestAppVersion: value.latestAppVersion,
+        minimumSupportedAppVersion: value.minimumSupportedAppVersion,
+        appUpgradePlayStoreUrl: value.appUpgradePlayStoreUrl,
+        forceAppUpgrade: value.forceAppUpgrade
       })
       .subscribe({
         next: (saved) => {
@@ -124,7 +132,11 @@ export class SettingsComponent implements OnInit {
       maxNumberOfActiveOrders: config.maxNumberOfActiveOrders ?? 0,
       minOrderActiveScreenPresenseHours: config.minOrderActiveScreenPresenseHours ?? 0,
       maxNumberOfHistoryOrders: config.maxNumberOfHistoryOrders ?? 0,
-      deliveryOffsetDays: config.deliveryOffsetDays ?? 1
+      deliveryOffsetDays: config.deliveryOffsetDays ?? 1,
+      latestAppVersion: config.latestAppVersion || '',
+      minimumSupportedAppVersion: config.minimumSupportedAppVersion || '',
+      appUpgradePlayStoreUrl: config.appUpgradePlayStoreUrl || '',
+      forceAppUpgrade: !!config.forceAppUpgrade
     });
   }
 }

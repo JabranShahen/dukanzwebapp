@@ -122,6 +122,33 @@
         </div>
       </section>
 
+      <section class="form-section">
+        <h3 class="section-title">App upgrade</h3>
+
+        <label>
+          Latest app version
+          <input type="text" formControlName="latestAppVersion" placeholder="e.g. 63.2.20" />
+          <span class="hint">Shown to users when a newer app build is available.</span>
+        </label>
+
+        <label>
+          Minimum supported app version
+          <input type="text" formControlName="minimumSupportedAppVersion" placeholder="e.g. 63.2.18" />
+          <span class="hint">Users below this version will be forced to upgrade before continuing.</span>
+        </label>
+
+        <label>
+          Google Play URL
+          <input type="text" formControlName="appUpgradePlayStoreUrl" placeholder="https://play.google.com/store/apps/details?id=..." />
+          <span class="hint">Optional. Leave blank to let the app build its Play Store link from the package id.</span>
+        </label>
+
+        <label class="checkbox-field">
+          <input type="checkbox" formControlName="forceAppUpgrade" />
+          <span>Force upgrade prompt for versions below the latest release</span>
+        </label>
+      </section>
+
       <div class="form-actions">
         <app-ui-button buttonType="submit" [disabled]="saving">
           {{ saving ? 'Saving…' : 'Save configuration' }}
