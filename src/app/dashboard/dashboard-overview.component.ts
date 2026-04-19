@@ -12,9 +12,9 @@ import { ManagementPanelComponent } from '../shared/management-panel/management-
   template: `
     <div class="page">
       <app-management-header
-        eyebrow="Rebuild foundation"
-        title="Dukanz Next dashboard shell"
-        subtext="The new webapp is organized around route-first management surfaces, reusable primitives, and Dukanz-specific services instead of the old template layout."
+        eyebrow="Process view"
+        title="Team dashboard for daily system pulse"
+        subtext="The new webapp is organized around route-first management surfaces, reusable primitives, and Dukanz-specific services for shared operations."
       ></app-management-header>
 
       <section class="grid">
