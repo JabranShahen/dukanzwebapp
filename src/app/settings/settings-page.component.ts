@@ -105,6 +105,29 @@ import { UiSkeletonComponent } from '../shared/ui/ui-skeleton/ui-skeleton.compon
               <input type="text" formControlName="contactPhoneNumber" placeholder="+44..." />
             </label>
 
+            <div class="section-heading">App Version Control</div>
+
+            <div class="number-grid">
+              <label>
+                Latest app version
+                <input type="text" formControlName="latestAppVersion" placeholder="1.0.0" />
+              </label>
+              <label>
+                Minimum supported version
+                <input type="text" formControlName="minimumSupportedAppVersion" placeholder="1.0.0" />
+              </label>
+            </div>
+
+            <label>
+              Play Store URL
+              <input type="text" formControlName="appUpgradePlayStoreUrl" placeholder="https://play.google.com/store/apps/details?id=..." />
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="forceAppUpgrade" />
+              Force upgrade (blocks app until updated)
+            </label>
+
             <div class="form-actions">
               <app-ui-button variant="secondary" [disabled]="saving" (clicked)="refresh()">Refresh</app-ui-button>
               <app-ui-button type="submit" [disabled]="configForm.invalid || configForm.pristine || saving">
@@ -158,6 +181,32 @@ import { UiSkeletonComponent } from '../shared/ui/ui-skeleton/ui-skeleton.compon
         gap: 0.6rem;
       }
 
+      .section-heading {
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.5;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(20, 50, 46, 0.1);
+      }
+
+      .checkbox-label {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .checkbox-label input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
       @media (max-width: 900px) {
         .number-grid {
           grid-template-columns: 1fr;
@@ -194,6 +243,10 @@ export class SettingsPageComponent implements OnInit, OnDestroy {
     minOrderActiveScreenPresenseHours: [0, [Validators.required, Validators.min(0)]],
     maxNumberOfHistoryOrders: [0, [Validators.required, Validators.min(0)]],
     contactPhoneNumber: ['', [Validators.required, Validators.maxLength(40)]],
+    latestAppVersion: ['', [Validators.maxLength(20)]],
+    minimumSupportedAppVersion: ['', [Validators.maxLength(20)]],
+    appUpgradePlayStoreUrl: ['', [Validators.maxLength(500)]],
+    forceAppUpgrade: [false],
   });
 
   ngOnInit(): void {
@@ -215,6 +268,10 @@ export class SettingsPageComponent implements OnInit, OnDestroy {
             minOrderActiveScreenPresenseHours: state.data.minOrderActiveScreenPresenseHours,
             maxNumberOfHistoryOrders: state.data.maxNumberOfHistoryOrders,
             contactPhoneNumber: state.data.contactPhoneNumber,
+            latestAppVersion: state.data.latestAppVersion,
+            minimumSupportedAppVersion: state.data.minimumSupportedAppVersion,
+            appUpgradePlayStoreUrl: state.data.appUpgradePlayStoreUrl,
+            forceAppUpgrade: state.data.forceAppUpgrade,
           });
         }
 
@@ -316,6 +373,10 @@ export class SettingsPageComponent implements OnInit, OnDestroy {
       minOrderActiveScreenPresenseHours: 0,
       maxNumberOfHistoryOrders: 0,
       contactPhoneNumber: '',
+      latestAppVersion: '',
+      minimumSupportedAppVersion: '',
+      appUpgradePlayStoreUrl: '',
+      forceAppUpgrade: false,
     };
   }
 

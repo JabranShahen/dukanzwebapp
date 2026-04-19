@@ -105,6 +105,10 @@ export class DukanzConfigService {
       minOrderActiveScreenPresenseHours: Number(request.minOrderActiveScreenPresenseHours),
       maxNumberOfHistoryOrders: Number(request.maxNumberOfHistoryOrders),
       contactPhoneNumber: request.contactPhoneNumber.trim(),
+      latestAppVersion: request.latestAppVersion.trim(),
+      minimumSupportedAppVersion: request.minimumSupportedAppVersion.trim(),
+      appUpgradePlayStoreUrl: request.appUpgradePlayStoreUrl.trim(),
+      forceAppUpgrade: Boolean(request.forceAppUpgrade),
     };
   }
 
@@ -124,6 +128,10 @@ export class DukanzConfigService {
       minOrderActiveScreenPresenseHours: Number(config.minOrderActiveScreenPresenseHours ?? 0),
       maxNumberOfHistoryOrders: Number(config.maxNumberOfHistoryOrders ?? 0),
       contactPhoneNumber: config.contactPhoneNumber ?? '',
+      latestAppVersion: config.latestAppVersion ?? '',
+      minimumSupportedAppVersion: config.minimumSupportedAppVersion ?? '',
+      appUpgradePlayStoreUrl: config.appUpgradePlayStoreUrl ?? '',
+      forceAppUpgrade: config.forceAppUpgrade ?? false,
     };
   }
 

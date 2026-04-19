@@ -12,6 +12,10 @@
   minOrderActiveScreenPresenseHours: number;
   maxNumberOfHistoryOrders: number;
   contactPhoneNumber: string;
+  latestAppVersion: string;
+  minimumSupportedAppVersion: string;
+  appUpgradePlayStoreUrl: string;
+  forceAppUpgrade: boolean;
 }
 
 export interface CreateDukanzConfigRequest {
@@ -26,6 +30,10 @@ export interface CreateDukanzConfigRequest {
   minOrderActiveScreenPresenseHours: number;
   maxNumberOfHistoryOrders: number;
   contactPhoneNumber: string;
+  latestAppVersion: string;
+  minimumSupportedAppVersion: string;
+  appUpgradePlayStoreUrl: string;
+  forceAppUpgrade: boolean;
 }
 
 export interface UpdateDukanzConfigRequest {
@@ -40,4 +48,8 @@ export interface UpdateDukanzConfigRequest {
   minOrderActiveScreenPresenseHours: number;
   maxNumberOfHistoryOrders: number;
   contactPhoneNumber: string;
+  latestAppVersion: string;
+  minimumSupportedAppVersion: string;
+  appUpgradePlayStoreUrl: string;
+  forceAppUpgrade: boolean;
 }
