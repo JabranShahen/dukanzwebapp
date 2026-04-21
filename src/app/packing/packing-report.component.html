@@ -90,16 +90,15 @@
         <div *ngIf="detail.orders.length > 0" class="order-list">
           <div *ngFor="let order of detail.orders" class="order-card" [class.order-card--disabled]="!isSelectable(order)">
             <div class="card-header">
-              <label class="order-checkbox">
-                <input
-                  type="checkbox"
-                  [checked]="isSelected(order.orderId)"
-                  [disabled]="!isSelectable(order) || saving"
-                  (change)="toggleOrder(order.orderId, $any($event.target).checked)"
-                />
-                <span>{{ shortOrderId(order.orderId) }}</span>
-              </label>
+              <span class="order-id">{{ shortOrderId(order.orderId) }}</span>
               <span class="order-time">{{ formatDate(order.orderDate, true) }}</span>
+              <app-ui-button
+                class="order-pack-action"
+                [disabled]="!isSelectable(order) || isSavingOrder(order.orderId)"
+                (clicked)="markOrderPacked(order)"
+              >
+                {{ isSavingOrder(order.orderId) ? 'Packing...' : 'Packed' }}
+              </app-ui-button>
               <span class="status-pill" [class]="'status-pill--' + statusTone(order.packingState)">{{ order.packingState }}</span>
               <span class="status-pill" [class]="'status-pill--' + statusTone(order.orderStatus)">{{ order.orderStatus }}</span>
             </div>
@@ -136,15 +135,9 @@
         </div>
 
         <div class="form-actions">
-          <app-ui-button [disabled]="saving || selectedCount === 0" (clicked)="markPacked()">
-            {{ saving ? 'Marking…' : 'Mark Packed' }}
-          </app-ui-button>
           <app-ui-button variant="ghost" [disabled]="loadingDetail || saving" (clicked)="loadBatchDetail(selectedBatchKey)">
             Refresh Batch
           </app-ui-button>
-          <span class="selection-summary" *ngIf="selectedCount > 0">
-            {{ selectedCount }} selected
-          </span>
         </div>
       </ng-container>
     </ng-container>

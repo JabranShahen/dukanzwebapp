@@ -1,6 +1,5 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 
 import { PackingReportComponent } from './packing-report.component';
@@ -125,21 +124,32 @@ describe('PackingReportComponent', () => {
     expect(packingService.getBatch).toHaveBeenCalledWith('2026-04-14');
   });
 
-  it('renders blocked orders as disabled for selection', () => {
-    const checkboxes = fixture.debugElement.queryAll(By.css('input[type="checkbox"]'));
-    expect(checkboxes.length).toBe(2);
-    expect((checkboxes[0].nativeElement as HTMLInputElement).disabled).toBeFalse();
-    expect((checkboxes[1].nativeElement as HTMLInputElement).disabled).toBeTrue();
+  it('allows only ready orders to be marked as packed', () => {
+    expect(component.detail).toBeTruthy();
+    expect(component.isSelectable(component.detail!.orders[0])).toBeTrue();
+    expect(component.isSelectable(component.detail!.orders[1])).toBeFalse();
   });
 
-  it('marks selected ready orders as packed and refreshes the batch detail', () => {
-    component.toggleOrder('order-ready', true);
-    component.markPacked();
+  it('marks a ready order as packed and removes it from the visible queue', () => {
+    const readyOrder = component.detail!.orders.find((order) => order.orderId === 'order-ready');
+    expect(readyOrder).toBeTruthy();
 
-    expect(packingService.markPacked).toHaveBeenCalledWith('2026-04-14', ['order-ready']);
-    expect(packingService.getBatch).toHaveBeenCalledTimes(2);
+    component.markOrderPacked(readyOrder!);
+
+    expect(component.detail?.orders.length).toBe(1);
+    expect(component.detail?.orders.some((order) => order.orderId === 'order-ready')).toBeFalse();
     expect(component.detail?.packedOrderCount).toBe(1);
-    expect(component.selectedCount).toBe(0);
-    expect(component.feedbackMessage).toContain('1 order marked packed');
+    expect(component.detail?.readyOrderCount).toBe(0);
+    expect(packingService.markPacked).toHaveBeenCalledWith('2026-04-14', ['order-ready']);
+    expect(component.feedbackMessage).toContain('ORD#READY marked packed');
+  });
+
+  it('does not send packing updates for blocked orders', () => {
+    const blockedOrder = component.detail!.orders.find((order) => order.orderId === 'order-blocked');
+    expect(blockedOrder).toBeTruthy();
+
+    component.markOrderPacked(blockedOrder!);
+
+    expect(packingService.markPacked).not.toHaveBeenCalled();
   });
 });

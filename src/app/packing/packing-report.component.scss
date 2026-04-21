@@ -18,8 +18,7 @@
   margin-bottom: 0.75rem;
 }
 
-.batch-count,
-.selection-summary {
+.batch-count {
   font-size: 0.85rem;
   color: #666;
 }
@@ -151,10 +150,9 @@
   flex-wrap: wrap;
 }
 
-.order-checkbox {
+.order-id {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
   font-weight: 700;
   color: #1a1a2e;
 }
@@ -163,6 +161,10 @@
   margin-right: auto;
   font-size: 0.8rem;
   color: #777;
+}
+
+.order-pack-action {
+  display: inline-flex;
 }
 
 .customer-info {
