@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { AuthGuard } from './auth.guard';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { DashboardOverviewComponent } from './dashboard/dashboard-overview/dashboard-overview.component';
 import { CategoryManagementComponent } from './category-management/category-management.component';
 import { EventCompositionComponent } from './events/event-composition.component';
 import { EventCategoryManagementComponent } from './events/event-category-management.component';
@@ -21,7 +22,7 @@ import { OrderManagementComponent } from './orders/order-management.component';
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'dashboard/monitoring',
+    redirectTo: 'dashboard',
     pathMatch: 'full'
   },
   {
@@ -36,8 +37,7 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'monitoring',
-        pathMatch: 'full'
+        component: DashboardOverviewComponent
       },
       {
         path: 'categories',
