@@ -1,5 +1,5 @@
 <div class="page">
-  <app-management-header eyebrow="Monitoring" title="Executive Monitoring"></app-management-header>
+  <app-management-header eyebrow="Monitoring" title="Order Monitoring"></app-management-header>
 
   <app-management-panel>
     <div class="toolbar">
@@ -23,8 +23,8 @@
     <ng-container *ngIf="!loading && !error">
       <section class="hero-summary">
         <div class="hero-summary__copy">
-          <span class="hero-summary__eyebrow">Top-level view</span>
-          <h2>CEO dashboard for daily system pulse</h2>
+          <span class="hero-summary__eyebrow">Daily overview</span>
+          <h2>Order activity for the selected date</h2>
           <p>{{ summaryHeadline }}</p>
         </div>
         <div class="hero-summary__meta">
@@ -52,7 +52,7 @@
 
       <section class="insight-panel">
         <div class="insight-panel__copy">
-          <span class="insight-panel__eyebrow">Leadership readout</span>
+          <span class="insight-panel__eyebrow">Operations summary</span>
           <h3>What to watch next</h3>
           <p>
             The stage rail shows whether demand is converting into completed deliveries. The summary cards expose whether

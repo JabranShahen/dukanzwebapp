@@ -75,7 +75,7 @@ export class MonitoringDashboardComponent implements OnInit {
 
     const delivered = this.countByStatus('Delivered');
     const bookedSales = this.totalGrossSales;
-    return `${this.totalOrders} orders generated ${this.formatMoney(bookedSales)} in gross demand, with ${delivered} delivered.`;
+    return `${this.totalOrders} orders placed — ${this.formatMoney(bookedSales)} gross value, ${delivered} delivered.`;
   }
 
   get totalGrossSales(): number {
