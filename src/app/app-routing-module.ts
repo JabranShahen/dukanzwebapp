@@ -13,6 +13,7 @@ import { ProductManagementComponent } from './product-management/product-managem
 import { SettingsPageComponent } from './settings/settings-page.component';
 import { SignInPageComponent } from './sign-in/sign-in-page.component';
 import { UiReferenceComponent } from './ui-reference/ui-reference.component';
+import { NotificationsPageComponent } from './notifications/notifications-page.component';
 
 const routes: Routes = [
   {
@@ -70,6 +71,11 @@ const routes: Routes = [
         path: 'account',
         component: AccountPlaceholderComponent,
         title: 'Dukanz | Account',
+      },
+      {
+        path: 'notifications',
+        component: NotificationsPageComponent,
+        title: 'Dukanz | Notifications',
       },
       {
         path: 'ui-reference',

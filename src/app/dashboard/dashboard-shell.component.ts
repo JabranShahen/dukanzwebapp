@@ -143,6 +143,7 @@ export class DashboardShellComponent {
     { label: 'Categories', route: '/dashboard/categories' },
     { label: 'Products', route: '/dashboard/products' },
     { label: 'Account', route: '/dashboard/account' },
+    { label: 'Notifications', route: '/dashboard/notifications' },
     { label: 'Settings', route: '/dashboard/settings' },
     { label: 'UI Reference', route: '/dashboard/ui-reference' },
   ];
