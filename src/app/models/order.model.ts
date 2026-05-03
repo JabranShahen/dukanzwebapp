@@ -52,6 +52,12 @@ export function getStatusActions(status: string | null | undefined): OrderStatus
   return STATUS_ACTIONS[normalizeOrderStatus(status)] ?? [];
 }
 
+export interface OrderStatusEntry {
+  status: string;
+  timestampPk: string;
+  changedBy?: string | null;
+}
+
 export interface OrderUser {
   id: string;
   PartitionKey?: string;
@@ -91,4 +97,5 @@ export interface Order {
   user?: OrderUser | null;
   driver?: OrderUser | null;
   orderItems?: OrderItem[];
+  statusHistory?: OrderStatusEntry[];
 }

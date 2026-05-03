@@ -18,6 +18,7 @@ import { PackingReportComponent } from './packing/packing-report.component';
 import { UserManagementComponent } from './users/user-management.component';
 import { LoginComponent } from './login/login.component';
 import { OrderManagementComponent } from './orders/order-management.component';
+import { OperationalDayDashboardComponent } from './operational-day/operational-day-dashboard.component';
 
 const routes: Routes = [
   {
@@ -76,6 +77,10 @@ const routes: Routes = [
       {
         path: 'monitoring',
         component: MonitoringDashboardComponent
+      },
+      {
+        path: 'operational-day',
+        component: OperationalDayDashboardComponent
       },
       {
         path: 'purchase',

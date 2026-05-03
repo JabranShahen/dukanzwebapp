@@ -38,6 +38,13 @@ export class OrderService {
     );
   }
 
+  getOrdersForDeliveryDate(date: Date): Observable<Order[]> {
+    return this.api.get<Order[] | null>(`${this.endpoint}/getListOfOrdersForDeliveryDate/${toIsoDate(date)}`).pipe(
+      map((response) => (Array.isArray(response) ? response : [])),
+      catchError(() => of([]))
+    );
+  }
+
   testPushNotification(userId: string): Observable<NotificationTestResult> {
     return this.api.get<NotificationTestResult>(`Notification/test/${userId}`);
   }

@@ -41,6 +41,7 @@ import { UiStatusPillComponent } from './shared/ui/ui-status-pill/ui-status-pill
 import { UiSnackbarComponent } from './shared/ui/ui-snackbar/ui-snackbar.component';
 import { OrderManagementComponent } from './orders/order-management.component';
 import { OrderPanelComponent } from './orders/order-panel/order-panel.component';
+import { OperationalDayDashboardComponent } from './operational-day/operational-day-dashboard.component';
 
 @NgModule({
   declarations: [
@@ -77,7 +78,8 @@ import { OrderPanelComponent } from './orders/order-panel/order-panel.component'
     UiStatusPillComponent,
     UiSnackbarComponent,
     OrderManagementComponent,
-    OrderPanelComponent
+    OrderPanelComponent,
+    OperationalDayDashboardComponent
   ],
   imports: [
     BrowserModule,

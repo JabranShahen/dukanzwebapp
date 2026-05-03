@@ -1,0 +1,180 @@
+<div class="page">
+  <app-management-header eyebrow="Operations" title="Operational Day Dashboard"></app-management-header>
+
+  <app-management-panel>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar__controls">
+        <label class="date-field">
+          <span class="date-field__label">Delivery date</span>
+          <input type="date" [ngModel]="selectedDate" (ngModelChange)="selectedDate = $event; onDateChange()" />
+        </label>
+        <app-ui-button variant="ghost" [disabled]="isLoading" (clicked)="load()">Refresh</app-ui-button>
+      </div>
+      <span class="toolbar__date">{{ selectedDateLabel }}</span>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="state-message">Loading operational data…</div>
+
+    <!-- Independent error banners -->
+    <div *ngIf="ordersError" class="state-message error">
+      {{ ordersError }}
+    </div>
+    <div *ngIf="packingError" class="state-message error">
+      {{ packingError }}
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+
+      <!-- Lifecycle stage rail -->
+      <section class="stage-rail">
+        <article class="stage-card stage-card--accent">
+          <span class="stage-card__label">Orders Received</span>
+          <strong class="stage-card__value">{{ receivedCount }}</strong>
+          <span class="stage-card__hint">All orders in this delivery cycle</span>
+          <span class="stage-card__arrow" aria-hidden="true">→</span>
+        </article>
+
+        <article class="stage-card stage-card--neutral">
+          <span class="stage-card__label">Purchased</span>
+          <strong class="stage-card__value">{{ packingDetail?.orderCount ?? '—' }}</strong>
+          <span class="stage-card__hint">Orders in the purchase batch</span>
+          <span class="stage-card__arrow" aria-hidden="true">→</span>
+        </article>
+
+        <article class="stage-card stage-card--warning">
+          <span class="stage-card__label">Packed</span>
+          <strong class="stage-card__value">{{ packedCount }}</strong>
+          <span class="stage-card__hint">Packed and ready to dispatch</span>
+          <span class="stage-card__arrow" aria-hidden="true">→</span>
+        </article>
+
+        <article class="stage-card stage-card--neutral">
+          <span class="stage-card__label">Dispatched</span>
+          <strong class="stage-card__value">{{ dispatchedCount }}</strong>
+          <span class="stage-card__hint">On the road with drivers</span>
+          <span class="stage-card__arrow" aria-hidden="true">→</span>
+        </article>
+
+        <article class="stage-card stage-card--success">
+          <span class="stage-card__label">Delivered</span>
+          <strong class="stage-card__value">{{ deliveredCount }}</strong>
+          <span class="stage-card__hint">Completed customer fulfilment</span>
+        </article>
+      </section>
+
+      <!-- Financial summary -->
+      <section class="summary-grid">
+        <article class="summary-card summary-card--accent">
+          <span class="summary-card__label">Total Gross Value</span>
+          <strong class="summary-card__value">{{ formatMoney(totalGrossValue) }}</strong>
+          <span class="summary-card__hint">All orders in cycle</span>
+        </article>
+
+        <article class="summary-card summary-card--success">
+          <span class="summary-card__label">Delivered Value</span>
+          <strong class="summary-card__value">{{ formatMoney(deliveredGrossValue) }}</strong>
+          <span class="summary-card__hint">Revenue already delivered</span>
+        </article>
+
+        <article class="summary-card" [class]="inFlightCount > 0 ? 'summary-card--warning' : 'summary-card--neutral'">
+          <span class="summary-card__label">In-Flight Orders</span>
+          <strong class="summary-card__value">{{ inFlightCount }}</strong>
+          <span class="summary-card__hint">Approved, packed, or dispatched</span>
+        </article>
+      </section>
+
+      <!-- Packing & purchase panel -->
+      <section class="packing-panel">
+        <h3 class="packing-panel__title">Purchase &amp; Packing Status</h3>
+
+        <div *ngIf="packingNotFound" class="state-message state-message--compact">
+          Purchase not yet created for this delivery date.
+        </div>
+
+        <ng-container *ngIf="!packingNotFound && packingDetail">
+          <div class="packing-summary-bar">
+            <div class="packing-summary-bar__info">
+              <span class="packing-summary-bar__label">Purchase status</span>
+              <span class="status-pill" [class]="'status-pill--' + statusTone(packingDetail.purchaseStatus)">
+                {{ packingDetail.purchaseStatus }}
+              </span>
+            </div>
+            <div class="packing-summary-bar__info">
+              <span class="packing-summary-bar__label">Total orders</span>
+              <span class="packing-summary-bar__value">{{ packingDetail.orderCount }}</span>
+            </div>
+            <div class="packing-summary-bar__info">
+              <span class="packing-summary-bar__label">Ready</span>
+              <span class="packing-summary-bar__value">{{ packingDetail.readyOrderCount }}</span>
+            </div>
+            <div class="packing-summary-bar__info">
+              <span class="packing-summary-bar__label">Blocked</span>
+              <span class="packing-summary-bar__value" [class.packing-summary-bar__value--danger]="packingDetail.blockedOrderCount > 0">
+                {{ packingDetail.blockedOrderCount }}
+              </span>
+            </div>
+            <div class="packing-summary-bar__info">
+              <span class="packing-summary-bar__label">Packed</span>
+              <span class="packing-summary-bar__value">{{ packingDetail.packedOrderCount }}</span>
+            </div>
+          </div>
+
+          <!-- Blocker list -->
+          <div *ngIf="blockerOrders.length > 0" class="blocker-list">
+            <h4 class="blocker-list__title">⚠ Blocked Orders ({{ blockerOrders.length }})</h4>
+            <div *ngFor="let b of blockerOrders" class="blocker-row">
+              <span class="blocker-row__id">{{ shortId(b.orderId) }}</span>
+              <span class="blocker-row__customer">{{ b.customerName || 'Unknown' }}</span>
+              <span class="blocker-row__reason">{{ b.blockReason }}</span>
+            </div>
+          </div>
+        </ng-container>
+      </section>
+
+      <!-- Order list with expandable status history -->
+      <section class="order-list" *ngIf="orders.length > 0">
+        <h3 class="order-list__title">Orders ({{ receivedCount }})</h3>
+
+        <article
+          *ngFor="let order of orders"
+          class="order-card"
+          [class.order-card--expanded]="expandedOrderId === order.id"
+        >
+          <div class="order-card__header" (click)="toggleOrder(order.id)" role="button" tabindex="0"
+               (keydown.enter)="toggleOrder(order.id)" (keydown.space)="toggleOrder(order.id)">
+            <span class="order-card__id">{{ shortId(order.id) }}</span>
+            <span class="order-card__customer">{{ order.user?.name || '—' }}</span>
+            <span class="status-pill" [class]="'status-pill--' + statusTone(order.status)">{{ order.status }}</span>
+            <span class="order-card__total">{{ formatMoney(order.orderGrossPrice) }}</span>
+            <span class="order-card__toggle" aria-hidden="true">{{ expandedOrderId === order.id ? '▲' : '▼' }}</span>
+          </div>
+
+          <!-- Status history panel -->
+          <div *ngIf="expandedOrderId === order.id" class="history-panel">
+            <ng-container *ngIf="sortedHistory(order).length > 0; else noHistory">
+              <div *ngFor="let entry of sortedHistory(order)" class="history-entry">
+                <span class="history-entry__status status-pill" [class]="'status-pill--' + statusTone(entry.status)">
+                  {{ entry.status }}
+                </span>
+                <span class="history-entry__time">{{ formatDateTime(entry.timestampPk) }}</span>
+                <span *ngIf="entry.changedBy" class="history-entry__actor">by {{ entry.changedBy }}</span>
+              </div>
+            </ng-container>
+            <ng-template #noHistory>
+              <p class="history-panel__empty">No history recorded for this order.</p>
+            </ng-template>
+          </div>
+        </article>
+      </section>
+
+      <div *ngIf="orders.length === 0 && !loadingOrders && !ordersError" class="state-message">
+        No orders found for this delivery date.
+      </div>
+
+    </ng-container>
+
+  </app-management-panel>
+</div>
