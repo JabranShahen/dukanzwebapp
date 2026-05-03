@@ -3,6 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 
 import { DukanzConfig } from '../models/dukanz-config.model';
 import { DukanzConfigService } from '../services/dukanz-config.service';
+import { OrderService } from '../services/order.service';
 
 @Component({
   selector: 'app-settings',
@@ -15,6 +16,7 @@ export class SettingsComponent implements OnInit {
   loadError = '';
   feedbackMessage = '';
   feedbackTone: 'success' | 'error' = 'success';
+  broadcasting = false;
 
   private currentConfigId: string | null = null;
 
@@ -38,7 +40,8 @@ export class SettingsComponent implements OnInit {
 
   constructor(
     private readonly configService: DukanzConfigService,
-    private readonly formBuilder: FormBuilder
+    private readonly formBuilder: FormBuilder,
+    private readonly orderService: OrderService
   ) {}
 
   ngOnInit(): void {
@@ -117,6 +120,25 @@ export class SettingsComponent implements OnInit {
 
   onFeedbackDismissed(): void {
     this.feedbackMessage = '';
+  }
+
+  onBroadcastAppUpdate(): void {
+    if (this.broadcasting) {
+      return;
+    }
+    this.broadcasting = true;
+    this.orderService.broadcastAppUpdate().subscribe({
+      next: (result) => {
+        this.broadcasting = false;
+        this.feedbackTone = 'success';
+        this.feedbackMessage = `Update notification sent to ${result.notified} of ${result.total} registered devices.`;
+      },
+      error: () => {
+        this.broadcasting = false;
+        this.feedbackTone = 'error';
+        this.feedbackMessage = 'Failed to send update notification. Check your connection and try again.';
+      }
+    });
   }
 
   private applyConfigToForm(config: DukanzConfig): void {

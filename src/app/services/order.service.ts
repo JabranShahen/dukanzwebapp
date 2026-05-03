@@ -13,6 +13,11 @@ export interface NotificationTestResult {
   sendResult: string;
 }
 
+export interface BroadcastAppUpdateResult {
+  notified: number;
+  total: number;
+}
+
 function toIsoDate(d: Date): string {
   return d.toISOString().split('T')[0];
 }
@@ -47,6 +52,10 @@ export class OrderService {
 
   testPushNotification(userId: string): Observable<NotificationTestResult> {
     return this.api.get<NotificationTestResult>(`Notification/test/${userId}`);
+  }
+
+  broadcastAppUpdate(): Observable<BroadcastAppUpdateResult> {
+    return this.api.post<BroadcastAppUpdateResult>('Notification/broadcast-app-update', {});
   }
 
   assignDriver(order: Order, driver: DukanzUser | null): Observable<boolean> {

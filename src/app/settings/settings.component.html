@@ -147,6 +147,17 @@
           <input type="checkbox" formControlName="forceAppUpgrade" />
           <span>Force upgrade prompt for versions below the latest release</span>
         </label>
+
+        <div class="broadcast-action">
+          <app-ui-button
+            variant="secondary"
+            [disabled]="broadcasting"
+            (clicked)="onBroadcastAppUpdate()"
+          >
+            {{ broadcasting ? 'Sending…' : 'Notify all users of update' }}
+          </app-ui-button>
+          <span class="hint">Sends a push notification to every registered device right now. Save your version changes first.</span>
+        </div>
       </section>
 
       <div class="form-actions">
