@@ -90,6 +90,14 @@ export class AuthService {
   private loadUserProfile(): void {
     const userService = this.injector.get(UserService);
     const sessionEmail = this.getSessionEmail().toLowerCase();
+    
+    // Quick fix: Super admins can proceed without user profile
+    if (this.superAdminEmails.has(sessionEmail)) {
+      this.setProfile(null, 'superadmin');
+      this.profileReadySubject.next(true);
+      return;
+    }
+    
     userService.getMe().subscribe({
       next: (user) => {
         // Hardcoded super-admin emails override the DB role
