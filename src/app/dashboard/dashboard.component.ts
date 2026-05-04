@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 import { AuthService } from '../auth.service';
 
@@ -13,10 +13,21 @@ interface NavItem {
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   navOpen = false;
+  navItems: NavItem[] = [];
 
-  get navItems(): NavItem[] {
+  constructor(readonly authService: AuthService) {}
+
+  ngOnInit(): void {
+    // Build nav immediately with current role, then rebuild when profile is ready
+    this.buildNavItems();
+    this.authService.currentRole$.subscribe(() => {
+      this.buildNavItems();
+    });
+  }
+
+  private buildNavItems(): void {
     const items: NavItem[] = [
       { key: 'overview', label: 'Overview', route: '/dashboard' },
       { key: 'operational-day', label: 'Ops Dashboard', route: '/dashboard/operational-day' },
@@ -40,10 +51,8 @@ export class DashboardComponent {
       );
     }
 
-    return items;
+    this.navItems = items;
   }
-
-  constructor(private readonly authService: AuthService) {}
 
   closeNav(): void {
     this.navOpen = false;
