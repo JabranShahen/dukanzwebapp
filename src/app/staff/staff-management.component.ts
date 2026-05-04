@@ -112,12 +112,7 @@ export class StaffManagementComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.creating = false;
-        this.showFeedback(
-          error.status === 409
-            ? 'A staff member with this email already exists.'
-            : 'Failed to create staff member.',
-          'error'
-        );
+        this.showFeedback(this.getCreateErrorMessage(error), 'error');
       }
     });
   }
@@ -202,6 +197,30 @@ export class StaffManagementComponent implements OnInit {
   private showFeedback(message: string, tone: 'success' | 'error'): void {
     this.feedbackMessage = message;
     this.feedbackTone = tone;
+  }
+
+  private getCreateErrorMessage(error: HttpErrorResponse): string {
+    if (error.status === 409) {
+      return 'A staff member with this email already exists.';
+    }
+
+    if (error.status === 400 && typeof error.error === 'string') {
+      return error.error;
+    }
+
+    if (error.status === 502) {
+      return 'Firebase Auth could not create the staff user.';
+    }
+
+    if (error.status === 503) {
+      return 'Staff data store or Firebase Auth is unavailable.';
+    }
+
+    if (error.status === 500) {
+      return 'Staff record could not be created.';
+    }
+
+    return 'Failed to create staff member.';
   }
 
   private clearFeedback(): void {

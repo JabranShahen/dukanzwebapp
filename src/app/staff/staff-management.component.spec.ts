@@ -121,6 +121,23 @@ describe('StaffManagementComponent', () => {
     expect(component.feedbackTone).toBe('error');
   });
 
+  it('shows infrastructure failure messages from create responses', () => {
+    staffService.create.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    createComponent();
+    component.newStaff = {
+      name: 'New Staff',
+      email: 'new@example.com',
+      password: 'password-123',
+      areaId: null,
+      role: 'operator'
+    };
+
+    component.create();
+
+    expect(component.feedbackMessage).toBe('Staff data store or Firebase Auth is unavailable.');
+    expect(component.feedbackTone).toBe('error');
+  });
+
   it('saves edits from the row draft', () => {
     createComponent();
     component.draftStaff['operator@example.com'].name = 'Updated Operator';
