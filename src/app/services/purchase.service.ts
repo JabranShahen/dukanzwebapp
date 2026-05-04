@@ -20,8 +20,9 @@ export class PurchaseService {
     return this.api.post<{ id: string }>(`${this.endpoint}/create`, {});
   }
 
-  listPurchases(): Observable<PurchaseSummary[]> {
-    return this.api.get<PurchaseSummary[]>(`${this.endpoint}/list`);
+  listPurchases(dateKey?: string): Observable<PurchaseSummary[]> {
+    const query = dateKey ? `?dateKey=${encodeURIComponent(dateKey)}` : '';
+    return this.api.get<PurchaseSummary[]>(`${this.endpoint}/list${query}`);
   }
 
   getPurchase(dateKey: string): Observable<PurchaseDetail> {

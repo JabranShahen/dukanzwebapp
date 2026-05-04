@@ -1,0 +1,69 @@
+<div class="page">
+  <app-management-header
+    eyebrow="Dukanz"
+    title="Area Management"
+    subtext="Create and manage operating areas"
+  ></app-management-header>
+
+  <app-management-panel>
+    <form class="create-row" (ngSubmit)="create()">
+      <input
+        type="text"
+        name="newAreaName"
+        [(ngModel)]="newAreaName"
+        placeholder="New area name"
+      />
+      <app-ui-button buttonType="submit" [disabled]="saving || !newAreaName.trim()">Create</app-ui-button>
+    </form>
+
+    <div *ngIf="error" class="feedback feedback--error">{{ error }}</div>
+    <div *ngIf="loading" class="state-msg">Loading areas...</div>
+
+    <app-ui-empty-state
+      *ngIf="!loading && !error && areas.length === 0"
+      title="No areas yet"
+      body="Create the first operating area to start assigning operators."
+    ></app-ui-empty-state>
+
+    <div *ngIf="!loading && areas.length > 0" class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let area of areas; trackBy: trackById">
+            <td>
+              <input
+                class="inline-input"
+                type="text"
+                [(ngModel)]="draftNames[area.id]"
+                [name]="'area-' + area.id"
+              />
+            </td>
+            <td>
+              <span class="status-badge" [class.status-badge--enabled]="area.enabled">
+                {{ area.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+            </td>
+            <td class="col-actions">
+              <button class="action-btn" type="button" [disabled]="saving" (click)="save(area)">Save</button>
+              <button class="action-btn" type="button" [disabled]="saving" (click)="toggle(area)">
+                {{ area.enabled ? 'Disable' : 'Enable' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-management-panel>
+
+  <app-ui-snackbar
+    [message]="feedbackMessage"
+    [tone]="feedbackTone"
+    (dismissed)="onFeedbackDismissed()"
+  ></app-ui-snackbar>
+</div>

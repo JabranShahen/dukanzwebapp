@@ -17,6 +17,7 @@ export interface DukanzConfig {
   minimumSupportedAppVersion: string;
   appUpgradePlayStoreUrl: string;
   forceAppUpgrade: boolean;
+  areaId?: string | null;
 }
 
 export interface DukanzConfigMutation {
@@ -38,4 +39,5 @@ export interface DukanzConfigMutation {
   minimumSupportedAppVersion: string;
   appUpgradePlayStoreUrl: string;
   forceAppUpgrade: boolean;
+  areaId?: string | null;
 }

@@ -10,6 +10,8 @@ import { EventCategoryManagementComponent } from './events/event-category-manage
 import { ProductManagementComponent } from './products/product-management.component';
 import { SettingsComponent } from './settings/settings.component';
 import { AccountComponent } from './account/account.component';
+import { AreaManagementComponent } from './areas/area-management.component';
+import { CustomerAllocationComponent } from './allocation/customer-allocation.component';
 import { DriverOrdersComponent } from './driver/driver-orders.component';
 import { MonitoringDashboardComponent } from './monitoring/monitoring-dashboard.component';
 import { PurchaseManagementComponent } from './purchase/purchase-management.component';
@@ -72,6 +74,14 @@ const routes: Routes = [
       {
         path: 'orders',
         component: OrderManagementComponent
+      },
+      {
+        path: 'allocation',
+        component: CustomerAllocationComponent
+      },
+      {
+        path: 'areas',
+        component: AreaManagementComponent
       },
       {
         path: 'monitoring',

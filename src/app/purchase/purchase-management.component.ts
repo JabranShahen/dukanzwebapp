@@ -48,6 +48,7 @@ export class PurchaseManagementComponent implements OnInit {
   listError = '';
   summaries: PurchaseSummary[] = [];
   deletingId: string | null = null;
+  selectedHistoryDateKey = '';
 
   expandedSummaryOrderIds = new Set<string>();
   loadingSummaryOrderIds = new Set<string>();
@@ -84,6 +85,9 @@ export class PurchaseManagementComponent implements OnInit {
     this.purchaseService.getPreview().subscribe({
       next: (data) => {
         this.preview = data;
+        if (!this.selectedHistoryDateKey) {
+          this.selectedHistoryDateKey = data.purchaseDateKey;
+        }
         this.loadingPreview = false;
       },
       error: () => {
@@ -93,14 +97,15 @@ export class PurchaseManagementComponent implements OnInit {
     });
   }
 
-  loadList(): void {
+  loadList(dateKey = this.selectedHistoryDateKey): void {
     this.loadingList = true;
     this.listError = '';
     this.expandedSummaryOrderIds.clear();
     this.loadingSummaryOrderIds.clear();
     this.summaryOrdersByPurchaseId.clear();
 
-    this.purchaseService.listPurchases().subscribe({
+    const selectedDateKey = (dateKey || '').trim();
+    this.purchaseService.listPurchases(selectedDateKey || undefined).subscribe({
       next: (data) => {
         this.summaries = Array.isArray(data) ? data : [];
         this.loadingList = false;
@@ -112,6 +117,15 @@ export class PurchaseManagementComponent implements OnInit {
     });
   }
 
+  onHistoryDateChange(): void {
+    this.loadList();
+  }
+
+  resetHistoryDateToCurrent(): void {
+    this.selectedHistoryDateKey = this.preview?.purchaseDateKey ?? '';
+    this.loadList();
+  }
+
   onCreatePurchase(): void {
     if (this.creating) return;
 
@@ -121,6 +135,9 @@ export class PurchaseManagementComponent implements OnInit {
         this.creating = false;
         this.feedbackTone = 'success';
         this.feedbackMessage = 'Purchase created successfully.';
+        if (this.preview?.purchaseDateKey) {
+          this.selectedHistoryDateKey = this.preview.purchaseDateKey;
+        }
         this.loadPreview();
         this.loadList();
       },

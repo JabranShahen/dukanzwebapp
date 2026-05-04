@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { initializeApp, getApps } from 'firebase/app';
 import {
@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { BehaviorSubject, filter, Observable } from 'rxjs';
 import { environment } from './environments/environment';
+import { UserService } from './services/user.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,13 +20,26 @@ export class AuthService {
 
   // undefined = Firebase hasn't resolved yet; null = signed out; User = signed in
   private readonly userSubject = new BehaviorSubject<User | null | undefined>(undefined);
+  private readonly currentAreaIdSubject = new BehaviorSubject<string | null>(null);
+  private readonly currentRoleSubject = new BehaviorSubject<string>('operator');
+  private readonly profileReadySubject = new BehaviorSubject<boolean>(false);
+
+  currentAreaId: string | null = null;
+  currentRole = 'operator';
 
   /** Emits once Firebase has resolved the auth state (skips the initial undefined) */
   readonly user$: Observable<User | null> = this.userSubject.pipe(
     filter((u): u is User | null => u !== undefined)
   );
 
-  constructor(private readonly router: Router) {
+  readonly currentAreaId$ = this.currentAreaIdSubject.asObservable();
+  readonly currentRole$ = this.currentRoleSubject.asObservable();
+  readonly profileReady$ = this.profileReadySubject.asObservable();
+
+  constructor(
+    private readonly router: Router,
+    private readonly injector: Injector
+  ) {
     const app = getApps().length
       ? getApps()[0]
       : initializeApp(environment.firebase);
@@ -33,6 +47,13 @@ export class AuthService {
 
     onAuthStateChanged(this.auth, user => {
       this.userSubject.next(user);
+      if (user) {
+        this.profileReadySubject.next(false);
+        this.loadUserProfile();
+      } else {
+        this.setProfile(null, 'operator');
+        this.profileReadySubject.next(true);
+      }
     });
   }
 
@@ -59,5 +80,26 @@ export class AuthService {
   async logout(): Promise<void> {
     await signOut(this.auth);
     this.router.navigate(['/login']);
+  }
+
+  private loadUserProfile(): void {
+    const userService = this.injector.get(UserService);
+    userService.getMe().subscribe({
+      next: (user) => {
+        this.setProfile(user.areaId ?? null, user.role ?? 'operator');
+        this.profileReadySubject.next(true);
+      },
+      error: () => {
+        this.setProfile(null, 'operator');
+        this.profileReadySubject.next(true);
+      }
+    });
+  }
+
+  private setProfile(areaId: string | null, role: string): void {
+    this.currentAreaId = areaId;
+    this.currentRole = role || 'operator';
+    this.currentAreaIdSubject.next(this.currentAreaId);
+    this.currentRoleSubject.next(this.currentRole);
   }
 }

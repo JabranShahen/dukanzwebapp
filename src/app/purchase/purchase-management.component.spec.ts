@@ -107,6 +107,14 @@ describe('PurchaseManagementComponent', () => {
     expect(purchaseService.listPurchases).toHaveBeenCalled();
     expect(component.preview).toEqual(preview as any);
     expect(component.summaries.length).toBe(1);
+    expect(component.selectedHistoryDateKey).toBe('2026-05-03');
+  });
+
+  it('loads purchase history for the selected date', () => {
+    component.selectedHistoryDateKey = '2026-05-02';
+    component.onHistoryDateChange();
+
+    expect(purchaseService.listPurchases).toHaveBeenCalledWith('2026-05-02');
   });
 
   it('fetches preview orders with the preview order ids', () => {

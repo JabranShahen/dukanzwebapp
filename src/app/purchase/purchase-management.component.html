@@ -139,7 +139,19 @@
       <hr class="section-divider" />
 
       <section class="section">
-        <h2 class="section-title">Purchases This Window</h2>
+        <div class="section-heading-row">
+          <h2 class="section-title">Purchase History</h2>
+          <div class="history-date-control">
+            <label for="purchase-history-date">Date</label>
+            <input
+              id="purchase-history-date"
+              type="date"
+              [(ngModel)]="selectedHistoryDateKey"
+              (change)="onHistoryDateChange()"
+            />
+            <app-ui-button variant="ghost" (clicked)="resetHistoryDateToCurrent()">Current Window</app-ui-button>
+          </div>
+        </div>
 
         <div *ngIf="loadingList" class="state-message">Loading purchases...</div>
 
@@ -149,7 +161,7 @@
         </div>
 
         <div *ngIf="!loadingList && !listError && summaries.length === 0" class="state-message">
-          No purchases created yet for this window.
+          No purchases created for this date.
         </div>
 
         <table *ngIf="!loadingList && !listError && summaries.length > 0" class="items-table history-table">

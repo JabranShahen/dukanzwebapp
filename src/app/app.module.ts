@@ -30,6 +30,8 @@ import { PurchaseCreateComponent } from './purchase/purchase-create.component';
 import { PurchaseManagementComponent } from './purchase/purchase-management.component';
 import { PurchaseProcessComponent } from './purchase/purchase-process.component';
 import { AccountComponent } from './account/account.component';
+import { AreaManagementComponent } from './areas/area-management.component';
+import { CustomerAllocationComponent } from './allocation/customer-allocation.component';
 import { UserManagementComponent } from './users/user-management.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { NgChartsModule } from 'ng2-charts';
@@ -71,6 +73,8 @@ import { OperationalDayDashboardComponent } from './operational-day/operational-
     PurchaseManagementComponent,
     PurchaseProcessComponent,
     AccountComponent,
+    AreaManagementComponent,
+    CustomerAllocationComponent,
     UserManagementComponent,
     ManagementHeaderComponent,
     ManagementPanelComponent,

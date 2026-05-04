@@ -1,0 +1,61 @@
+<div class="page">
+  <app-management-header
+    eyebrow="Dukanz"
+    title="Customer Allocation"
+    subtext="Assign unallocated customers to your operating area"
+  ></app-management-header>
+
+  <app-management-panel>
+    <div class="toolbar">
+      <span class="count">{{ loading ? '-' : customers.length + ' customer' + (customers.length === 1 ? '' : 's') }}</span>
+      <app-ui-button variant="secondary" (clicked)="load()">Refresh</app-ui-button>
+    </div>
+
+    <div *ngIf="error" class="feedback feedback--error">{{ error }}</div>
+    <div *ngIf="loading" class="state-msg">Loading customers...</div>
+
+    <app-ui-empty-state
+      *ngIf="!loading && !error && customers.length === 0"
+      title="No customers waiting"
+      body="Unallocated customers will appear here."
+    ></app-ui-empty-state>
+
+    <div *ngIf="!loading && customers.length > 0" class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Pending Orders</th>
+            <th class="col-actions">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let customer of customers; trackBy: trackById">
+            <td class="col-name">{{ customer.name || '-' }}</td>
+            <td class="col-mono">{{ customer.phoneNumber || '-' }}</td>
+            <td class="col-address">{{ customer.address || '-' }}</td>
+            <td>{{ customer.pendingOrders }}</td>
+            <td class="col-actions">
+              <button
+                class="action-btn"
+                type="button"
+                [disabled]="allocatingId === customer.id || !authService.currentAreaId"
+                (click)="onAllocate(customer.id)"
+              >
+                {{ allocatingId === customer.id ? 'Assigning...' : 'Assign to my area' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-management-panel>
+
+  <app-ui-snackbar
+    [message]="feedbackMessage"
+    [tone]="feedbackTone"
+    (dismissed)="onFeedbackDismissed()"
+  ></app-ui-snackbar>
+</div>

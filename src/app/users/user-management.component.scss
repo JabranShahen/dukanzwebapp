@@ -11,6 +11,27 @@
   margin-bottom: 0.25rem;
 }
 
+.create-operator {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.create-operator input,
+.create-operator select,
+.inline-select {
+  border: 1px solid var(--tone-border);
+  border-radius: 0.45rem;
+  color: var(--tone-ink);
+  font-size: 0.82rem;
+  padding: 0.42rem 0.55rem;
+}
+
+.create-operator input {
+  min-width: 160px;
+}
+
 .search-wrap {
   position: relative;
   display: flex;

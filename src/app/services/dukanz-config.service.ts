@@ -58,7 +58,8 @@ export class DukanzConfigService {
       latestAppVersion: (payload.latestAppVersion || '').trim(),
       minimumSupportedAppVersion: (payload.minimumSupportedAppVersion || '').trim(),
       appUpgradePlayStoreUrl: (payload.appUpgradePlayStoreUrl || '').trim(),
-      forceAppUpgrade: !!payload.forceAppUpgrade
+      forceAppUpgrade: !!payload.forceAppUpgrade,
+      areaId: payload.areaId ?? null
     };
 
     if (payload.id) {
@@ -92,7 +93,8 @@ export class DukanzConfigService {
       latestAppVersion: (raw.latestAppVersion || '').trim(),
       minimumSupportedAppVersion: (raw.minimumSupportedAppVersion || '').trim(),
       appUpgradePlayStoreUrl: (raw.appUpgradePlayStoreUrl || '').trim(),
-      forceAppUpgrade: !!raw.forceAppUpgrade
+      forceAppUpgrade: !!raw.forceAppUpgrade,
+      areaId: raw.areaId ?? null
     };
   }
 

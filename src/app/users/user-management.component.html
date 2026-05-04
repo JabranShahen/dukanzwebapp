@@ -7,6 +7,22 @@
 
   <app-management-panel>
 
+    <form *ngIf="isSuperAdmin" class="create-operator" (ngSubmit)="createOperator()">
+      <input type="text" name="operatorName" [(ngModel)]="newOperator.name" placeholder="Operator name" />
+      <input type="text" name="operatorPhone" [(ngModel)]="newOperator.phoneNumber" placeholder="Phone number" />
+      <select name="operatorArea" [(ngModel)]="newOperator.areaId">
+        <option [ngValue]="null">No area</option>
+        <option *ngFor="let area of areas" [ngValue]="area.id">{{ area.name }}</option>
+      </select>
+      <select name="operatorRole" [(ngModel)]="newOperator.role">
+        <option value="operator">Operator</option>
+        <option value="superadmin">Super-admin</option>
+      </select>
+      <app-ui-button buttonType="submit" [disabled]="updatingId === 'new'">
+        {{ updatingId === 'new' ? 'Creating...' : 'Create operator' }}
+      </app-ui-button>
+    </form>
+
     <!-- ── Filters ─────────────────────────────────────────── -->
     <div class="filters">
       <div class="search-wrap">
@@ -79,6 +95,8 @@
             <th>Address</th>
             <th>Email</th>
             <th>Role</th>
+            <th *ngIf="isSuperAdmin">Area</th>
+            <th *ngIf="isSuperAdmin">System Role</th>
             <th>Status</th>
             <th class="col-actions">Actions</th>
           </tr>
@@ -97,6 +115,30 @@
               <span class="role-badge" [class.role-badge--driver]="user.isDriver">
                 {{ user.isDriver ? 'Driver' : 'Customer' }}
               </span>
+            </td>
+            <td *ngIf="isSuperAdmin">
+              <select
+                class="inline-select"
+                [ngModel]="user.areaId || null"
+                [ngModelOptions]="{ standalone: true }"
+                [disabled]="updatingId === user.id"
+                (ngModelChange)="updateArea(user, $event)"
+              >
+                <option [ngValue]="null">No area</option>
+                <option *ngFor="let area of areas" [ngValue]="area.id">{{ area.name }}</option>
+              </select>
+            </td>
+            <td *ngIf="isSuperAdmin">
+              <select
+                class="inline-select"
+                [ngModel]="user.role || 'operator'"
+                [ngModelOptions]="{ standalone: true }"
+                [disabled]="updatingId === user.id"
+                (ngModelChange)="updateSystemRole(user, $event)"
+              >
+                <option value="operator">Operator</option>
+                <option value="superadmin">Super-admin</option>
+              </select>
             </td>
             <td>
               <span class="status-badge" [class.status-badge--enabled]="user.enable" [class.status-badge--disabled]="!user.enable">

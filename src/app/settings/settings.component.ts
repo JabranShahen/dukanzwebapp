@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 
 import { DukanzConfig } from '../models/dukanz-config.model';
+import { AuthService } from '../auth.service';
 import { DukanzConfigService } from '../services/dukanz-config.service';
 import { OrderService } from '../services/order.service';
 
@@ -39,6 +40,7 @@ export class SettingsComponent implements OnInit {
   });
 
   constructor(
+    private readonly authService: AuthService,
     private readonly configService: DukanzConfigService,
     private readonly formBuilder: FormBuilder,
     private readonly orderService: OrderService
@@ -93,7 +95,8 @@ export class SettingsComponent implements OnInit {
         latestAppVersion: value.latestAppVersion,
         minimumSupportedAppVersion: value.minimumSupportedAppVersion,
         appUpgradePlayStoreUrl: value.appUpgradePlayStoreUrl,
-        forceAppUpgrade: value.forceAppUpgrade
+        forceAppUpgrade: value.forceAppUpgrade,
+        areaId: this.authService.currentAreaId
       })
       .subscribe({
         next: (saved) => {

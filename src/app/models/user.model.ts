@@ -7,4 +7,15 @@ export interface DukanzUser {
   enable: boolean;
   isDriver: boolean;
   email?: string;
+  areaId?: string | null;
+  role?: 'operator' | 'superadmin' | string;
+}
+
+export interface UnallocatedCustomer {
+  id: string;
+  name: string;
+  phoneNumber: string;
+  address: string;
+  email?: string;
+  pendingOrders: number;
 }
