@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { BehaviorSubject, filter, Observable } from 'rxjs';
 import { environment } from './environments/environment';
+import { StaffService } from './services/staff.service';
 import { UserService } from './services/user.service';
 
 @Injectable({
@@ -88,16 +89,32 @@ export class AuthService {
   ]);
 
   private loadUserProfile(): void {
-    const userService = this.injector.get(UserService);
+    const firebaseUser = this.userSubject.value;
     const sessionEmail = this.getSessionEmail().toLowerCase();
-    
-    // Quick fix: Super admins can proceed without user profile
-    if (this.superAdminEmails.has(sessionEmail)) {
-      this.setProfile(null, 'superadmin');
-      this.profileReadySubject.next(true);
+
+    const isEmailUser = firebaseUser?.providerData
+      .some((provider) => provider.providerId === 'password') ?? false;
+
+    if (isEmailUser) {
+      const staffService = this.injector.get(StaffService);
+      staffService.getMe().subscribe({
+        next: (staff) => {
+          const role = this.superAdminEmails.has(sessionEmail)
+            ? 'superadmin'
+            : (staff.role ?? 'operator');
+          this.setProfile(staff.areaId ?? null, role);
+          this.profileReadySubject.next(true);
+        },
+        error: () => {
+          const role = this.superAdminEmails.has(sessionEmail) ? 'superadmin' : 'operator';
+          this.setProfile(null, role);
+          this.profileReadySubject.next(true);
+        }
+      });
       return;
     }
-    
+
+    const userService = this.injector.get(UserService);
     userService.getMe().subscribe({
       next: (user) => {
         // Hardcoded super-admin emails override the DB role

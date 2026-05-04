@@ -7,11 +7,11 @@ import { AreaService } from '../services/area.service';
 import { UserService } from '../services/user.service';
 
 @Component({
-  selector: 'app-user-management',
-  templateUrl: './user-management.component.html',
-  styleUrls: ['./user-management.component.scss']
+  selector: 'app-customer-management',
+  templateUrl: './customer-management.component.html',
+  styleUrls: ['./customer-management.component.scss']
 })
-export class UserManagementComponent implements OnInit {
+export class CustomerManagementComponent implements OnInit {
   loading = false;
   error = '';
   successMessage = '';

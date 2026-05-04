@@ -16,7 +16,8 @@ import { DriverOrdersComponent } from './driver/driver-orders.component';
 import { MonitoringDashboardComponent } from './monitoring/monitoring-dashboard.component';
 import { PurchaseManagementComponent } from './purchase/purchase-management.component';
 import { PackingReportComponent } from './packing/packing-report.component';
-import { UserManagementComponent } from './users/user-management.component';
+import { CustomerManagementComponent } from './customers/customer-management.component';
+import { StaffManagementComponent } from './staff/staff-management.component';
 import { LoginComponent } from './login/login.component';
 import { OrderManagementComponent } from './orders/order-management.component';
 import { OperationalDayDashboardComponent } from './operational-day/operational-day-dashboard.component';
@@ -110,7 +111,16 @@ const routes: Routes = [
       },
       {
         path: 'users',
-        component: UserManagementComponent
+        redirectTo: 'customers',
+        pathMatch: 'full'
+      },
+      {
+        path: 'customers',
+        component: CustomerManagementComponent
+      },
+      {
+        path: 'staff',
+        component: StaffManagementComponent
       },
       {
         path: 'account',

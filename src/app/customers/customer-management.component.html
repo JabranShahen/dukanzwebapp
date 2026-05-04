@@ -1,7 +1,7 @@
 <div class="page">
   <app-management-header
     eyebrow="Dukanz"
-    title="Users"
+    title="Customers"
     subtext="Manage customer and driver accounts"
   ></app-management-header>
 
@@ -72,17 +72,17 @@
     <div *ngIf="successMessage" class="feedback feedback--success">{{ successMessage }}</div>
 
     <!-- ── Loading ───────────────────────────────────────────── -->
-    <div *ngIf="loading" class="state-msg">Loading users…</div>
+    <div *ngIf="loading" class="state-msg">Loading customers...</div>
 
     <!-- ── Empty ─────────────────────────────────────────────── -->
     <app-ui-empty-state
       *ngIf="!loading && filteredUsers.length === 0 && allUsers.length === 0"
-      title="No users yet"
-      body="Users will appear here once customers sign up."
+      title="No customers yet"
+      body="Customers will appear here once they sign up."
     ></app-ui-empty-state>
 
     <div *ngIf="!loading && filteredUsers.length === 0 && allUsers.length > 0" class="state-msg">
-      No users match the current filters.
+      No customers match the current filters.
     </div>
 
     <!-- ── Table ──────────────────────────────────────────────── -->

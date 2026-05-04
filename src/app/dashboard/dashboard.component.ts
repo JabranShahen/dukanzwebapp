@@ -42,7 +42,8 @@ export class DashboardComponent implements OnInit {
     if (this.authService.currentRole === 'superadmin') {
       items.push(
         { key: 'areas', label: 'Area Management', route: '/dashboard/areas' },
-        { key: 'users', label: 'Users', route: '/dashboard/users' },
+        { key: 'customers', label: 'Customers', route: '/dashboard/customers' },
+        { key: 'staff', label: 'Staff', route: '/dashboard/staff' },
         { key: 'products', label: 'Products', route: '/dashboard/products' },
         { key: 'categories', label: 'Categories', route: '/dashboard/categories' },
         { key: 'events', label: 'Events', route: '/dashboard/events' },

@@ -1,0 +1,112 @@
+<div class="page">
+  <app-management-header
+    eyebrow="Dukanz"
+    title="Staff Management"
+    subtext="Manage portal staff accounts"
+  ></app-management-header>
+
+  <app-management-panel *ngIf="isSuperAdmin; else restricted">
+    <form class="create-row" (ngSubmit)="create()">
+      <input type="text" name="staffName" [(ngModel)]="newStaff.name" placeholder="Name" />
+      <input type="email" name="staffEmail" [(ngModel)]="newStaff.email" placeholder="Email" />
+      <input type="password" name="staffPassword" [(ngModel)]="newStaff.password" placeholder="Password" />
+      <select name="staffArea" [(ngModel)]="newStaff.areaId">
+        <option [ngValue]="null">No area</option>
+        <option *ngFor="let area of areas" [ngValue]="area.id">{{ area.name }}</option>
+      </select>
+      <select name="staffRole" [(ngModel)]="newStaff.role">
+        <option value="operator">Operator</option>
+        <option value="superadmin">Super-admin</option>
+      </select>
+      <app-ui-button buttonType="submit" [disabled]="creating">
+        {{ creating ? 'Creating...' : 'Create staff' }}
+      </app-ui-button>
+    </form>
+
+    <div *ngIf="error" class="feedback feedback--error">{{ error }}</div>
+    <div *ngIf="loading" class="state-msg">Loading staff...</div>
+
+    <app-ui-empty-state
+      *ngIf="!loading && !error && staff.length === 0"
+      title="No staff yet"
+      body="Staff accounts will appear here after they are created."
+    ></app-ui-empty-state>
+
+    <div *ngIf="!loading && staff.length > 0" class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Area</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let account of staff; trackBy: trackById" [class.row--updating]="updatingId === account.id">
+            <td>
+              <input
+                class="inline-input"
+                type="text"
+                [name]="'staff-name-' + account.id"
+                [(ngModel)]="draftStaff[account.id].name"
+              />
+            </td>
+            <td class="col-mono">{{ account.email }}</td>
+            <td>
+              <select
+                class="inline-select"
+                [name]="'staff-area-' + account.id"
+                [(ngModel)]="draftStaff[account.id].areaId"
+              >
+                <option [ngValue]="null">No area</option>
+                <option *ngFor="let area of areas" [ngValue]="area.id">{{ area.name }}</option>
+              </select>
+            </td>
+            <td>
+              <select
+                class="inline-select"
+                [name]="'staff-role-' + account.id"
+                [(ngModel)]="draftStaff[account.id].role"
+              >
+                <option value="operator">Operator</option>
+                <option value="superadmin">Super-admin</option>
+              </select>
+            </td>
+            <td>
+              <span
+                class="status-badge"
+                [class.status-badge--enabled]="account.enabled"
+                [class.status-badge--disabled]="!account.enabled"
+              >
+                {{ account.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+            </td>
+            <td class="col-actions">
+              <button class="action-btn" type="button" [disabled]="updatingId === account.id" (click)="save(account)">
+                Save
+              </button>
+              <button class="action-btn" type="button" [disabled]="updatingId === account.id" (click)="toggleEnabled(account)">
+                {{ account.enabled ? 'Disable' : 'Enable' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-management-panel>
+
+  <ng-template #restricted>
+    <app-management-panel>
+      <div class="state-msg">Staff management is restricted to superadmins.</div>
+    </app-management-panel>
+  </ng-template>
+
+  <app-ui-snackbar
+    [message]="feedbackMessage"
+    [tone]="feedbackTone"
+    (dismissed)="onFeedbackDismissed()"
+  ></app-ui-snackbar>
+</div>
