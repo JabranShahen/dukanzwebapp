@@ -28,7 +28,7 @@ export class LoginComponent implements OnInit {
   ngOnInit(): void {
     this.authService.user$.pipe(take(1)).subscribe((user) => {
       if (user) {
-        void this.router.navigate(['/dashboard/categories']);
+        void this.router.navigate(['/dashboard']);
       }
     });
   }
@@ -46,7 +46,7 @@ export class LoginComponent implements OnInit {
 
     try {
       await this.authService.login(email, password);
-      this.router.navigate(['/dashboard/categories']);
+      this.router.navigate(['/dashboard']);
     } catch (err: unknown) {
       this.errorMessage = this.friendlyError(err);
     } finally {
@@ -57,11 +57,22 @@ export class LoginComponent implements OnInit {
   private friendlyError(err: unknown): string {
     if (err && typeof err === 'object' && 'code' in err) {
       const code = (err as { code: string }).code;
-      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+      if (
+        code === 'auth/user-not-found' ||
+        code === 'auth/wrong-password' ||
+        code === 'auth/invalid-credential' ||
+        code === 'auth/invalid-email'
+      ) {
         return 'Incorrect email or password.';
       }
       if (code === 'auth/too-many-requests') {
         return 'Too many failed attempts. Please try again later.';
+      }
+      if (code === 'auth/user-disabled') {
+        return 'This account has been disabled. Please contact support.';
+      }
+      if (code === 'auth/network-request-failed') {
+        return 'Network error. Please check your connection and try again.';
       }
     }
     return 'Login failed. Please check your connection and try again.';
