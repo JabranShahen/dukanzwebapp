@@ -12,8 +12,7 @@ import { SettingsComponent } from './settings/settings.component';
 import { AccountComponent } from './account/account.component';
 import { DriverOrdersComponent } from './driver/driver-orders.component';
 import { MonitoringDashboardComponent } from './monitoring/monitoring-dashboard.component';
-import { PurchaseCreateComponent } from './purchase/purchase-create.component';
-import { PurchaseProcessComponent } from './purchase/purchase-process.component';
+import { PurchaseManagementComponent } from './purchase/purchase-management.component';
 import { PackingReportComponent } from './packing/packing-report.component';
 import { UserManagementComponent } from './users/user-management.component';
 import { LoginComponent } from './login/login.component';
@@ -84,11 +83,12 @@ const routes: Routes = [
       },
       {
         path: 'purchase',
-        component: PurchaseCreateComponent
+        component: PurchaseManagementComponent
       },
       {
         path: 'purchase-process',
-        component: PurchaseProcessComponent
+        redirectTo: 'purchase',
+        pathMatch: 'full'
       },
       {
         path: 'packing',

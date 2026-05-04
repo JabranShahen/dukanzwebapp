@@ -35,4 +35,8 @@ export class PurchaseService {
   processPurchase(purchaseId: string, items: ProcessItemPayload[]): Observable<boolean> {
     return this.api.post<boolean>(`${this.endpoint}/${purchaseId}/process`, { items });
   }
+
+  deletePurchase(purchaseId: string): Observable<boolean> {
+    return this.api.delete<boolean>(`${this.endpoint}/${purchaseId}`);
+  }
 }

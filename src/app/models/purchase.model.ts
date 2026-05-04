@@ -18,6 +18,7 @@ export interface PurchaseSummary {
   status: string;
   total: number;
   itemCount: number;
+  orderCount: number;
 }
 
 export interface PurchaseDetailItem {

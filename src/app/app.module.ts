@@ -27,6 +27,7 @@ import { DriverOrdersComponent } from './driver/driver-orders.component';
 import { MonitoringDashboardComponent } from './monitoring/monitoring-dashboard.component';
 import { PackingReportComponent } from './packing/packing-report.component';
 import { PurchaseCreateComponent } from './purchase/purchase-create.component';
+import { PurchaseManagementComponent } from './purchase/purchase-management.component';
 import { PurchaseProcessComponent } from './purchase/purchase-process.component';
 import { AccountComponent } from './account/account.component';
 import { UserManagementComponent } from './users/user-management.component';
@@ -67,6 +68,7 @@ import { OperationalDayDashboardComponent } from './operational-day/operational-
     MonitoringDashboardComponent,
     PackingReportComponent,
     PurchaseCreateComponent,
+    PurchaseManagementComponent,
     PurchaseProcessComponent,
     AccountComponent,
     UserManagementComponent,
