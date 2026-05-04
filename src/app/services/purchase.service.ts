@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { PurchaseDetail, PurchasePreview, PurchaseSummary, ProcessItemPayload } from '../models/purchase.model';
+import { PurchaseDetail, PurchaseOrderSummary, PurchasePreview, PurchaseSummary, ProcessItemPayload } from '../models/purchase.model';
 import { ApiService } from './api.service';
 
 @Injectable({
@@ -26,6 +26,10 @@ export class PurchaseService {
 
   getPurchase(dateKey: string): Observable<PurchaseDetail> {
     return this.api.get<PurchaseDetail>(`${this.endpoint}/date/${dateKey}`);
+  }
+
+  getOrdersForPurchase(purchaseId: string): Observable<PurchaseOrderSummary[]> {
+    return this.api.get<PurchaseOrderSummary[]>(`${this.endpoint}/${purchaseId}/orders`);
   }
 
   processPurchase(purchaseId: string, items: ProcessItemPayload[]): Observable<boolean> {

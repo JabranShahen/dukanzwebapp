@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-import { PurchaseSummary, PurchaseDetail, PurchaseDetailItem } from '../models/purchase.model';
+import { PurchaseOrderSummary, PurchaseSummary, PurchaseDetail, PurchaseDetailItem } from '../models/purchase.model';
 import { PurchaseService } from '../services/purchase.service';
 
 interface EditableItem extends PurchaseDetailItem {
@@ -20,6 +20,7 @@ interface ItemGroup {
 export class PurchaseProcessComponent implements OnInit {
   loadingList = true;
   loadingDetail = false;
+  loadingOrders = false;
   saving = false;
   listError = '';
   detailError = '';
@@ -30,6 +31,9 @@ export class PurchaseProcessComponent implements OnInit {
   selectedId = '';
   detail: PurchaseDetail | null = null;
   groups: ItemGroup[] = [];
+
+  showOrders = false;
+  orders: PurchaseOrderSummary[] = [];
 
   constructor(private readonly purchaseService: PurchaseService) {}
 
@@ -57,7 +61,28 @@ export class PurchaseProcessComponent implements OnInit {
 
   selectPurchase(id: string): void {
     this.selectedId = id;
+    this.showOrders = false;
+    this.orders = [];
     this.loadDetail(id);
+  }
+
+  toggleOrders(): void {
+    if (this.showOrders) {
+      this.showOrders = false;
+      return;
+    }
+    this.showOrders = true;
+    if (this.orders.length > 0) return;
+    this.loadingOrders = true;
+    this.purchaseService.getOrdersForPurchase(this.selectedId).subscribe({
+      next: (data) => {
+        this.orders = data;
+        this.loadingOrders = false;
+      },
+      error: () => {
+        this.loadingOrders = false;
+      }
+    });
   }
 
   loadDetail(dateKey: string): void {
@@ -135,5 +160,13 @@ export class PurchaseProcessComponent implements OnInit {
 
   onFeedbackDismissed(): void {
     this.feedbackMessage = '';
+  }
+
+  formatPrice(value: number): string {
+    return 'Rs\u00a0' + (value || 0).toLocaleString();
+  }
+
+  shortId(id: string): string {
+    return '\u2026' + (id || '').slice(-8);
   }
 }

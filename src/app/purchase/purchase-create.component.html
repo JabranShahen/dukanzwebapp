@@ -92,9 +92,52 @@
           {{ creating ? 'Creating…' : preview.alreadyCreated ? 'Purchase Created' : 'Create Purchase' }}
         </app-ui-button>
 
+        <app-ui-button
+          variant="ghost"
+          *ngIf="preview.orderCount > 0"
+          (clicked)="toggleOrders()"
+        >
+          {{ showOrders ? 'Hide Orders' : 'View Orders (' + preview.orderCount + ')' }}
+        </app-ui-button>
+
         <app-ui-button variant="ghost" [disabled]="loading" (clicked)="loadPreview()">
           Refresh
         </app-ui-button>
+      </div>
+
+      <!-- Orders panel -->
+      <div *ngIf="showOrders" class="orders-panel">
+        <div class="orders-panel__header">
+          <span class="orders-panel__title">Orders in this purchase run</span>
+        </div>
+        <div *ngIf="loadingOrders" class="state-message">Loading orders…</div>
+        <table *ngIf="!loadingOrders && orders.length > 0" class="items-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Address</th>
+              <th>Status</th>
+              <th class="col-qty">Items</th>
+              <th class="col-qty">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of orders">
+              <td class="col-mono">{{ shortId(order.id) }}</td>
+              <td>{{ order.user?.name }}</td>
+              <td>{{ order.user?.phoneNumber }}</td>
+              <td>{{ order.user?.address }}</td>
+              <td>{{ order.status }}</td>
+              <td class="col-qty">{{ order.orderItems?.length ?? 0 }}</td>
+              <td class="col-qty">{{ formatPrice(order.orderGrossPrice) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div *ngIf="!loadingOrders && orders.length === 0" class="state-message">
+          No orders found.
+        </div>
       </div>
 
     </ng-container>

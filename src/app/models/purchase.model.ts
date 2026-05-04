@@ -45,6 +45,16 @@ export interface ProcessItemPayload {
   pricePerQty: number;
 }
 
+export interface PurchaseOrderSummary {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  address: string;
+  status: string;
+  total: number;
+  itemCount: number;
+}
+
 export interface PurchasePreview {
   windowStart: string;
   windowEnd: string;
@@ -53,5 +63,6 @@ export interface PurchasePreview {
   deliveryDate: string;
   orderCount: number;
   alreadyCreated: boolean;
+  orderIds: string[];
   categories: PurchasePreviewCategory[];
 }

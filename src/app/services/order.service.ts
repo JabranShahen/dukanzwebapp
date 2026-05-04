@@ -50,6 +50,13 @@ export class OrderService {
     );
   }
 
+  getOrdersByIds(ids: string[]): Observable<Order[]> {
+    return this.api.post<Order[] | null>(`${this.endpoint}/batch`, { ids }).pipe(
+      map((response) => (Array.isArray(response) ? response : [])),
+      catchError(() => of([]))
+    );
+  }
+
   testPushNotification(userId: string): Observable<NotificationTestResult> {
     return this.api.get<NotificationTestResult>(`Notification/test/${userId}`);
   }

@@ -97,6 +97,44 @@
           <app-ui-button [disabled]="saving" (clicked)="onSave()">
             {{ saving ? 'Saving…' : 'Save Prices' }}
           </app-ui-button>
+          <app-ui-button variant="ghost" (clicked)="toggleOrders()">
+            {{ showOrders ? 'Hide Orders' : 'View Orders' }}
+          </app-ui-button>
+        </div>
+
+        <!-- Orders panel -->
+        <div *ngIf="showOrders" class="orders-panel">
+          <div class="orders-panel__header">
+            <span class="orders-panel__title">Orders included in this purchase</span>
+          </div>
+          <div *ngIf="loadingOrders" class="state-message">Loading orders…</div>
+          <table *ngIf="!loadingOrders && orders.length > 0" class="items-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th class="col-qty">Items</th>
+                <th class="col-qty">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let order of orders">
+                <td class="col-mono">{{ shortId(order.id) }}</td>
+                <td>{{ order.customerName }}</td>
+                <td>{{ order.customerPhone }}</td>
+                <td>{{ order.address }}</td>
+                <td>{{ order.status }}</td>
+                <td class="col-qty">{{ order.itemCount }}</td>
+                <td class="col-qty">{{ formatPrice(order.total) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="!loadingOrders && orders.length === 0" class="state-message">
+            No orders linked to this purchase.
+          </div>
         </div>
 
       </ng-container>

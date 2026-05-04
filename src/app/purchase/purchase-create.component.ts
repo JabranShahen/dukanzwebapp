@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 
 import { PurchasePreview } from '../models/purchase.model';
+import { Order } from '../models/order.model';
+import { OrderService } from '../services/order.service';
 import { PurchaseService } from '../services/purchase.service';
 
 type PdfLine = {
@@ -24,7 +26,14 @@ export class PurchaseCreateComponent implements OnInit {
 
   preview: PurchasePreview | null = null;
 
-  constructor(private readonly purchaseService: PurchaseService) {}
+  showOrders = false;
+  loadingOrders = false;
+  orders: Order[] = [];
+
+  constructor(
+    private readonly purchaseService: PurchaseService,
+    private readonly orderService: OrderService
+  ) {}
 
   ngOnInit(): void {
     this.loadPreview();
@@ -33,6 +42,8 @@ export class PurchaseCreateComponent implements OnInit {
   loadPreview(): void {
     this.loading = true;
     this.loadError = '';
+    this.showOrders = false;
+    this.orders = [];
     this.purchaseService.getPreview().subscribe({
       next: (data) => {
         this.preview = data;
@@ -41,6 +52,25 @@ export class PurchaseCreateComponent implements OnInit {
       error: () => {
         this.loading = false;
         this.loadError = 'Failed to load purchase preview. Check your connection.';
+      }
+    });
+  }
+
+  toggleOrders(): void {
+    if (this.showOrders) {
+      this.showOrders = false;
+      return;
+    }
+    this.showOrders = true;
+    if (this.orders.length > 0) return;
+    this.loadingOrders = true;
+    this.orderService.getOrdersByIds(this.preview?.orderIds ?? []).subscribe({
+      next: (data) => {
+        this.orders = data;
+        this.loadingOrders = false;
+      },
+      error: () => {
+        this.loadingOrders = false;
       }
     });
   }
@@ -101,6 +131,14 @@ export class PurchaseCreateComponent implements OnInit {
 
   onFeedbackDismissed(): void {
     this.feedbackMessage = '';
+  }
+
+  formatPrice(value: number): string {
+    return 'Rs\u00a0' + (value || 0).toLocaleString();
+  }
+
+  shortId(id: string): string {
+    return '\u2026' + (id || '').slice(-8);
   }
 
   private buildPurchasePdf(preview: PurchasePreview): Blob {
