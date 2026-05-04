@@ -82,15 +82,26 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  private readonly superAdminEmails = new Set([
+    'jabran.shaheen@gmail.com',
+    'jabranshaheen@hotmail.com'
+  ]);
+
   private loadUserProfile(): void {
     const userService = this.injector.get(UserService);
+    const sessionEmail = this.getSessionEmail().toLowerCase();
     userService.getMe().subscribe({
       next: (user) => {
-        this.setProfile(user.areaId ?? null, user.role ?? 'operator');
+        // Hardcoded super-admin emails override the DB role
+        const role = this.superAdminEmails.has(sessionEmail)
+          ? 'superadmin'
+          : (user.role ?? 'operator');
+        this.setProfile(user.areaId ?? null, role);
         this.profileReadySubject.next(true);
       },
       error: () => {
-        this.setProfile(null, 'operator');
+        const role = this.superAdminEmails.has(sessionEmail) ? 'superadmin' : 'operator';
+        this.setProfile(null, role);
         this.profileReadySubject.next(true);
       }
     });
