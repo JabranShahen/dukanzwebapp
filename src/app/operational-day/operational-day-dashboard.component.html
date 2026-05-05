@@ -1,6 +1,19 @@
 <div class="page">
   <app-management-header eyebrow="Operations" title="Operational Day Dashboard"></app-management-header>
 
+  <!-- User info bar -->
+  <div class="user-info-bar">
+    <div class="user-info-bar__identity">
+      <span class="user-info-bar__name">{{ userName || userEmail }}</span>
+      <span *ngIf="userName" class="user-info-bar__email">{{ userEmail }}</span>
+    </div>
+    <div class="user-info-bar__meta">
+      <span class="user-info-bar__badge user-info-bar__badge--role">{{ userRole }}</span>
+      <span class="user-info-bar__divider" aria-hidden="true">·</span>
+      <span class="user-info-bar__area">{{ userAreaName }}</span>
+    </div>
+  </div>
+
   <app-management-panel>
 
     <!-- Toolbar -->

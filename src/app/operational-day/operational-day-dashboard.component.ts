@@ -1,9 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 
+import { AuthService } from '../auth.service';
+import { Area } from '../models/area.model';
 import { Order, normalizeOrderStatus, OrderStatusEntry } from '../models/order.model';
 import { PackingBatchDetail, PackingOrderSummary } from '../models/packing.model';
+import { AreaService } from '../services/area.service';
 import { OrderService } from '../services/order.service';
 import { PackingService } from '../services/packing.service';
+import { StaffService } from '../services/staff.service';
 
 const DELIVERY_OFFSET_DAYS = 1;
 
@@ -25,13 +29,59 @@ export class OperationalDayDashboardComponent implements OnInit {
   packingNotFound = false;
   expandedOrderId: string | null = null;
 
+  // ── User info bar ──────────────────────────────────────────────────────────
+  userName = '';
+  userEmail = '';
+  userRole = '';
+  userAreaName = '';
+
   constructor(
     private readonly orderService: OrderService,
-    private readonly packingService: PackingService
+    private readonly packingService: PackingService,
+    private readonly authService: AuthService,
+    private readonly staffService: StaffService,
+    private readonly areaService: AreaService
   ) {}
 
   ngOnInit(): void {
     this.load();
+    this.loadUserInfo();
+  }
+
+  // ── User info ──────────────────────────────────────────────────────────────
+  private loadUserInfo(): void {
+    this.userEmail = this.authService.getSessionEmail();
+    this.userRole = this.authService.currentRole;
+
+    this.staffService.getMe().subscribe({
+      next: (staff) => {
+        this.userName = staff.name || '';
+        this.userRole = staff.role || this.authService.currentRole;
+        if (staff.areaId) {
+          this.resolveAreaName(staff.areaId);
+        } else {
+          this.userAreaName = 'No area assigned';
+        }
+      },
+      error: () => {
+        // fallback — email user not in staff DB yet (superadmin bypass)
+        this.userAreaName = this.authService.currentAreaId
+          ? this.authService.currentAreaId
+          : 'No area assigned';
+      }
+    });
+  }
+
+  private resolveAreaName(areaId: string): void {
+    this.areaService.getAll().subscribe({
+      next: (areas: Area[]) => {
+        const match = areas.find((a) => a.id === areaId);
+        this.userAreaName = match ? match.name : areaId;
+      },
+      error: () => {
+        this.userAreaName = areaId;
+      }
+    });
   }
 
   // ── Data loading ───────────────────────────────────────────────────────────
