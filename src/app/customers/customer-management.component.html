@@ -6,34 +6,15 @@
   ></app-management-header>
 
   <app-management-panel>
-
-    <form *ngIf="isSuperAdmin" class="create-operator" (ngSubmit)="createOperator()">
-      <input type="text" name="operatorName" [(ngModel)]="newOperator.name" placeholder="Operator name" />
-      <input type="text" name="operatorPhone" [(ngModel)]="newOperator.phoneNumber" placeholder="Phone number" />
-      <select name="operatorArea" [(ngModel)]="newOperator.areaId">
-        <option [ngValue]="null">No area</option>
-        <option *ngFor="let area of areas" [ngValue]="area.id">{{ area.name }}</option>
-      </select>
-      <select name="operatorRole" [(ngModel)]="newOperator.role">
-        <option value="operator">Operator</option>
-        <option value="superadmin">Super-admin</option>
-      </select>
-      <app-ui-button buttonType="submit" [disabled]="updatingId === 'new'">
-        {{ updatingId === 'new' ? 'Creating...' : 'Create operator' }}
-      </app-ui-button>
-    </form>
-
-    <!-- ── Filters ─────────────────────────────────────────── -->
     <div class="filters">
       <div class="search-wrap">
-        <span class="search-icon">🔍</span>
         <input
           class="search-input"
           type="text"
-          placeholder="Search by name, phone, address or email…"
+          placeholder="Search by name, phone, address or email..."
           [(ngModel)]="filterText"
         />
-        <button *ngIf="filterText" class="clear-input" type="button" (click)="filterText = ''">✕</button>
+        <button *ngIf="filterText" class="clear-input" type="button" (click)="filterText = ''">x</button>
       </div>
 
       <div class="filter-pills">
@@ -61,20 +42,16 @@
       </div>
     </div>
 
-    <!-- ── Toolbar ──────────────────────────────────────────── -->
     <div class="toolbar">
-      <span class="count">{{ loading ? '—' : userCountLabel }}</span>
-      <app-ui-button variant="secondary" (clicked)="load()">↺ Refresh</app-ui-button>
+      <span class="count">{{ loading ? '-' : userCountLabel }}</span>
+      <app-ui-button variant="secondary" (clicked)="load()">Refresh</app-ui-button>
     </div>
 
-    <!-- ── Feedback ─────────────────────────────────────────── -->
     <div *ngIf="error" class="feedback feedback--error">{{ error }}</div>
     <div *ngIf="successMessage" class="feedback feedback--success">{{ successMessage }}</div>
 
-    <!-- ── Loading ───────────────────────────────────────────── -->
     <div *ngIf="loading" class="state-msg">Loading customers...</div>
 
-    <!-- ── Empty ─────────────────────────────────────────────── -->
     <app-ui-empty-state
       *ngIf="!loading && filteredUsers.length === 0 && allUsers.length === 0"
       title="No customers yet"
@@ -85,7 +62,6 @@
       No customers match the current filters.
     </div>
 
-    <!-- ── Table ──────────────────────────────────────────────── -->
     <div *ngIf="!loading && filteredUsers.length > 0" class="table-wrap">
       <table>
         <thead>
@@ -96,7 +72,6 @@
             <th>Email</th>
             <th>Role</th>
             <th *ngIf="isSuperAdmin">Area</th>
-            <th *ngIf="isSuperAdmin">System Role</th>
             <th>Status</th>
             <th class="col-actions">Actions</th>
           </tr>
@@ -107,10 +82,10 @@
             [class.row--disabled]="!user.enable"
             [class.row--updating]="updatingId === user.id"
           >
-            <td class="col-name">{{ user.name || '—' }}</td>
-            <td class="col-mono">{{ user.phoneNumber || '—' }}</td>
-            <td class="col-address">{{ user.address || '—' }}</td>
-            <td class="col-mono col-email">{{ user.email || '—' }}</td>
+            <td class="col-name">{{ user.name || '-' }}</td>
+            <td class="col-mono">{{ user.phoneNumber || '-' }}</td>
+            <td class="col-address">{{ user.address || '-' }}</td>
+            <td class="col-mono col-email">{{ user.email || '-' }}</td>
             <td>
               <span class="role-badge" [class.role-badge--driver]="user.isDriver">
                 {{ user.isDriver ? 'Driver' : 'Customer' }}
@@ -126,18 +101,6 @@
               >
                 <option [ngValue]="null">No area</option>
                 <option *ngFor="let area of areas" [ngValue]="area.id">{{ area.name }}</option>
-              </select>
-            </td>
-            <td *ngIf="isSuperAdmin">
-              <select
-                class="inline-select"
-                [ngModel]="user.role || 'operator'"
-                [ngModelOptions]="{ standalone: true }"
-                [disabled]="updatingId === user.id"
-                (ngModelChange)="updateSystemRole(user, $event)"
-              >
-                <option value="operator">Operator</option>
-                <option value="superadmin">Super-admin</option>
               </select>
             </td>
             <td>
@@ -171,6 +134,5 @@
         </tbody>
       </table>
     </div>
-
   </app-management-panel>
 </div>

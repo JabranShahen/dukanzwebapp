@@ -23,7 +23,6 @@ export class CustomerManagementComponent implements OnInit {
 
   updatingId: string | null = null;
   areas: Area[] = [];
-  newOperator: DukanzUser = this.buildEmptyOperator();
 
   constructor(
     public readonly authService: AuthService,
@@ -43,11 +42,13 @@ export class CustomerManagementComponent implements OnInit {
     this.error = '';
     this.userService.getAll().subscribe({
       next: (users) => {
-        this.allUsers = users.sort((a, b) => a.name.localeCompare(b.name));
+        this.allUsers = users
+          .filter((user) => this.isPhoneAccount(user))
+          .sort((a, b) => a.name.localeCompare(b.name));
         this.loading = false;
       },
       error: () => {
-        this.error = 'Failed to load users.';
+        this.error = 'Failed to load customers.';
         this.loading = false;
       }
     });
@@ -73,7 +74,9 @@ export class CustomerManagementComponent implements OnInit {
   get userCountLabel(): string {
     const total = this.filteredUsers.length;
     const all = this.allUsers.length;
-    return total === all ? `${total} user${total !== 1 ? 's' : ''}` : `${total} of ${all}`;
+    return total === all
+      ? `${total} customer/driver account${total !== 1 ? 's' : ''}`
+      : `${total} of ${all}`;
   }
 
   clearFilters(): void {
@@ -143,43 +146,6 @@ export class CustomerManagementComponent implements OnInit {
     this.updateUserPatch(user, { areaId: areaId || null }, `${user.name} area updated.`);
   }
 
-  updateSystemRole(user: DukanzUser, role: string): void {
-    this.updateUserPatch(user, { role: role || 'operator' }, `${user.name} role updated.`);
-  }
-
-  createOperator(): void {
-    const user = {
-      ...this.newOperator,
-      id: this.newOperator.phoneNumber,
-      PartitionKey: this.newOperator.phoneNumber,
-      enable: true,
-      isDriver: false,
-      role: this.newOperator.role || 'operator',
-      areaId: this.newOperator.areaId || null
-    };
-
-    if (!user.name.trim() || !user.phoneNumber.trim()) {
-      this.error = 'Name and phone are required.';
-      return;
-    }
-
-    this.updatingId = 'new';
-    this.error = '';
-    this.successMessage = '';
-    this.userService.create(user).subscribe({
-      next: () => {
-        this.updatingId = null;
-        this.successMessage = `${user.name} created.`;
-        this.newOperator = this.buildEmptyOperator();
-        this.load();
-      },
-      error: () => {
-        this.error = `Failed to create ${user.name}.`;
-        this.updatingId = null;
-      }
-    });
-  }
-
   trackById(_: number, user: DukanzUser): string {
     return user.id;
   }
@@ -203,17 +169,7 @@ export class CustomerManagementComponent implements OnInit {
     });
   }
 
-  private buildEmptyOperator(): DukanzUser {
-    return {
-      id: '',
-      name: '',
-      address: '',
-      phoneNumber: '',
-      enable: true,
-      isDriver: false,
-      email: '',
-      areaId: null,
-      role: 'operator'
-    };
+  private isPhoneAccount(user: DukanzUser): boolean {
+    return (user.phoneNumber || '').trim().length > 0;
   }
 }
