@@ -19,6 +19,7 @@ export interface PurchaseSummary {
   total: number;
   itemCount: number;
   orderCount: number;
+  areaId: string;
 }
 
 export interface PurchaseDetailItem {
@@ -38,6 +39,7 @@ export interface PurchaseDetail {
   purchDate: string;
   status: string;
   total: number;
+  areaId: string;
   items: PurchaseDetailItem[];
 }
 

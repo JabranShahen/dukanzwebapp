@@ -96,9 +96,11 @@ export class PurchaseProcessComponent implements OnInit {
         this.buildGroups(data);
         this.loadingDetail = false;
       },
-      error: () => {
+      error: (err) => {
         this.loadingDetail = false;
-        this.detailError = 'Failed to load purchase details.';
+        this.detailError = err?.status === 403
+          ? 'Access denied — this purchase belongs to a different area.'
+          : 'Failed to load purchase details.';
       }
     });
   }

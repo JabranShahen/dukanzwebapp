@@ -255,9 +255,11 @@ export class PurchaseManagementComponent implements OnInit {
         this.buildGroups(data);
         this.loadingDetail = false;
       },
-      error: () => {
+      error: (err) => {
         this.loadingDetail = false;
-        this.detailError = 'Failed to load purchase details.';
+        this.detailError = err?.status === 403
+          ? 'Access denied — this purchase belongs to a different area.'
+          : 'Failed to load purchase details.';
       }
     });
   }
@@ -316,7 +318,7 @@ export class PurchaseManagementComponent implements OnInit {
       const objectUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = objectUrl;
-      link.download = `purchase-${this.preview.purchaseDateKey}.pdf`;
+      link.download = `purchase-${this.detail!.areaId ? this.detail!.areaId + '-' : ''}${this.preview.purchaseDateKey}.pdf`;
       link.click();
       window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 0);
     } catch {
@@ -445,6 +447,7 @@ export class PurchaseManagementComponent implements OnInit {
     const lines: PdfLine[] = [
       { text: 'Dukanz Purchase Sheet', size: 18, bold: true },
       { text: `Batch ${preview.purchaseDateKey}`, size: 12, bold: true },
+      { text: `Area: ${this.detail?.areaId || 'N/A'}` },
       { text: `Order window: ${this.formatDate(preview.windowStart)} -> ${this.formatDate(preview.windowEnd)}` },
       { text: `Delivery date: ${this.formatDate(preview.deliveryDate)}` },
       { text: `Orders: ${preview.orderCount}` },

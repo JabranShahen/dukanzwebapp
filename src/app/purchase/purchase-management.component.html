@@ -169,6 +169,7 @@
             <tr>
               <th>Purchase ID</th>
               <th>Created</th>
+              <th>Area</th>
               <th class="col-qty">Orders</th>
               <th class="col-qty">Products</th>
               <th>Status</th>
@@ -181,6 +182,7 @@
               <tr>
                 <td class="col-mono">{{ shortId(summary.id) }}</td>
                 <td>{{ formatDate(summary.purchDate) }}</td>
+                <td><span class="area-badge">{{ summary.areaId || '—' }}</span></td>
                 <td class="col-qty">{{ summary.orderCount }}</td>
                 <td class="col-qty">{{ summary.itemCount }}</td>
                 <td>
@@ -248,6 +250,7 @@
       <div class="process-header">
         <app-ui-button variant="ghost" (clicked)="backToList()">Back to list</app-ui-button>
         <span class="process-title">Processing {{ shortId(processingPurchaseId) }}</span>
+        <span *ngIf="detail?.areaId" class="area-badge">Area: {{ detail.areaId }}</span>
       </div>
 
       <div *ngIf="loadingDetail" class="state-message">Loading items...</div>
