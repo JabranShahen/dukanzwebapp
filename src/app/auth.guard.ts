@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 })
 export class AuthGuard implements CanActivate, CanActivateChild {
   private readonly superAdminRoutes = [
+    '/dashboard/operational-day',
     '/dashboard/areas',
     '/dashboard/customers',
     '/dashboard/staff',

@@ -30,7 +30,6 @@ export class DashboardComponent implements OnInit {
   private buildNavItems(): void {
     const items: NavItem[] = [
       { key: 'overview', label: 'Overview', route: '/dashboard' },
-      { key: 'operational-day', label: 'Ops Dashboard', route: '/dashboard/operational-day' },
       { key: 'driver', label: 'Driver', route: '/dashboard/driver' },
       { key: 'orders', label: 'Orders', route: '/dashboard/orders' },
       { key: 'purchase', label: 'Purchase Management', route: '/dashboard/purchase' },
@@ -41,6 +40,7 @@ export class DashboardComponent implements OnInit {
 
     if (this.authService.currentRole === 'superadmin') {
       items.push(
+        { key: 'operational-day', label: 'Ops Dashboard', route: '/dashboard/operational-day' },
         { key: 'areas', label: 'Area Management', route: '/dashboard/areas' },
         { key: 'customers', label: 'Customers', route: '/dashboard/customers' },
         { key: 'staff', label: 'Staff', route: '/dashboard/staff' },
