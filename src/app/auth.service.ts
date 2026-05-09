@@ -27,6 +27,7 @@ export class AuthService {
 
   currentAreaId: string | null = null;
   currentRole = 'operator';
+  currentName = '';
 
   /** Emits once Firebase has resolved the auth state (skips the initial undefined) */
   readonly user$: Observable<User | null> = this.userSubject.pipe(
@@ -52,7 +53,7 @@ export class AuthService {
         this.profileReadySubject.next(false);
         this.loadUserProfile();
       } else {
-        this.setProfile(null, 'operator');
+        this.setProfile(null, 'operator', '');
         this.profileReadySubject.next(true);
       }
     });
@@ -102,12 +103,12 @@ export class AuthService {
           const role = this.superAdminEmails.has(sessionEmail)
             ? 'superadmin'
             : (staff.role ?? 'operator');
-          this.setProfile(staff.areaId ?? null, role);
+          this.setProfile(staff.areaId ?? null, role, staff.name ?? '');
           this.profileReadySubject.next(true);
         },
         error: () => {
           const role = this.superAdminEmails.has(sessionEmail) ? 'superadmin' : 'operator';
-          this.setProfile(null, role);
+          this.setProfile(null, role, '');
           this.profileReadySubject.next(true);
         }
       });
@@ -121,20 +122,21 @@ export class AuthService {
         const role = this.superAdminEmails.has(sessionEmail)
           ? 'superadmin'
           : (user.role ?? 'operator');
-        this.setProfile(user.areaId ?? null, role);
+        this.setProfile(user.areaId ?? null, role, user.name ?? '');
         this.profileReadySubject.next(true);
       },
       error: () => {
         const role = this.superAdminEmails.has(sessionEmail) ? 'superadmin' : 'operator';
-        this.setProfile(null, role);
+        this.setProfile(null, role, '');
         this.profileReadySubject.next(true);
       }
     });
   }
 
-  private setProfile(areaId: string | null, role: string): void {
+  private setProfile(areaId: string | null, role: string, name: string): void {
     this.currentAreaId = areaId;
     this.currentRole = role || 'operator';
+    this.currentName = name;
     this.currentAreaIdSubject.next(this.currentAreaId);
     this.currentRoleSubject.next(this.currentRole);
   }

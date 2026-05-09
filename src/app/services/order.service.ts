@@ -86,6 +86,12 @@ export class OrderService {
     );
   }
 
+  reassignArea(orderId: string, areaId: string): Observable<boolean> {
+    return this.api.patch<void>(`${this.endpoint}/${orderId}/area`, { areaId }).pipe(
+      map(() => true)
+    );
+  }
+
   updateStatus(order: Order, newStatus: string): Observable<boolean> {
     const payload = { ...order, status: newStatus };
     return this.api.put<string | boolean | object>(`${this.endpoint}`, payload).pipe(

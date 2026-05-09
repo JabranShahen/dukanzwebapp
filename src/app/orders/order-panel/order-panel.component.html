@@ -125,6 +125,27 @@
       </ng-template>
     </section>
 
+    <!-- Area Reassignment (superadmin only) -->
+    <section class="panel-section" *ngIf="authService.currentAreaId === null">
+      <h3 class="section-title">Area</h3>
+      <div class="detail-row">
+        <span>Current area</span>
+        <span>{{ areaName(order.areaId) }}</span>
+      </div>
+      <div class="driver-assign-row" *ngIf="areas.length > 0">
+        <select class="driver-select" [(ngModel)]="selectedReassignAreaId" [disabled]="reassigningArea">
+          <option value="">— Select area —</option>
+          <option *ngFor="let area of areas" [value]="area.id">{{ area.name }}</option>
+        </select>
+        <app-ui-button
+          variant="primary"
+          [disabled]="!canReassignArea() || reassigningArea"
+          (clicked)="reassignArea()"
+        >{{ reassigningArea ? 'Moving...' : 'Move to Area' }}</app-ui-button>
+      </div>
+      <p class="muted-text" *ngIf="areas.length === 0">Loading areas…</p>
+    </section>
+
     <!-- Driver Assignment -->
     <section class="panel-section">
       <h3 class="section-title">Driver Assignment</h3>

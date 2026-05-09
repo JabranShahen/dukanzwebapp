@@ -31,6 +31,10 @@ export class ApiService {
     return this.tryPut<T>(endpoint, payload, 0);
   }
 
+  patch<T>(endpoint: string, payload: unknown): Observable<T> {
+    return this.tryPatch<T>(endpoint, payload, 0);
+  }
+
   delete<T>(endpoint: string): Observable<T> {
     return this.tryDelete<T>(endpoint, 0);
   }
@@ -77,6 +81,22 @@ export class ApiService {
       catchError((error) => {
         if (index + 1 < this.baseUrls.length) {
           return this.tryPut<T>(endpoint, payload, index + 1);
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  private tryPatch<T>(endpoint: string, payload: unknown, index: number): Observable<T> {
+    if (index >= this.baseUrls.length) {
+      return throwError(() => new Error('No API base URL configured.'));
+    }
+
+    const url = `${this.baseUrls[index]}/${endpoint.replace(/^\/+/, '')}`;
+    return this.http.patch<T>(url, payload).pipe(
+      catchError((error) => {
+        if (index + 1 < this.baseUrls.length) {
+          return this.tryPatch<T>(endpoint, payload, index + 1);
         }
         return throwError(() => error);
       })

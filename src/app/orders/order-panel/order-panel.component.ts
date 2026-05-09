@@ -15,7 +15,10 @@ import {
   Order,
   OrderStatusAction
 } from '../../models/order.model';
+import { Area } from '../../models/area.model';
 import { DukanzUser } from '../../models/user.model';
+import { AuthService } from '../../auth.service';
+import { AreaService } from '../../services/area.service';
 import { OrderService } from '../../services/order.service';
 import { UserService } from '../../services/user.service';
 
@@ -36,17 +39,28 @@ export class OrderPanelComponent implements OnInit, OnChanges {
   updatingStatus = false;
   updatingDriver = false;
 
+  areas: Area[] = [];
+  selectedReassignAreaId = '';
+  reassigningArea = false;
+
   feedbackMessage = '';
   feedbackTone: 'success' | 'error' = 'success';
 
   constructor(
+    public readonly authService: AuthService,
     private readonly orderService: OrderService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly areaService: AreaService
   ) {}
 
   ngOnInit(): void {
     this.loadDrivers();
     this.preselectDriver();
+    if (this.authService.currentAreaId === null) {
+      this.areaService.getAll().subscribe({
+        next: (areas) => { this.areas = areas.filter(a => a.enabled); }
+      });
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -194,6 +208,38 @@ export class OrderPanelComponent implements OnInit, OnChanges {
     } catch {
       return '—';
     }
+  }
+
+  areaName(areaId: string | null | undefined): string {
+    if (!areaId) return '— none —';
+    return this.areas.find(a => a.id === areaId)?.name ?? areaId;
+  }
+
+  canReassignArea(): boolean {
+    return (
+      !!this.selectedReassignAreaId &&
+      this.selectedReassignAreaId !== (this.order.areaId ?? '')
+    );
+  }
+
+  reassignArea(): void {
+    if (!this.canReassignArea() || this.reassigningArea) return;
+    this.reassigningArea = true;
+
+    this.orderService.reassignArea(this.order.id, this.selectedReassignAreaId).subscribe({
+      next: () => {
+        this.reassigningArea = false;
+        this.selectedReassignAreaId = '';
+        this.feedbackTone = 'success';
+        this.feedbackMessage = 'Order moved to new area.';
+        this.orderUpdated.emit();
+      },
+      error: () => {
+        this.reassigningArea = false;
+        this.feedbackTone = 'error';
+        this.feedbackMessage = 'Failed to reassign area.';
+      }
+    });
   }
 
   onFeedbackDismissed(): void {

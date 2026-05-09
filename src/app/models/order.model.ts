@@ -85,6 +85,7 @@ export interface Order {
   id: string;
   PartitionKey?: string;
   partitionKey?: string;
+  areaId?: string | null;
   status: string;
   orderTotalPrice: number;
   deliveryChargeApplied: number;

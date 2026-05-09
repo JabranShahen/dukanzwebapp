@@ -12,13 +12,19 @@
         {{ item.label }}
       </a>
     </nav>
+    <div class="user-card">
+      <span class="user-card__name">{{ authService.currentName || authService.getSessionEmail() }}</span>
+      <span class="user-card__meta">{{ authService.getSessionEmail() }}</span>
+      <span class="user-card__role">{{ authService.currentRole }}</span>
+    </div>
     <button type="button" class="logout logout--sidebar" (click)="logout()">Logout</button>
   </aside>
 
   <div class="content-wrap">
     <header class="topbar">
       <button type="button" class="toggle" (click)="navOpen = !navOpen">☰</button>
-      <span>Dukanz Dashboard</span>
+      <span class="topbar__title">Dukanz Dashboard</span>
+      <span class="topbar__user">{{ authService.currentName || authService.getSessionEmail() }}</span>
       <button type="button" class="logout logout--topbar" (click)="logout()">Logout</button>
     </header>
     <main class="content">
