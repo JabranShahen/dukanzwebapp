@@ -35,6 +35,7 @@ export class PurchaseManagementComponent implements OnInit {
   viewMode: 'list' | 'process' = 'list';
   processingPurchaseId: string | null = null;
 
+  previewDate: string = this.todayIso();
   loadingPreview = true;
   previewError = '';
   preview: PurchasePreview | null = null;
@@ -76,13 +77,24 @@ export class PurchaseManagementComponent implements OnInit {
     this.loadList();
   }
 
+  todayIso(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  onPreviewDateChange(): void {
+    this.showPreviewOrders = false;
+    this.previewOrders = [];
+    this.loadPreview();
+  }
+
   loadPreview(): void {
     this.loadingPreview = true;
     this.previewError = '';
     this.showPreviewOrders = false;
     this.previewOrders = [];
 
-    this.purchaseService.getPreview().subscribe({
+    this.purchaseService.getPreview(this.previewDate || undefined).subscribe({
       next: (data) => {
         this.preview = data;
         if (!this.selectedHistoryDateKey) {
@@ -130,7 +142,7 @@ export class PurchaseManagementComponent implements OnInit {
     if (this.creating) return;
 
     this.creating = true;
-    this.purchaseService.createPurchase().subscribe({
+    this.purchaseService.createPurchase(this.previewDate || undefined).subscribe({
       next: () => {
         this.creating = false;
         this.feedbackTone = 'success';

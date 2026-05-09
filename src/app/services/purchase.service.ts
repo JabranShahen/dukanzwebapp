@@ -12,12 +12,14 @@ export class PurchaseService {
 
   constructor(private readonly api: ApiService) {}
 
-  getPreview(): Observable<PurchasePreview> {
-    return this.api.get<PurchasePreview>(`${this.endpoint}/preview`);
+  getPreview(date?: string): Observable<PurchasePreview> {
+    const query = date ? `?date=${encodeURIComponent(date)}` : '';
+    return this.api.get<PurchasePreview>(`${this.endpoint}/preview${query}`);
   }
 
-  createPurchase(): Observable<{ id: string }> {
-    return this.api.post<{ id: string }>(`${this.endpoint}/create`, {});
+  createPurchase(date?: string): Observable<{ id: string }> {
+    const query = date ? `?date=${encodeURIComponent(date)}` : '';
+    return this.api.post<{ id: string }>(`${this.endpoint}/create${query}`, {});
   }
 
   listPurchases(dateKey?: string): Observable<PurchaseSummary[]> {
