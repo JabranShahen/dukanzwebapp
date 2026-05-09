@@ -318,7 +318,7 @@ export class PurchaseManagementComponent implements OnInit {
       const objectUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = objectUrl;
-      link.download = `purchase-${this.detail!.areaId ? this.detail!.areaId + '-' : ''}${this.preview.purchaseDateKey}.pdf`;
+      link.download = `purchase-${this.detail?.areaId ? this.detail.areaId + '-' : ''}${this.preview.purchaseDateKey}.pdf`;
       link.click();
       window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 0);
     } catch {
