@@ -8,6 +8,13 @@
   <app-management-panel>
     <div class="toolbar">
       <span class="count">{{ loading ? '-' : customers.length + ' customer' + (customers.length === 1 ? '' : 's') }}</span>
+      <div *ngIf="areas.length > 0" class="area-selector">
+        <label for="area-select">Area</label>
+        <select id="area-select" [(ngModel)]="selectedAreaId">
+          <option value="">— select area —</option>
+          <option *ngFor="let area of areas" [value]="area.id">{{ area.name }}</option>
+        </select>
+      </div>
       <app-ui-button variant="secondary" (clicked)="load()">Refresh</app-ui-button>
     </div>
 
@@ -41,7 +48,7 @@
               <button
                 class="action-btn"
                 type="button"
-                [disabled]="allocatingId === customer.id || !authService.currentAreaId"
+                [disabled]="allocatingId === customer.id || !effectiveAreaId"
                 (click)="onAllocate(customer.id)"
               >
                 {{ allocatingId === customer.id ? 'Assigning...' : 'Assign to my area' }}

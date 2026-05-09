@@ -6,8 +6,36 @@
 .toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.area-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+
+  label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--tone-muted);
+    white-space: nowrap;
+  }
+
+  select {
+    padding: 0.3rem 0.55rem;
+    border: 1.5px solid var(--tone-border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--tone-ink);
+    background: var(--tone-surface);
+
+    &:focus {
+      outline: none;
+      border-color: var(--tone-ink);
+    }
+  }
 }
 
 .count,

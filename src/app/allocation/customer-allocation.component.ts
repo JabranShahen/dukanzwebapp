@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 
 import { AuthService } from '../auth.service';
+import { Area } from '../models/area.model';
 import { UnallocatedCustomer } from '../models/user.model';
+import { AreaService } from '../services/area.service';
 import { UserService } from '../services/user.service';
 
 @Component({
@@ -17,13 +19,26 @@ export class CustomerAllocationComponent implements OnInit {
   feedbackMessage = '';
   feedbackTone: 'success' | 'error' = 'success';
 
+  areas: Area[] = [];
+  selectedAreaId = '';
+
+  get effectiveAreaId(): string | null {
+    return this.authService.currentAreaId ?? (this.selectedAreaId || null);
+  }
+
   constructor(
     public readonly authService: AuthService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly areaService: AreaService
   ) {}
 
   ngOnInit(): void {
     this.load();
+    if (!this.authService.currentAreaId) {
+      this.areaService.getAll().subscribe({
+        next: (areas) => { this.areas = areas; }
+      });
+    }
   }
 
   load(): void {
@@ -42,15 +57,16 @@ export class CustomerAllocationComponent implements OnInit {
   }
 
   onAllocate(customerId: string): void {
-    if (!this.authService.currentAreaId) {
+    const areaId = this.effectiveAreaId;
+    if (!areaId) {
       this.feedbackTone = 'error';
-      this.feedbackMessage = 'No operator area is assigned to this session.';
+      this.feedbackMessage = 'Select an area before assigning customers.';
       return;
     }
 
     this.allocatingId = customerId;
     this.feedbackMessage = '';
-    this.userService.allocate(customerId, this.authService.currentAreaId).subscribe({
+    this.userService.allocate(customerId, areaId).subscribe({
       next: (result) => {
         this.allocatingId = null;
         this.feedbackTone = 'success';
