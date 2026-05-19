@@ -201,7 +201,7 @@
                 </td>
                 <td class="col-qty">{{ formatPrice(summary.total) }}</td>
                 <td class="actions-cell">
-                  <app-ui-button variant="ghost" (clicked)="openProcess(summary.id)">Process</app-ui-button>
+                  <app-ui-button variant="primary" (clicked)="openProcess(summary.id)">Process</app-ui-button>
                   <app-ui-button variant="ghost" (clicked)="toggleSummaryOrders(summary.id)">
                     {{ isSummaryOrdersExpanded(summary.id) ? 'Hide Orders' : 'View Orders' }}
                   </app-ui-button>
