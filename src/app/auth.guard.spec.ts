@@ -10,6 +10,7 @@ describe('AuthGuard', () => {
 
     expect(routes).toContain('/dashboard/customers');
     expect(routes).toContain('/dashboard/staff');
+    expect(routes).toContain('/dashboard/data-updates');
     expect(routes).not.toContain('/dashboard/users');
   });
 });

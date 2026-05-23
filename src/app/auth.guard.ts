@@ -17,7 +17,8 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     '/dashboard/categories',
     '/dashboard/events',
     '/dashboard/monitoring',
-    '/dashboard/settings'
+    '/dashboard/settings',
+    '/dashboard/data-updates'
   ];
 
   constructor(

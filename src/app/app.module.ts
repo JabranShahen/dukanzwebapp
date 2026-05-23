@@ -34,6 +34,7 @@ import { AreaManagementComponent } from './areas/area-management.component';
 import { CustomerAllocationComponent } from './allocation/customer-allocation.component';
 import { CustomerManagementComponent } from './customers/customer-management.component';
 import { StaffManagementComponent } from './staff/staff-management.component';
+import { DataUpdatesComponent } from './data-updates/data-updates.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { NgChartsModule } from 'ng2-charts';
 import { ManagementHeaderComponent } from './shared/management-header/management-header.component';
@@ -78,6 +79,7 @@ import { OperationalDayDashboardComponent } from './operational-day/operational-
     CustomerAllocationComponent,
     CustomerManagementComponent,
     StaffManagementComponent,
+    DataUpdatesComponent,
     ManagementHeaderComponent,
     ManagementPanelComponent,
     UiButtonComponent,

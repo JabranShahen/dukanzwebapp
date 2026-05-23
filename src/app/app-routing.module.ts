@@ -18,6 +18,7 @@ import { PurchaseManagementComponent } from './purchase/purchase-management.comp
 import { PackingReportComponent } from './packing/packing-report.component';
 import { CustomerManagementComponent } from './customers/customer-management.component';
 import { StaffManagementComponent } from './staff/staff-management.component';
+import { DataUpdatesComponent } from './data-updates/data-updates.component';
 import { LoginComponent } from './login/login.component';
 import { OrderManagementComponent } from './orders/order-management.component';
 import { OperationalDayDashboardComponent } from './operational-day/operational-day-dashboard.component';
@@ -121,6 +122,10 @@ const routes: Routes = [
       {
         path: 'staff',
         component: StaffManagementComponent
+      },
+      {
+        path: 'data-updates',
+        component: DataUpdatesComponent
       },
       {
         path: 'account',

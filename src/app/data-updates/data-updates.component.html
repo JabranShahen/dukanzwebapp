@@ -1,0 +1,38 @@
+<div class="page">
+  <app-management-header eyebrow="Super Admin" title="Data Updates"></app-management-header>
+
+  <app-management-panel>
+    <section class="data-update-section">
+      <div class="data-update-section__copy">
+        <h3>Purchase data</h3>
+        <p>Clear purchase status and purchase history from all orders. Purchase records are not deleted.</p>
+      </div>
+
+      <app-ui-button
+        variant="danger"
+        [disabled]="resetting"
+        (clicked)="openResetConfirmation()"
+      >
+        {{ resetting ? 'Resetting...' : 'Reset purchase' }}
+      </app-ui-button>
+    </section>
+  </app-management-panel>
+
+  <app-confirm-dialog
+    *ngIf="showResetConfirmation"
+    title="Reset purchase data?"
+    message="This will clear purchase status and purchase history from every order. Purchase records will not be deleted."
+    confirmLabel="Reset purchase"
+    cancelLabel="Cancel"
+    [pending]="resetting"
+    [destructive]="true"
+    (cancelled)="cancelReset()"
+    (confirmed)="confirmReset()"
+  ></app-confirm-dialog>
+
+  <app-ui-snackbar
+    [message]="feedbackMessage"
+    [tone]="feedbackTone"
+    (dismissed)="onFeedbackDismissed()"
+  ></app-ui-snackbar>
+</div>
