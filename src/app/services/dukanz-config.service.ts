@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { DukanzConfig, DukanzConfigMutation } from '../models/dukanz-config.model';
+import { ConfigContext, DukanzConfig, DukanzConfigMutation } from '../models/dukanz-config.model';
 import { ApiService } from './api.service';
 
 @Injectable({
@@ -13,8 +13,9 @@ export class DukanzConfigService {
 
   constructor(private readonly api: ApiService) {}
 
-  getConfig(): Observable<DukanzConfig | null> {
-    return this.api.get<DukanzConfig[] | null>(this.endpoint).pipe(
+  getConfig(areaId?: string | null): Observable<DukanzConfig | null> {
+    const url = areaId ? `${this.endpoint}?areaId=${encodeURIComponent(areaId)}` : this.endpoint;
+    return this.api.get<DukanzConfig[] | null>(url).pipe(
       map((response) => {
         if (!Array.isArray(response) || response.length === 0) {
           return null;
@@ -24,13 +25,31 @@ export class DukanzConfigService {
     );
   }
 
-  save(payload: DukanzConfigMutation): Observable<DukanzConfig> {
+  getConfigContext(areaId: string | null): Observable<ConfigContext> {
+    const url = areaId
+      ? `${this.endpoint}/context?areaId=${encodeURIComponent(areaId)}`
+      : `${this.endpoint}/context`;
+    return this.api.get<{
+      effectiveConfig: DukanzConfig | null;
+      areaConfig:      DukanzConfig | null;
+      globalConfig:    DukanzConfig | null;
+    }>(url).pipe(
+      map((res) => ({
+        effectiveConfig: res.effectiveConfig ? this.normalizeConfig(res.effectiveConfig) : null,
+        areaConfig:      res.areaConfig      ? this.normalizeConfig(res.areaConfig)      : null,
+        globalConfig:    res.globalConfig    ? this.normalizeConfig(res.globalConfig)    : null,
+      }))
+    );
+  }
+
+  save(payload: DukanzConfigMutation, areaId?: string | null): Observable<DukanzConfig> {
     const requestPayload = this.toMutationPayload(payload);
+    const url = areaId ? `${this.endpoint}?areaId=${encodeURIComponent(areaId)}` : this.endpoint;
 
     // Always PUT — the backend resolves the authoritative id from the DB and
     // falls back to insert when no config exists yet.
     return this.api
-      .put<{ updated?: boolean; entity?: DukanzConfig } | DukanzConfig>(this.endpoint, requestPayload)
+      .put<{ updated?: boolean; entity?: DukanzConfig } | DukanzConfig>(url, requestPayload)
       .pipe(
         map((response) => {
           const entity = (response as { entity?: DukanzConfig })?.entity;

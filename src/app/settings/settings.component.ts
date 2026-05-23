@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 
-import { DukanzConfig } from '../models/dukanz-config.model';
+import { ConfigContext, ConfigField, DukanzConfig } from '../models/dukanz-config.model';
+import { Area } from '../models/area.model';
 import { AuthService } from '../auth.service';
 import { DukanzConfigService } from '../services/dukanz-config.service';
+import { AreaService } from '../services/area.service';
 import { OrderService } from '../services/order.service';
 
 @Component({
@@ -19,7 +21,26 @@ export class SettingsComponent implements OnInit {
   feedbackTone: 'success' | 'error' = 'success';
   broadcasting = false;
 
+  areas: Area[] = [];
+  selectedAreaId: string | null = null;
+  inheritedFields = new Set<ConfigField>();
+
   private currentConfigId: string | null = null;
+  private configContext: ConfigContext | null = null;
+
+  get isSuperAdmin(): boolean {
+    return this.authService.currentRole === 'superadmin';
+  }
+
+  isInherited(field: ConfigField): boolean {
+    if (!this.isSuperAdmin || !this.configContext || !this.selectedAreaId) return false;
+    const { areaConfig, globalConfig } = this.configContext;
+    if (!globalConfig) return false;
+    if (!areaConfig) return true;
+    const normalize = (v: unknown): unknown => (v == null || v === '') ? '' : v;
+    return normalize((areaConfig as unknown as Record<string, unknown>)[field]) ===
+           normalize((globalConfig as unknown as Record<string, unknown>)[field]);
+  }
 
   readonly configForm = this.formBuilder.nonNullable.group({
     message: ['', [Validators.maxLength(500)]],
@@ -42,30 +63,74 @@ export class SettingsComponent implements OnInit {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: DukanzConfigService,
+    private readonly areaService: AreaService,
     private readonly formBuilder: FormBuilder,
     private readonly orderService: OrderService
   ) {}
 
   ngOnInit(): void {
+    if (this.isSuperAdmin) {
+      this.areaService.getAll().subscribe({
+        next: (areas) => { this.areas = areas; }
+      });
+    }
+    this.loadConfig();
+  }
+
+  onAreaChange(): void {
+    this.currentConfigId = null;
     this.loadConfig();
   }
 
   loadConfig(): void {
     this.loading = true;
     this.loadError = '';
+    this.configContext = null;
+    this.inheritedFields.clear();
 
-    this.configService.getConfig().subscribe({
-      next: (config) => {
-        this.loading = false;
-        if (config) {
-          this.applyConfigToForm(config);
+    if (this.isSuperAdmin) {
+      this.configService.getConfigContext(this.selectedAreaId).subscribe({
+        next: (ctx) => {
+          this.loading = false;
+          this.configContext = ctx;
+          this.refreshInheritedFields();
+          if (ctx.effectiveConfig) {
+            this.applyConfigToForm(ctx.effectiveConfig);
+          }
+        },
+        error: () => {
+          this.loading = false;
+          this.loadError = 'Failed to load configuration. Check your connection and try again.';
         }
-      },
-      error: () => {
-        this.loading = false;
-        this.loadError = 'Failed to load configuration. Check your connection and try again.';
-      }
-    });
+      });
+    } else {
+      this.configService.getConfig().subscribe({
+        next: (config) => {
+          this.loading = false;
+          if (config) {
+            this.applyConfigToForm(config);
+          }
+        },
+        error: () => {
+          this.loading = false;
+          this.loadError = 'Failed to load configuration. Check your connection and try again.';
+        }
+      });
+    }
+  }
+
+  private refreshInheritedFields(): void {
+    this.inheritedFields.clear();
+    if (!this.configContext) return;
+    const fields: ConfigField[] = [
+      'message', 'contactPhoneNumber', 'cutoffTime', 'deliveryOffsetDays',
+      'deliveryCharges', 'minOrderSize', 'maxOrderSize', 'freeDeliveryOrderSize',
+      'maxNumberOfActiveOrders', 'minOrderActiveScreenPresenseHours', 'maxNumberOfHistoryOrders',
+      'latestAppVersion', 'minimumSupportedAppVersion', 'appUpgradePlayStoreUrl', 'forceAppUpgrade'
+    ];
+    for (const f of fields) {
+      if (this.isInherited(f)) this.inheritedFields.add(f);
+    }
   }
 
   onSave(): void {
@@ -78,9 +143,17 @@ export class SettingsComponent implements OnInit {
     const value = this.configForm.getRawValue();
     this.saving = true;
 
+    const saveAreaId = this.isSuperAdmin ? this.selectedAreaId : this.authService.currentAreaId;
+
+    // When saving for a specific area, only reuse an existing ID if there is
+    // already an area-specific record — never reuse the global record's ID.
+    const saveId = (this.isSuperAdmin && this.selectedAreaId)
+      ? (this.configContext?.areaConfig?.id || undefined)
+      : (this.currentConfigId || undefined);
+
     this.configService
       .save({
-        id: this.currentConfigId || undefined,
+        id: saveId,
         message: value.message,
         contactPhoneNumber: value.contactPhoneNumber,
         cutoffTime: value.cutoffTime,
@@ -96,20 +169,13 @@ export class SettingsComponent implements OnInit {
         minimumSupportedAppVersion: value.minimumSupportedAppVersion,
         appUpgradePlayStoreUrl: value.appUpgradePlayStoreUrl,
         forceAppUpgrade: value.forceAppUpgrade,
-        areaId: this.authService.currentAreaId
-      })
+        areaId: saveAreaId
+      }, saveAreaId ?? undefined)
       .subscribe({
         next: (saved) => {
           this.saving = false;
           this.currentConfigId = saved.id || this.currentConfigId;
-          // Reload from the server to confirm the save persisted.
-          this.configService.getConfig().subscribe({
-            next: (confirmed) => {
-              if (confirmed) {
-                this.applyConfigToForm(confirmed);
-              }
-            }
-          });
+          this.loadConfig();
           this.feedbackTone = 'success';
           this.feedbackMessage = 'Configuration saved.';
         },

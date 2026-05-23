@@ -3,6 +3,16 @@
 
   <app-management-panel>
 
+    <div *ngIf="isSuperAdmin" class="area-selector-row">
+      <label class="area-selector-label">
+        Area
+        <select [(ngModel)]="selectedAreaId" (ngModelChange)="onAreaChange()">
+          <option [ngValue]="null">Global (all areas)</option>
+          <option *ngFor="let area of areas" [ngValue]="area.id">{{ area.name }}</option>
+        </select>
+      </label>
+    </div>
+
     <div *ngIf="loading" class="state-message">Loading configuration…</div>
 
     <div *ngIf="!loading && loadError" class="state-message error">
@@ -23,25 +33,33 @@
 
         <label>
           Store message
-          <input type="text" formControlName="message" placeholder="Shown to customers in the app" />
+          <input type="text" formControlName="message" placeholder="Shown to customers in the app"
+                 [class.inherited]="inheritedFields.has('message')" />
           <span class="hint">Optional message displayed to customers on the ordering screen.</span>
+          <span class="inherited-hint" *ngIf="inheritedFields.has('message')">Inherited from global</span>
         </label>
 
         <label>
           Contact phone number
-          <input type="text" formControlName="contactPhoneNumber" placeholder="+1 555 000 0000" />
+          <input type="text" formControlName="contactPhoneNumber" placeholder="+1 555 000 0000"
+                 [class.inherited]="inheritedFields.has('contactPhoneNumber')" />
+          <span class="inherited-hint" *ngIf="inheritedFields.has('contactPhoneNumber')">Inherited from global</span>
         </label>
 
         <label>
           Cutoff time
-          <input type="text" formControlName="cutoffTime" placeholder="e.g. 22:00" />
+          <input type="text" formControlName="cutoffTime" placeholder="e.g. 22:00"
+                 [class.inherited]="inheritedFields.has('cutoffTime')" />
           <span class="hint">Orders are not accepted after this time.</span>
+          <span class="inherited-hint" *ngIf="inheritedFields.has('cutoffTime')">Inherited from global</span>
         </label>
 
         <label>
           Delivery offset days
-          <input type="number" formControlName="deliveryOffsetDays" min="0" step="1" />
+          <input type="number" formControlName="deliveryOffsetDays" min="0" step="1"
+                 [class.inherited]="inheritedFields.has('deliveryOffsetDays')" />
           <span class="hint">Days between order cutoff and delivery. 0 = same-day, 1 = next day.</span>
+          <span class="inherited-hint" *ngIf="inheritedFields.has('deliveryOffsetDays')">Inherited from global</span>
           <span class="error" *ngIf="configForm.controls.deliveryOffsetDays.touched && configForm.controls.deliveryOffsetDays.invalid">
             Must be 0 or greater.
           </span>
@@ -54,7 +72,9 @@
         <div class="field-row">
           <label>
             Minimum order size
-            <input type="number" formControlName="minOrderSize" min="0" step="0.01" />
+            <input type="number" formControlName="minOrderSize" min="0" step="0.01"
+                   [class.inherited]="inheritedFields.has('minOrderSize')" />
+            <span class="inherited-hint" *ngIf="inheritedFields.has('minOrderSize')">Inherited from global</span>
             <span class="error" *ngIf="configForm.controls.minOrderSize.touched && configForm.controls.minOrderSize.invalid">
               Must be 0 or greater.
             </span>
@@ -62,7 +82,9 @@
 
           <label>
             Maximum order size
-            <input type="number" formControlName="maxOrderSize" min="0" step="0.01" />
+            <input type="number" formControlName="maxOrderSize" min="0" step="0.01"
+                   [class.inherited]="inheritedFields.has('maxOrderSize')" />
+            <span class="inherited-hint" *ngIf="inheritedFields.has('maxOrderSize')">Inherited from global</span>
             <span class="error" *ngIf="configForm.controls.maxOrderSize.touched && configForm.controls.maxOrderSize.invalid">
               Must be 0 or greater.
             </span>
@@ -72,8 +94,10 @@
         <div class="field-row">
           <label>
             Max active orders
-            <input type="number" formControlName="maxNumberOfActiveOrders" min="0" step="1" />
+            <input type="number" formControlName="maxNumberOfActiveOrders" min="0" step="1"
+                   [class.inherited]="inheritedFields.has('maxNumberOfActiveOrders')" />
             <span class="hint">Maximum simultaneous active orders allowed.</span>
+            <span class="inherited-hint" *ngIf="inheritedFields.has('maxNumberOfActiveOrders')">Inherited from global</span>
             <span class="error" *ngIf="configForm.controls.maxNumberOfActiveOrders.touched && configForm.controls.maxNumberOfActiveOrders.invalid">
               Must be 0 or greater.
             </span>
@@ -81,8 +105,10 @@
 
           <label>
             Max history orders shown
-            <input type="number" formControlName="maxNumberOfHistoryOrders" min="0" step="1" />
+            <input type="number" formControlName="maxNumberOfHistoryOrders" min="0" step="1"
+                   [class.inherited]="inheritedFields.has('maxNumberOfHistoryOrders')" />
             <span class="hint">Maximum past orders shown in order history.</span>
+            <span class="inherited-hint" *ngIf="inheritedFields.has('maxNumberOfHistoryOrders')">Inherited from global</span>
             <span class="error" *ngIf="configForm.controls.maxNumberOfHistoryOrders.touched && configForm.controls.maxNumberOfHistoryOrders.invalid">
               Must be 0 or greater.
             </span>
@@ -91,8 +117,10 @@
 
         <label>
           Min hours order stays active on screen
-          <input type="number" formControlName="minOrderActiveScreenPresenseHours" min="0" step="1" />
+          <input type="number" formControlName="minOrderActiveScreenPresenseHours" min="0" step="1"
+                 [class.inherited]="inheritedFields.has('minOrderActiveScreenPresenseHours')" />
           <span class="hint">How many hours an active order remains visible before being archived.</span>
+          <span class="inherited-hint" *ngIf="inheritedFields.has('minOrderActiveScreenPresenseHours')">Inherited from global</span>
           <span class="error" *ngIf="configForm.controls.minOrderActiveScreenPresenseHours.touched && configForm.controls.minOrderActiveScreenPresenseHours.invalid">
             Must be 0 or greater.
           </span>
@@ -105,7 +133,9 @@
         <div class="field-row">
           <label>
             Delivery charge
-            <input type="number" formControlName="deliveryCharges" min="0" step="0.01" />
+            <input type="number" formControlName="deliveryCharges" min="0" step="0.01"
+                   [class.inherited]="inheritedFields.has('deliveryCharges')" />
+            <span class="inherited-hint" *ngIf="inheritedFields.has('deliveryCharges')">Inherited from global</span>
             <span class="error" *ngIf="configForm.controls.deliveryCharges.touched && configForm.controls.deliveryCharges.invalid">
               Must be 0 or greater.
             </span>
@@ -113,8 +143,10 @@
 
           <label>
             Free delivery above
-            <input type="number" formControlName="freeDeliveryOrderSize" min="0" step="0.01" />
+            <input type="number" formControlName="freeDeliveryOrderSize" min="0" step="0.01"
+                   [class.inherited]="inheritedFields.has('freeDeliveryOrderSize')" />
             <span class="hint">Orders above this amount get free delivery. Set to 0 to disable.</span>
+            <span class="inherited-hint" *ngIf="inheritedFields.has('freeDeliveryOrderSize')">Inherited from global</span>
             <span class="error" *ngIf="configForm.controls.freeDeliveryOrderSize.touched && configForm.controls.freeDeliveryOrderSize.invalid">
               Must be 0 or greater.
             </span>
@@ -127,25 +159,33 @@
 
         <label>
           Latest app version
-          <input type="text" formControlName="latestAppVersion" placeholder="e.g. 63.2.20" />
+          <input type="text" formControlName="latestAppVersion" placeholder="e.g. 63.2.20"
+                 [class.inherited]="inheritedFields.has('latestAppVersion')" />
           <span class="hint">Shown to users when a newer app build is available.</span>
+          <span class="inherited-hint" *ngIf="inheritedFields.has('latestAppVersion')">Inherited from global</span>
         </label>
 
         <label>
           Minimum supported app version
-          <input type="text" formControlName="minimumSupportedAppVersion" placeholder="e.g. 63.2.18" />
+          <input type="text" formControlName="minimumSupportedAppVersion" placeholder="e.g. 63.2.18"
+                 [class.inherited]="inheritedFields.has('minimumSupportedAppVersion')" />
           <span class="hint">Users below this version will be forced to upgrade before continuing.</span>
+          <span class="inherited-hint" *ngIf="inheritedFields.has('minimumSupportedAppVersion')">Inherited from global</span>
         </label>
 
         <label>
           Google Play URL
-          <input type="text" formControlName="appUpgradePlayStoreUrl" placeholder="https://play.google.com/store/apps/details?id=..." />
+          <input type="text" formControlName="appUpgradePlayStoreUrl" placeholder="https://play.google.com/store/apps/details?id=..."
+                 [class.inherited]="inheritedFields.has('appUpgradePlayStoreUrl')" />
           <span class="hint">Optional. Leave blank to let the app build its Play Store link from the package id.</span>
+          <span class="inherited-hint" *ngIf="inheritedFields.has('appUpgradePlayStoreUrl')">Inherited from global</span>
         </label>
 
         <label class="checkbox-field">
-          <input type="checkbox" formControlName="forceAppUpgrade" />
+          <input type="checkbox" formControlName="forceAppUpgrade"
+                 [class.inherited]="inheritedFields.has('forceAppUpgrade')" />
           <span>Force upgrade prompt for versions below the latest release</span>
+          <span class="inherited-hint" *ngIf="inheritedFields.has('forceAppUpgrade')">Inherited from global</span>
         </label>
 
         <div class="broadcast-action">

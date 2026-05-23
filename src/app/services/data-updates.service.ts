@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ResetPurchaseResult } from '../models/data-updates.model';
+import { ResetPackingResult, ResetPurchaseResult } from '../models/data-updates.model';
 import { ApiService } from './api.service';
 
 @Injectable({
@@ -12,7 +12,13 @@ export class DataUpdatesService {
 
   constructor(private readonly api: ApiService) {}
 
-  resetPurchase(): Observable<ResetPurchaseResult> {
-    return this.api.post<ResetPurchaseResult>(`${this.endpoint}/reset-purchase`, {});
+  resetPurchase(orderIds?: string[]): Observable<ResetPurchaseResult> {
+    const body = orderIds && orderIds.length > 0 ? { orderIds } : {};
+    return this.api.post<ResetPurchaseResult>(`${this.endpoint}/reset-purchase`, body);
+  }
+
+  resetPacking(orderIds?: string[]): Observable<ResetPackingResult> {
+    const body = orderIds && orderIds.length > 0 ? { orderIds } : {};
+    return this.api.post<ResetPackingResult>(`${this.endpoint}/reset-packing`, body);
   }
 }

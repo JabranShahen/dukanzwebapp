@@ -49,7 +49,7 @@ export class DashboardComponent implements OnInit {
         { key: 'events', label: 'Events', route: '/dashboard/events' },
         { key: 'monitoring', label: 'Monitoring', route: '/dashboard/monitoring' },
         { key: 'settings', label: 'Settings', route: '/dashboard/settings' },
-        { key: 'data-updates', label: 'Data Updates', route: '/dashboard/data-updates' }
+        { key: 'data-updates', label: 'Data Admin', route: '/dashboard/data-updates' }
       );
     }
 

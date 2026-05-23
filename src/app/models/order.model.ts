@@ -81,6 +81,12 @@ export interface OrderItem {
   orderItemTotalPrice: number;
 }
 
+export interface OrderPurchaseEntry {
+  purchaseId: string;
+  timestampPk: string;
+  createdBy?: string | null;
+}
+
 export interface Order {
   id: string;
   PartitionKey?: string;
@@ -99,4 +105,8 @@ export interface Order {
   driver?: OrderUser | null;
   orderItems?: OrderItem[];
   statusHistory?: OrderStatusEntry[];
+  createdAtPk?: string | null;
+  purchaseStatus?: string | null;
+  purchaseHistory?: OrderPurchaseEntry[];
+  specialInstructions?: string | null;
 }

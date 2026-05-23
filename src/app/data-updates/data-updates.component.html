@@ -1,34 +1,331 @@
 <div class="page">
-  <app-management-header eyebrow="Super Admin" title="Data Updates"></app-management-header>
+  <app-management-header eyebrow="Super Admin" title="Data Admin"></app-management-header>
 
-  <app-management-panel>
-    <section class="data-update-section">
-      <div class="data-update-section__copy">
-        <h3>Purchase data</h3>
-        <p>Clear purchase status and purchase history from all orders. Purchase records are not deleted.</p>
-      </div>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button type="button" class="tab" [class.tab--active]="activeTab === 'orders'" (click)="switchTab('orders')">Orders</button>
+    <button type="button" class="tab" [class.tab--active]="activeTab === 'purchases'" (click)="switchTab('purchases')">Purchases</button>
+  </div>
 
-      <app-ui-button
-        variant="danger"
-        [disabled]="resetting"
-        (clicked)="openResetConfirmation()"
-      >
-        {{ resetting ? 'Resetting...' : 'Reset purchase' }}
-      </app-ui-button>
-    </section>
-  </app-management-panel>
+  <!-- ══════════════════════════════════════════════════════ ORDERS TAB -->
+  <ng-container *ngIf="activeTab === 'orders'">
+    <app-management-panel>
 
-  <app-confirm-dialog
-    *ngIf="showResetConfirmation"
-    title="Reset purchase data?"
-    message="This will clear purchase status and purchase history from every order. Purchase records will not be deleted."
-    confirmLabel="Reset purchase"
-    cancelLabel="Cancel"
-    [pending]="resetting"
-    [destructive]="true"
-    (cancelled)="cancelReset()"
-    (confirmed)="confirmReset()"
-  ></app-confirm-dialog>
+      <section class="filter-section">
+        <h3 class="filter-title">Order filter</h3>
+        <div class="filter-grid">
+          <label class="filter-field">
+            Purchase date <span class="required">*</span>
+            <input type="date" [(ngModel)]="filterDate" (ngModelChange)="onFilterInputChange()" />
+            <span class="field-error" *ngIf="filterDateRequired">Purchase date is required.</span>
+          </label>
+          <label class="filter-field">
+            Order placed date
+            <input type="date" [(ngModel)]="filterPlacedDate" (ngModelChange)="onFilterInputChange()" />
+          </label>
+          <label class="filter-field">
+            Order status
+            <select [(ngModel)]="filterOrderStatus" (ngModelChange)="onFilterInputChange()">
+              <option value="any">Any</option>
+              <option value="Approved">Approved</option>
+              <option value="Packed">Packed</option>
+              <option value="Dispatched">Dispatched</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Declined">Declined</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            Purchase status
+            <select [(ngModel)]="filterPurchaseStatus" (ngModelChange)="onFilterInputChange()">
+              <option value="any">Any</option>
+              <option value="linked">Linked (has purchase history)</option>
+              <option value="not-linked">Not linked</option>
+              <option value="status-set">Has purchaseStatus set</option>
+              <option value="status-unset">No purchaseStatus</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            Area
+            <select [(ngModel)]="filterAreaId" (ngModelChange)="onFilterInputChange()">
+              <option value="any">Any</option>
+              <option *ngFor="let area of areas" [value]="area.id">{{ area.name }}</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            Driver
+            <select [(ngModel)]="filterDriverAssigned" (ngModelChange)="onFilterInputChange()">
+              <option value="any">Any</option>
+              <option value="assigned">Assigned</option>
+              <option value="unassigned">Unassigned</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            Min gross total
+            <input type="number" min="0" step="0.01" [(ngModel)]="filterMinTotal" (ngModelChange)="onFilterInputChange()" placeholder="0" />
+          </label>
+          <label class="filter-field">
+            Max gross total
+            <input type="number" min="0" step="0.01" [(ngModel)]="filterMaxTotal" (ngModelChange)="onFilterInputChange()" placeholder="No limit" />
+          </label>
+          <label class="filter-field">
+            Customer phone
+            <input type="text" [(ngModel)]="filterCustomerPhone" (ngModelChange)="onFilterInputChange()" placeholder="Partial match" />
+          </label>
+          <label class="filter-field">
+            Customer name
+            <input type="text" [(ngModel)]="filterCustomerName" (ngModelChange)="onFilterInputChange()" placeholder="Partial match" />
+          </label>
+          <label class="filter-field filter-field--wide">
+            Order ID
+            <input type="text" [(ngModel)]="filterOrderId" (ngModelChange)="onFilterInputChange()" placeholder="Partial match" />
+          </label>
+        </div>
+        <div class="filter-actions">
+          <app-ui-button [disabled]="filterLoading" (clicked)="onFindOrders()">
+            {{ filterLoading ? 'Loading…' : 'Find orders' }}
+          </app-ui-button>
+        </div>
+      </section>
+
+      <ng-container *ngIf="filteredOrders !== null || filterLoading || filterError">
+        <div class="filter-results">
+          <div *ngIf="filterLoading" class="state-msg">Loading orders…</div>
+          <div *ngIf="!filterLoading && filterError" class="state-msg state-msg--error">
+            {{ filterError }}
+            <app-ui-button variant="ghost" (clicked)="onFindOrders()">Retry</app-ui-button>
+          </div>
+          <ng-container *ngIf="!filterLoading && !filterError && filteredOrders !== null">
+            <div class="toolbar">
+              <span class="count">{{ filteredOrders.length }} order{{ filteredOrders.length !== 1 ? 's' : '' }} found</span>
+            </div>
+            <div *ngIf="filteredOrders.length === 0" class="state-msg">No orders match the current filter.</div>
+            <div *ngIf="filteredOrders.length > 0" class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Area</th>
+                    <th>Order status</th>
+                    <th>Purchase status</th>
+                    <th>Gross total</th>
+                    <th>Placed date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let order of filteredOrders">
+                    <td><span [title]="order.id">{{ truncateId(order.id) }}</span></td>
+                    <td>{{ order.user?.name || '—' }}</td>
+                    <td>{{ order.user?.phoneNumber || '—' }}</td>
+                    <td>{{ order.areaId || '—' }}</td>
+                    <td>{{ order.status }}</td>
+                    <td>{{ purchaseStatusDisplay(order) }}</td>
+                    <td>{{ order.orderGrossPrice | number:'1.0-2' }}</td>
+                    <td>{{ placedDateDisplay(order) || '—' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </ng-container>
+        </div>
+      </ng-container>
+
+      <section class="data-update-section">
+        <div class="data-update-section__copy">
+          <h3>Purchase data</h3>
+          <p *ngIf="!hasResults">Clear purchase status and purchase history from orders. Find orders above to scope this action.</p>
+          <p *ngIf="hasResults">Clear purchase status and purchase history from the {{ filteredOrders!.length }} filtered orders. Purchase records are not deleted.</p>
+        </div>
+        <app-ui-button
+          variant="danger"
+          [disabled]="resetting || !hasResults"
+          [title]="!hasResults ? 'Find orders first to scope this action.' : ''"
+          (clicked)="openResetConfirmation()"
+        >
+          {{ resetting ? 'Resetting…' : 'Reset purchase' }}
+        </app-ui-button>
+      </section>
+
+      <section class="data-update-section">
+        <div class="data-update-section__copy">
+          <h3>Packing status</h3>
+          <p *ngIf="!hasResults">Set Packed/Dispatched/Delivered orders back to Approved. Find orders above to scope this action.</p>
+          <p *ngIf="hasResults">Set Packed, Dispatched, and Delivered orders back to Approved within the {{ filteredOrders!.length }} filtered orders.</p>
+        </div>
+        <app-ui-button
+          variant="danger"
+          [disabled]="resettingPacking || !hasResults"
+          [title]="!hasResults ? 'Find orders first to scope this action.' : ''"
+          (clicked)="openResetPackingConfirmation()"
+        >
+          {{ resettingPacking ? 'Resetting…' : 'Reset packing' }}
+        </app-ui-button>
+      </section>
+
+    </app-management-panel>
+
+    <app-confirm-dialog
+      *ngIf="showResetConfirmation"
+      title="Reset purchase data?"
+      [message]="'This will clear purchase status and purchase history from the ' + filteredOrders!.length + ' selected orders. Purchase records will not be deleted.'"
+      confirmLabel="Reset purchase"
+      cancelLabel="Cancel"
+      [pending]="resetting"
+      [destructive]="true"
+      (cancelled)="cancelReset()"
+      (confirmed)="confirmReset()"
+    ></app-confirm-dialog>
+
+    <app-confirm-dialog
+      *ngIf="showResetPackingConfirmation"
+      title="Reset packing status?"
+      [message]="'This will set Packed, Dispatched, and Delivered orders back to Approved within the ' + filteredOrders!.length + ' selected orders.'"
+      confirmLabel="Reset packing"
+      cancelLabel="Cancel"
+      [pending]="resettingPacking"
+      [destructive]="true"
+      (cancelled)="cancelResetPacking()"
+      (confirmed)="confirmResetPacking()"
+    ></app-confirm-dialog>
+  </ng-container>
+
+  <!-- ══════════════════════════════════════════════════ PURCHASES TAB -->
+  <ng-container *ngIf="activeTab === 'purchases'">
+    <app-management-panel>
+
+      <section class="filter-section">
+        <h3 class="filter-title">Purchase filter</h3>
+        <div class="filter-grid">
+          <label class="filter-field">
+            Purchase date
+            <input type="date" [(ngModel)]="pFilterDate" (ngModelChange)="onPurchaseFilterInputChange()" />
+          </label>
+          <label class="filter-field">
+            Status
+            <select [(ngModel)]="pFilterStatus" (ngModelChange)="onPurchaseFilterInputChange()">
+              <option value="any">Any</option>
+              <option value="Purchased">Purchased</option>
+              <option value="Partial">Partial</option>
+              <option value="Pending">Pending</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            Area
+            <select [(ngModel)]="pFilterAreaId" (ngModelChange)="onPurchaseFilterInputChange()">
+              <option value="any">Any</option>
+              <option *ngFor="let area of areas" [value]="area.id">{{ area.name }}</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            Min total
+            <input type="number" min="0" step="0.01" [(ngModel)]="pFilterMinTotal" (ngModelChange)="onPurchaseFilterInputChange()" placeholder="0" />
+          </label>
+          <label class="filter-field">
+            Max total
+            <input type="number" min="0" step="0.01" [(ngModel)]="pFilterMaxTotal" (ngModelChange)="onPurchaseFilterInputChange()" placeholder="No limit" />
+          </label>
+          <label class="filter-field">
+            Min item count
+            <input type="number" min="0" step="1" [(ngModel)]="pFilterMinItems" (ngModelChange)="onPurchaseFilterInputChange()" placeholder="0" />
+          </label>
+          <label class="filter-field">
+            Max item count
+            <input type="number" min="0" step="1" [(ngModel)]="pFilterMaxItems" (ngModelChange)="onPurchaseFilterInputChange()" placeholder="No limit" />
+          </label>
+          <label class="filter-field">
+            Min order count
+            <input type="number" min="0" step="1" [(ngModel)]="pFilterMinOrders" (ngModelChange)="onPurchaseFilterInputChange()" placeholder="0" />
+          </label>
+          <label class="filter-field">
+            Max order count
+            <input type="number" min="0" step="1" [(ngModel)]="pFilterMaxOrders" (ngModelChange)="onPurchaseFilterInputChange()" placeholder="No limit" />
+          </label>
+          <label class="filter-field filter-field--wide">
+            Purchase ID
+            <input type="text" [(ngModel)]="pFilterId" (ngModelChange)="onPurchaseFilterInputChange()" placeholder="Partial match" />
+          </label>
+        </div>
+        <div class="filter-actions">
+          <app-ui-button [disabled]="pFilterLoading" (clicked)="onFindPurchases()">
+            {{ pFilterLoading ? 'Loading…' : 'Find purchases' }}
+          </app-ui-button>
+        </div>
+      </section>
+
+      <ng-container *ngIf="filteredPurchases !== null || pFilterLoading || pFilterError">
+        <div class="filter-results">
+          <div *ngIf="pFilterLoading" class="state-msg">Loading purchases…</div>
+          <div *ngIf="!pFilterLoading && pFilterError" class="state-msg state-msg--error">
+            {{ pFilterError }}
+            <app-ui-button variant="ghost" (clicked)="onFindPurchases()">Retry</app-ui-button>
+          </div>
+          <ng-container *ngIf="!pFilterLoading && !pFilterError && filteredPurchases !== null">
+            <div class="toolbar">
+              <span class="count">{{ filteredPurchases.length }} purchase{{ filteredPurchases.length !== 1 ? 's' : '' }} found</span>
+            </div>
+            <div *ngIf="filteredPurchases.length === 0" class="state-msg">No purchases match the current filter.</div>
+            <div *ngIf="filteredPurchases.length > 0" class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Purchase ID</th>
+                    <th>Purchase date</th>
+                    <th>Status</th>
+                    <th>Area</th>
+                    <th>Total</th>
+                    <th>Items</th>
+                    <th>Orders</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let p of filteredPurchases">
+                    <td><span [title]="p.id">{{ truncateId(p.id) }}</span></td>
+                    <td>{{ p.purchDate?.slice(0, 10) || '—' }}</td>
+                    <td>{{ p.status }}</td>
+                    <td>{{ p.areaId || '—' }}</td>
+                    <td>{{ p.total | number:'1.0-2' }}</td>
+                    <td>{{ p.itemCount }}</td>
+                    <td>{{ p.orderCount }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </ng-container>
+        </div>
+      </ng-container>
+
+      <section class="data-update-section">
+        <div class="data-update-section__copy">
+          <h3>Delete purchases</h3>
+          <p *ngIf="!hasPurchaseResults">Permanently delete purchase records. Find purchases above to scope this action.</p>
+          <p *ngIf="hasPurchaseResults">Permanently delete the {{ filteredPurchases!.length }} filtered purchase records. This cannot be undone.</p>
+        </div>
+        <app-ui-button
+          variant="danger"
+          [disabled]="deleting || !hasPurchaseResults"
+          [title]="!hasPurchaseResults ? 'Find purchases first to scope this action.' : ''"
+          (clicked)="openDeleteConfirmation()"
+        >
+          {{ deleting ? 'Deleting…' : 'Delete purchases' }}
+        </app-ui-button>
+      </section>
+
+    </app-management-panel>
+
+    <app-confirm-dialog
+      *ngIf="showDeleteConfirmation"
+      title="Delete purchases?"
+      [message]="'This will permanently delete ' + filteredPurchases!.length + ' purchase records. This cannot be undone.'"
+      confirmLabel="Delete purchases"
+      cancelLabel="Cancel"
+      [pending]="deleting"
+      [destructive]="true"
+      (cancelled)="cancelDelete()"
+      (confirmed)="confirmDelete()"
+    ></app-confirm-dialog>
+  </ng-container>
 
   <app-ui-snackbar
     [message]="feedbackMessage"

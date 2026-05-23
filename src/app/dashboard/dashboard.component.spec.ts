@@ -27,7 +27,7 @@ describe('DashboardComponent', () => {
     }));
     expect(component.navItems).toContain(jasmine.objectContaining({
       key: 'data-updates',
-      label: 'Data Updates',
+      label: 'Data Admin',
       route: '/dashboard/data-updates'
     }));
     expect(component.navItems.some((item) => item.key === 'users' || item.route === '/dashboard/users')).toBeFalse();
