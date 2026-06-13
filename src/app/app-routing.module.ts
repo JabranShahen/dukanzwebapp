@@ -22,6 +22,7 @@ import { DataUpdatesComponent } from './data-updates/data-updates.component';
 import { LoginComponent } from './login/login.component';
 import { OrderManagementComponent } from './orders/order-management.component';
 import { OperationalDayDashboardComponent } from './operational-day/operational-day-dashboard.component';
+import { ClaimsManagementComponent } from './claims/claims-management.component';
 
 const routes: Routes = [
   {
@@ -76,6 +77,10 @@ const routes: Routes = [
       {
         path: 'orders',
         component: OrderManagementComponent
+      },
+      {
+        path: 'claims',
+        component: ClaimsManagementComponent
       },
       {
         path: 'allocation',

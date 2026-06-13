@@ -1,0 +1,270 @@
+<div class="page">
+  <app-management-header
+    eyebrow="Dukanz"
+    title="Claims"
+    subtext="Review customer item claims and record audited decisions"
+  ></app-management-header>
+
+  <app-management-panel>
+    <div class="filters">
+      <label>
+        <span>Status</span>
+        <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+          <option *ngFor="let status of statusOptions" [value]="status">
+            {{ status ? displayStatus(status) : 'All statuses' }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        <span>Issue</span>
+        <select [(ngModel)]="issueTypeFilter" (change)="applyFilters()">
+          <option *ngFor="let issue of issueOptions" [value]="issue">
+            {{ issue || 'All issues' }}
+          </option>
+        </select>
+      </label>
+
+      <label *ngIf="isSuperAdmin()">
+        <span>Area</span>
+        <input
+          type="text"
+          [(ngModel)]="areaIdFilter"
+          (keyup.enter)="applyFilters()"
+          placeholder="Area ID"
+        />
+      </label>
+
+      <label class="search-mode">
+        <span>Search by</span>
+        <select [(ngModel)]="searchMode" (change)="applyFilters()">
+          <option value="orderId">Order</option>
+          <option value="customerPhone">Customer phone</option>
+        </select>
+      </label>
+
+      <label class="search-field">
+        <span>Search</span>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="applyFilters()"
+          placeholder="Order ID or phone"
+        />
+      </label>
+
+      <label>
+        <span>From</span>
+        <input type="date" [(ngModel)]="fromDate" (change)="applyFilters()" />
+      </label>
+
+      <label>
+        <span>To</span>
+        <input type="date" [(ngModel)]="toDate" (change)="applyFilters()" />
+      </label>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar__meta">
+        <strong>{{ claims.length }}</strong> claim{{ claims.length !== 1 ? 's' : '' }}
+        <span *ngIf="authService.currentAreaId && !isSuperAdmin()">Area {{ authService.currentAreaId }}</span>
+      </div>
+      <div class="toolbar__actions">
+        <app-ui-button variant="ghost" (clicked)="clearFilters()">Clear</app-ui-button>
+        <app-ui-button variant="secondary" (clicked)="loadClaims()">Refresh</app-ui-button>
+      </div>
+    </div>
+
+    <div class="notification-strip" *ngIf="!loading && claims.length > 0">
+      <span>{{ openCount() }} open</span>
+      <span>{{ submittedCount() }} submitted</span>
+      <span>{{ needsInfoCount() }} needs info</span>
+    </div>
+
+    <div *ngIf="loading" class="state-msg">Loading claims...</div>
+    <div *ngIf="!loading && error" class="state-msg state-msg--error">{{ error }}</div>
+
+    <app-ui-empty-state
+      *ngIf="!loading && !error && claims.length === 0"
+      title="No claims match these filters."
+      body=""
+    ></app-ui-empty-state>
+
+    <div *ngIf="!loading && claims.length > 0" class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Claim</th>
+            <th>Age</th>
+            <th>Order</th>
+            <th>Customer</th>
+            <th>Issue</th>
+            <th>Items</th>
+            <th>Photos</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let claim of claims"
+            class="row--clickable"
+            [class.row--selected]="selectedClaim?.claimId === claim.claimId"
+            (click)="openClaim(claim)"
+          >
+            <td class="col-mono">{{ shortId(claim.claimId) }}</td>
+            <td class="col-age">{{ ageLabel(claim.ageHours) }}</td>
+            <td class="col-mono">{{ claim.orderId }}</td>
+            <td>
+              <div class="customer-cell">
+                <strong>{{ claim.customerName || 'Unknown' }}</strong>
+                <span>{{ claim.customerPhoneNumber || '-' }}</span>
+              </div>
+            </td>
+            <td>{{ claim.issueTypes.join(', ') || '-' }}</td>
+            <td>{{ claim.itemCount }}</td>
+            <td>{{ claim.attachmentCount }}</td>
+            <td>
+              <app-ui-status-pill
+                [label]="displayStatus(claim.status)"
+                [tone]="statusTone(claim.status)"
+              ></app-ui-status-pill>
+            </td>
+            <td>
+              <button class="link-button" type="button" (click)="openClaim(claim); $event.stopPropagation()">Review</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </app-management-panel>
+</div>
+
+<div class="drawer-overlay" *ngIf="selectedClaim" (click)="closeDetail()"></div>
+
+<aside class="drawer" *ngIf="selectedClaim" role="dialog" aria-modal="true">
+  <div class="drawer__header">
+    <div>
+      <span class="drawer__eyebrow">{{ shortId(selectedClaim.claimId) }}</span>
+      <h2>Claim detail</h2>
+    </div>
+    <app-ui-status-pill
+      [label]="displayStatus(selectedDetail?.status || selectedClaim.status)"
+      [tone]="statusTone(selectedDetail?.status || selectedClaim.status)"
+    ></app-ui-status-pill>
+    <button class="close-btn" type="button" (click)="closeDetail()">x</button>
+  </div>
+
+  <div class="drawer__body">
+    <div *ngIf="detailLoading" class="state-msg">Loading detail...</div>
+    <div *ngIf="detailError && !detailLoading" class="state-msg state-msg--error">{{ detailError }}</div>
+
+    <ng-container *ngIf="selectedDetail && !detailLoading">
+      <section class="detail-section">
+        <h3>Order</h3>
+        <div class="detail-row">
+          <span>Order ID</span>
+          <span class="mono">{{ selectedDetail.orderId }}</span>
+        </div>
+        <div class="detail-row">
+          <span>Area</span>
+          <span>{{ selectedDetail.areaId || '-' }}</span>
+        </div>
+        <div class="detail-row">
+          <span>Customer</span>
+          <span>{{ selectedClaim.customerName || selectedDetail.customerPhoneNumber }}</span>
+        </div>
+        <div class="detail-row">
+          <span>Phone</span>
+          <span>{{ selectedDetail.customerPhoneNumber || '-' }}</span>
+        </div>
+      </section>
+
+      <section class="detail-section">
+        <h3>Claimed items</h3>
+        <div class="item-row" *ngFor="let item of selectedDetail.items">
+          <div>
+            <strong>{{ item.productName || item.productId }}</strong>
+            <span>{{ item.issueType }} - Qty {{ item.quantityClaimed }}</span>
+          </div>
+          <p *ngIf="item.description">{{ item.description }}</p>
+        </div>
+      </section>
+
+      <section class="detail-section">
+        <div class="section-title-row">
+          <h3>Photos</h3>
+          <app-ui-button
+            *ngIf="hasAttachments() && !hasAttachmentUrls()"
+            variant="secondary"
+            [disabled]="detailLoading"
+            (clicked)="loadPhotoPreviews()"
+          >Load previews</app-ui-button>
+        </div>
+        <p class="muted-text" *ngIf="!hasAttachments()">No photos attached.</p>
+        <div class="attachments" *ngIf="hasAttachments()">
+          <div class="attachment" *ngFor="let attachment of selectedDetail.attachments">
+            <img
+              *ngIf="attachment.downloadUrl"
+              [src]="attachment.downloadUrl"
+              [alt]="attachment.fileName"
+            />
+            <div>
+              <strong>{{ attachment.fileName }}</strong>
+              <span>{{ formatFileSize(attachment.sizeBytes) }}</span>
+              <a *ngIf="attachment.downloadUrl" [href]="attachment.downloadUrl" target="_blank" rel="noopener">Open photo</a>
+              <span *ngIf="!attachment.downloadUrl" class="muted-text">Signed URL not loaded</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-section">
+        <h3>Status history</h3>
+        <div class="history-row" *ngFor="let entry of selectedDetail.statusHistory">
+          <div>
+            <strong>{{ displayStatus(entry.status) }}</strong>
+            <span>{{ formatDateTime(entry.timestampUtc) }}</span>
+          </div>
+          <p>{{ entry.note || entry.actorDisplayName || entry.changedBy }}</p>
+        </div>
+      </section>
+
+      <section class="detail-section">
+        <h3>Decision</h3>
+        <label class="field">
+          <span>Internal note</span>
+          <textarea rows="3" [(ngModel)]="internalNote" placeholder="Audit note"></textarea>
+        </label>
+        <div class="decision-grid">
+          <label class="field">
+            <span>Refund amount</span>
+            <input type="number" min="0" step="1" [(ngModel)]="resolutionAmount" placeholder="Optional" />
+          </label>
+          <label class="field">
+            <span>Reference</span>
+            <input type="text" [(ngModel)]="resolutionReferenceId" placeholder="Manual ticket or refund ref" />
+          </label>
+        </div>
+        <div class="action-group" *ngIf="getActions().length > 0; else noActions">
+          <app-ui-button
+            *ngFor="let action of getActions()"
+            [variant]="action.variant"
+            [disabled]="updating"
+            (clicked)="applyAction(action)"
+          >{{ action.label }}</app-ui-button>
+          <span *ngIf="updating" class="muted-text">Updating...</span>
+        </div>
+        <ng-template #noActions>
+          <p class="muted-text">No actions available for this status.</p>
+        </ng-template>
+      </section>
+    </ng-container>
+  </div>
+</aside>
+
+<app-ui-snackbar
+  [message]="feedbackMessage"
+  [tone]="feedbackTone"
+  (dismissed)="onFeedbackDismissed()"
+></app-ui-snackbar>

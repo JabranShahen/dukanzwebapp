@@ -47,6 +47,7 @@ import { UiSnackbarComponent } from './shared/ui/ui-snackbar/ui-snackbar.compone
 import { OrderManagementComponent } from './orders/order-management.component';
 import { OrderPanelComponent } from './orders/order-panel/order-panel.component';
 import { OperationalDayDashboardComponent } from './operational-day/operational-day-dashboard.component';
+import { ClaimsManagementComponent } from './claims/claims-management.component';
 
 @NgModule({
   declarations: [
@@ -89,7 +90,8 @@ import { OperationalDayDashboardComponent } from './operational-day/operational-
     UiSnackbarComponent,
     OrderManagementComponent,
     OrderPanelComponent,
-    OperationalDayDashboardComponent
+    OperationalDayDashboardComponent,
+    ClaimsManagementComponent
   ],
   imports: [
     BrowserModule,

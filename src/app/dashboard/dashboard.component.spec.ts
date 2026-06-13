@@ -26,6 +26,11 @@ describe('DashboardComponent', () => {
       route: '/dashboard/staff'
     }));
     expect(component.navItems).toContain(jasmine.objectContaining({
+      key: 'claims',
+      label: 'Claims',
+      route: '/dashboard/claims'
+    }));
+    expect(component.navItems).toContain(jasmine.objectContaining({
       key: 'data-updates',
       label: 'Data Admin',
       route: '/dashboard/data-updates'
@@ -44,6 +49,10 @@ describe('DashboardComponent', () => {
 
     component.ngOnInit();
 
+    expect(component.navItems).toContain(jasmine.objectContaining({
+      key: 'claims',
+      route: '/dashboard/claims'
+    }));
     expect(component.navItems.some((item) => item.key === 'data-updates')).toBeFalse();
   });
 });

@@ -32,6 +32,7 @@ export class DashboardComponent implements OnInit {
       { key: 'overview', label: 'Overview', route: '/dashboard' },
       { key: 'driver', label: 'Driver', route: '/dashboard/driver' },
       { key: 'orders', label: 'Orders', route: '/dashboard/orders' },
+      { key: 'claims', label: 'Claims', route: '/dashboard/claims' },
       { key: 'purchase', label: 'Purchase Management', route: '/dashboard/purchase' },
       { key: 'packing', label: 'Packing', route: '/dashboard/packing' },
       { key: 'allocation', label: 'Customer Allocation', route: '/dashboard/allocation' },
