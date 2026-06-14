@@ -78,6 +78,17 @@ export class DukanzConfigService {
       minimumSupportedAppVersion: (payload.minimumSupportedAppVersion || '').trim(),
       appUpgradePlayStoreUrl: (payload.appUpgradePlayStoreUrl || '').trim(),
       forceAppUpgrade: !!payload.forceAppUpgrade,
+      claimsEnabled: !!payload.claimsEnabled,
+      claimsPilotAreaIds: Array.isArray(payload.claimsPilotAreaIds)
+        ? payload.claimsPilotAreaIds.map((areaId) => String(areaId || '').trim()).filter(Boolean)
+        : [],
+      claimWindowDays: this.normalizePositiveInt(payload.claimWindowDays, 7),
+      claimsRequirePhotos: !!payload.claimsRequirePhotos,
+      claimsMaxPhotos: this.normalizePositiveInt(payload.claimsMaxPhotos, 5),
+      claimsMaxPhotoSizeMb: this.normalizePositiveInt(payload.claimsMaxPhotoSizeMb, 5),
+      claimsStorageContainer: (payload.claimsStorageContainer || 'claims').trim() || 'claims',
+      claimsAttachmentRetentionDays: this.normalizePositiveInt(payload.claimsAttachmentRetentionDays, 90),
+      claimsDocumentRetentionDays: this.normalizePositiveInt(payload.claimsDocumentRetentionDays, 365),
       areaId: payload.areaId ?? null
     };
 
@@ -113,6 +124,17 @@ export class DukanzConfigService {
       minimumSupportedAppVersion: (raw.minimumSupportedAppVersion || '').trim(),
       appUpgradePlayStoreUrl: (raw.appUpgradePlayStoreUrl || '').trim(),
       forceAppUpgrade: !!raw.forceAppUpgrade,
+      claimsEnabled: !!raw.claimsEnabled,
+      claimsPilotAreaIds: Array.isArray(raw.claimsPilotAreaIds)
+        ? raw.claimsPilotAreaIds.map((areaId) => String(areaId || '').trim()).filter(Boolean)
+        : [],
+      claimWindowDays: this.normalizePositiveInt(raw.claimWindowDays, 7),
+      claimsRequirePhotos: !!raw.claimsRequirePhotos,
+      claimsMaxPhotos: this.normalizePositiveInt(raw.claimsMaxPhotos, 5),
+      claimsMaxPhotoSizeMb: this.normalizePositiveInt(raw.claimsMaxPhotoSizeMb, 5),
+      claimsStorageContainer: (raw.claimsStorageContainer || 'claims').trim() || 'claims',
+      claimsAttachmentRetentionDays: this.normalizePositiveInt(raw.claimsAttachmentRetentionDays, 90),
+      claimsDocumentRetentionDays: this.normalizePositiveInt(raw.claimsDocumentRetentionDays, 365),
       areaId: raw.areaId ?? null
     };
   }
@@ -124,5 +146,10 @@ export class DukanzConfigService {
   private normalizeInt(value: number | undefined): number {
     const n = Number.isFinite(value) ? Math.round(Number(value)) : 0;
     return n < 0 ? 0 : n;
+  }
+
+  private normalizePositiveInt(value: number | undefined, fallback: number): number {
+    const n = this.normalizeInt(value);
+    return n > 0 ? n : fallback;
   }
 }

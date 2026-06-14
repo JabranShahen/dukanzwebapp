@@ -155,6 +155,96 @@
       </section>
 
       <section class="form-section">
+        <h3 class="section-title">Claims</h3>
+
+        <label class="checkbox-field">
+          <input type="checkbox" formControlName="claimsEnabled"
+                 [class.inherited]="inheritedFields.has('claimsEnabled')" />
+          <span>Enable item claims</span>
+          <span class="inherited-hint" *ngIf="inheritedFields.has('claimsEnabled')">Inherited from global</span>
+        </label>
+        <span class="hint">
+          {{ claimsScopeHint }}
+        </span>
+
+        <label *ngIf="isSuperAdmin && !selectedAreaId">
+          Pilot area IDs
+          <input type="text" formControlName="claimsPilotAreaIdsText" placeholder="area-1, area-2" />
+          <span class="hint">Leave blank to allow all areas that use the global configuration.</span>
+        </label>
+
+        <div class="field-row">
+          <label>
+            Claim window days
+            <input type="number" formControlName="claimWindowDays" min="1" step="1"
+                   [class.inherited]="inheritedFields.has('claimWindowDays')" />
+            <span class="inherited-hint" *ngIf="inheritedFields.has('claimWindowDays')">Inherited from global</span>
+            <span class="error" *ngIf="configForm.controls.claimWindowDays.touched && configForm.controls.claimWindowDays.invalid">
+              Must be 1 or greater.
+            </span>
+          </label>
+
+          <label>
+            Max photos
+            <input type="number" formControlName="claimsMaxPhotos" min="0" step="1"
+                   [class.inherited]="inheritedFields.has('claimsMaxPhotos')" />
+            <span class="inherited-hint" *ngIf="inheritedFields.has('claimsMaxPhotos')">Inherited from global</span>
+            <span class="error" *ngIf="configForm.controls.claimsMaxPhotos.touched && configForm.controls.claimsMaxPhotos.invalid">
+              Must be 0 or greater.
+            </span>
+          </label>
+        </div>
+
+        <div class="field-row">
+          <label>
+            Max photo size MB
+            <input type="number" formControlName="claimsMaxPhotoSizeMb" min="1" step="1"
+                   [class.inherited]="inheritedFields.has('claimsMaxPhotoSizeMb')" />
+            <span class="inherited-hint" *ngIf="inheritedFields.has('claimsMaxPhotoSizeMb')">Inherited from global</span>
+            <span class="error" *ngIf="configForm.controls.claimsMaxPhotoSizeMb.touched && configForm.controls.claimsMaxPhotoSizeMb.invalid">
+              Must be 1 or greater.
+            </span>
+          </label>
+
+          <label>
+            Storage container
+            <input type="text" formControlName="claimsStorageContainer" placeholder="claims"
+                   [class.inherited]="inheritedFields.has('claimsStorageContainer')" />
+            <span class="inherited-hint" *ngIf="inheritedFields.has('claimsStorageContainer')">Inherited from global</span>
+          </label>
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" formControlName="claimsRequirePhotos"
+                 [class.inherited]="inheritedFields.has('claimsRequirePhotos')" />
+          <span>Require photo evidence</span>
+          <span class="inherited-hint" *ngIf="inheritedFields.has('claimsRequirePhotos')">Inherited from global</span>
+        </label>
+
+        <div class="field-row">
+          <label>
+            Attachment retention days
+            <input type="number" formControlName="claimsAttachmentRetentionDays" min="1" step="1"
+                   [class.inherited]="inheritedFields.has('claimsAttachmentRetentionDays')" />
+            <span class="inherited-hint" *ngIf="inheritedFields.has('claimsAttachmentRetentionDays')">Inherited from global</span>
+            <span class="error" *ngIf="configForm.controls.claimsAttachmentRetentionDays.touched && configForm.controls.claimsAttachmentRetentionDays.invalid">
+              Must be 1 or greater.
+            </span>
+          </label>
+
+          <label>
+            Claim retention days
+            <input type="number" formControlName="claimsDocumentRetentionDays" min="1" step="1"
+                   [class.inherited]="inheritedFields.has('claimsDocumentRetentionDays')" />
+            <span class="inherited-hint" *ngIf="inheritedFields.has('claimsDocumentRetentionDays')">Inherited from global</span>
+            <span class="error" *ngIf="configForm.controls.claimsDocumentRetentionDays.touched && configForm.controls.claimsDocumentRetentionDays.invalid">
+              Must be 1 or greater.
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
         <h3 class="section-title">App upgrade</h3>
 
         <label>

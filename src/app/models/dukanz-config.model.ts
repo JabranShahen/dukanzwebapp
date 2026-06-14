@@ -17,6 +17,15 @@ export interface DukanzConfig {
   minimumSupportedAppVersion: string;
   appUpgradePlayStoreUrl: string;
   forceAppUpgrade: boolean;
+  claimsEnabled: boolean;
+  claimsPilotAreaIds: string[];
+  claimWindowDays: number;
+  claimsRequirePhotos: boolean;
+  claimsMaxPhotos: number;
+  claimsMaxPhotoSizeMb: number;
+  claimsStorageContainer: string;
+  claimsAttachmentRetentionDays: number;
+  claimsDocumentRetentionDays: number;
   areaId?: string | null;
 }
 
@@ -32,7 +41,9 @@ export const CONFIG_FIELDS: ConfigField[] = [
   'message', 'contactPhoneNumber', 'cutoffTime', 'deliveryOffsetDays',
   'deliveryCharges', 'minOrderSize', 'maxOrderSize', 'freeDeliveryOrderSize',
   'maxNumberOfActiveOrders', 'minOrderActiveScreenPresenseHours', 'maxNumberOfHistoryOrders',
-  'latestAppVersion', 'minimumSupportedAppVersion', 'appUpgradePlayStoreUrl', 'forceAppUpgrade'
+  'latestAppVersion', 'minimumSupportedAppVersion', 'appUpgradePlayStoreUrl', 'forceAppUpgrade',
+  'claimsEnabled', 'claimWindowDays', 'claimsRequirePhotos', 'claimsMaxPhotos', 'claimsMaxPhotoSizeMb',
+  'claimsStorageContainer', 'claimsAttachmentRetentionDays', 'claimsDocumentRetentionDays'
 ];
 
 export interface DukanzConfigMutation {
@@ -54,5 +65,14 @@ export interface DukanzConfigMutation {
   minimumSupportedAppVersion: string;
   appUpgradePlayStoreUrl: string;
   forceAppUpgrade: boolean;
+  claimsEnabled: boolean;
+  claimsPilotAreaIds: string[];
+  claimWindowDays: number;
+  claimsRequirePhotos: boolean;
+  claimsMaxPhotos: number;
+  claimsMaxPhotoSizeMb: number;
+  claimsStorageContainer: string;
+  claimsAttachmentRetentionDays: number;
+  claimsDocumentRetentionDays: number;
   areaId?: string | null;
 }

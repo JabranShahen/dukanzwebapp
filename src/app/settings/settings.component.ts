@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 
-import { ConfigContext, ConfigField, DukanzConfig } from '../models/dukanz-config.model';
+import { CONFIG_FIELDS, ConfigContext, ConfigField, DukanzConfig } from '../models/dukanz-config.model';
 import { Area } from '../models/area.model';
 import { AuthService } from '../auth.service';
 import { DukanzConfigService } from '../services/dukanz-config.service';
@@ -32,6 +32,14 @@ export class SettingsComponent implements OnInit {
     return this.authService.currentRole === 'superadmin';
   }
 
+  get claimsScopeHint(): string {
+    if (this.selectedAreaId || !this.isSuperAdmin) {
+      return 'Applies to the selected area when saved.';
+    }
+
+    return 'Applies to global configuration. Use pilot area IDs to restrict rollout.';
+  }
+
   isInherited(field: ConfigField): boolean {
     if (!this.isSuperAdmin || !this.configContext || !this.selectedAreaId) return false;
     const { areaConfig, globalConfig } = this.configContext;
@@ -57,7 +65,16 @@ export class SettingsComponent implements OnInit {
     latestAppVersion: ['', [Validators.maxLength(50)]],
     minimumSupportedAppVersion: ['', [Validators.maxLength(50)]],
     appUpgradePlayStoreUrl: ['', [Validators.maxLength(500)]],
-    forceAppUpgrade: [false]
+    forceAppUpgrade: [false],
+    claimsEnabled: [false],
+    claimsPilotAreaIdsText: ['', [Validators.maxLength(500)]],
+    claimWindowDays: [7, [Validators.required, Validators.min(1)]],
+    claimsRequirePhotos: [false],
+    claimsMaxPhotos: [5, [Validators.required, Validators.min(0)]],
+    claimsMaxPhotoSizeMb: [5, [Validators.required, Validators.min(1)]],
+    claimsStorageContainer: ['claims', [Validators.maxLength(100)]],
+    claimsAttachmentRetentionDays: [90, [Validators.required, Validators.min(1)]],
+    claimsDocumentRetentionDays: [365, [Validators.required, Validators.min(1)]]
   });
 
   constructor(
@@ -122,13 +139,7 @@ export class SettingsComponent implements OnInit {
   private refreshInheritedFields(): void {
     this.inheritedFields.clear();
     if (!this.configContext) return;
-    const fields: ConfigField[] = [
-      'message', 'contactPhoneNumber', 'cutoffTime', 'deliveryOffsetDays',
-      'deliveryCharges', 'minOrderSize', 'maxOrderSize', 'freeDeliveryOrderSize',
-      'maxNumberOfActiveOrders', 'minOrderActiveScreenPresenseHours', 'maxNumberOfHistoryOrders',
-      'latestAppVersion', 'minimumSupportedAppVersion', 'appUpgradePlayStoreUrl', 'forceAppUpgrade'
-    ];
-    for (const f of fields) {
+    for (const f of CONFIG_FIELDS) {
       if (this.isInherited(f)) this.inheritedFields.add(f);
     }
   }
@@ -169,6 +180,15 @@ export class SettingsComponent implements OnInit {
         minimumSupportedAppVersion: value.minimumSupportedAppVersion,
         appUpgradePlayStoreUrl: value.appUpgradePlayStoreUrl,
         forceAppUpgrade: value.forceAppUpgrade,
+        claimsEnabled: value.claimsEnabled,
+        claimsPilotAreaIds: this.resolveClaimsPilotAreaIds(value.claimsPilotAreaIdsText),
+        claimWindowDays: value.claimWindowDays,
+        claimsRequirePhotos: value.claimsRequirePhotos,
+        claimsMaxPhotos: value.claimsMaxPhotos,
+        claimsMaxPhotoSizeMb: value.claimsMaxPhotoSizeMb,
+        claimsStorageContainer: value.claimsStorageContainer,
+        claimsAttachmentRetentionDays: value.claimsAttachmentRetentionDays,
+        claimsDocumentRetentionDays: value.claimsDocumentRetentionDays,
         areaId: saveAreaId
       }, saveAreaId ?? undefined)
       .subscribe({
@@ -227,7 +247,27 @@ export class SettingsComponent implements OnInit {
       latestAppVersion: config.latestAppVersion || '',
       minimumSupportedAppVersion: config.minimumSupportedAppVersion || '',
       appUpgradePlayStoreUrl: config.appUpgradePlayStoreUrl || '',
-      forceAppUpgrade: !!config.forceAppUpgrade
+      forceAppUpgrade: !!config.forceAppUpgrade,
+      claimsEnabled: !!config.claimsEnabled,
+      claimsPilotAreaIdsText: (config.claimsPilotAreaIds || []).join(', '),
+      claimWindowDays: config.claimWindowDays ?? 7,
+      claimsRequirePhotos: !!config.claimsRequirePhotos,
+      claimsMaxPhotos: config.claimsMaxPhotos ?? 5,
+      claimsMaxPhotoSizeMb: config.claimsMaxPhotoSizeMb ?? 5,
+      claimsStorageContainer: config.claimsStorageContainer || 'claims',
+      claimsAttachmentRetentionDays: config.claimsAttachmentRetentionDays ?? 90,
+      claimsDocumentRetentionDays: config.claimsDocumentRetentionDays ?? 365
     });
+  }
+
+  private resolveClaimsPilotAreaIds(rawValue: string): string[] {
+    if (this.selectedAreaId) {
+      return [this.selectedAreaId];
+    }
+
+    return (rawValue || '')
+      .split(',')
+      .map((areaId) => areaId.trim())
+      .filter(Boolean);
   }
 }
