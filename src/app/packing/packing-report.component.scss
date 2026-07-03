@@ -15,12 +15,38 @@
 .toolbar {
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
   margin-bottom: 0.75rem;
 }
 
-.batch-count {
-  font-size: 0.85rem;
-  color: #666;
+.date-control {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+
+  label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #888;
+  }
+
+  input {
+    min-width: 150px;
+    padding: 0.48rem 0.6rem;
+    border: 1.5px solid #d0d5dd;
+    border-radius: 6px;
+    color: #1a1a2e;
+    font-size: 0.9rem;
+
+    &:focus {
+      outline: none;
+      border-color: #1a1a2e;
+    }
+  }
 }
 
 .batch-selector {

@@ -3,51 +3,32 @@
 
   <app-management-panel>
     <div class="toolbar">
-      <span class="batch-count" *ngIf="!loadingList">
-        {{ batches.length }} batch{{ batches.length !== 1 ? 'es' : '' }}
-      </span>
-      <app-ui-button variant="ghost" [disabled]="loadingList || loadingDetail || saving" (clicked)="loadBatches()">Refresh</app-ui-button>
-    </div>
-
-    <div *ngIf="loadingList" class="state-message">Loading packing batches…</div>
-
-    <div *ngIf="!loadingList && listError" class="state-message error">
-      {{ listError }}
-      <app-ui-button variant="ghost" (clicked)="loadBatches()">Retry</app-ui-button>
-    </div>
-
-    <div *ngIf="!loadingList && !listError && batches.length === 0" class="state-message">
-      No purchased or partial batches are ready for packing yet.
-    </div>
-
-    <ng-container *ngIf="!loadingList && !listError && batches.length > 0">
-      <div class="batch-selector">
-        <span class="selector-label">Packing batch</span>
-        <div class="selector-pills">
-          <button
-            *ngFor="let batch of batches"
-            class="selector-pill"
-            [class.selector-pill--active]="batch.purchaseDateKey === selectedBatchKey"
-            (click)="selectBatch(batch.purchaseDateKey)"
-          >
-            {{ formatDate(batch.purchaseDate) }}
-            <span class="selector-pill__badge" [class]="'selector-pill__badge--' + statusTone(batch.purchaseStatus)">
-              {{ batch.purchaseStatus }}
-            </span>
-            <span class="selector-pill__meta">{{ batch.readyOrderCount }} ready</span>
-            <span class="selector-pill__meta">{{ batch.blockedOrderCount }} blocked</span>
-          </button>
-        </div>
+      <div class="date-control">
+        <label for="packing-date">Packing date</label>
+        <input
+          id="packing-date"
+          type="date"
+          [(ngModel)]="selectedPackingDate"
+          (change)="onPackingDateChange()"
+          [disabled]="loadingDetail || saving"
+        />
+        <app-ui-button variant="ghost" [disabled]="loadingDetail || saving" (clicked)="resetPackingDateToToday()">Today</app-ui-button>
       </div>
+      <app-ui-button variant="ghost" [disabled]="loadingDetail || saving" (clicked)="loadSelectedDate()">Refresh</app-ui-button>
+    </div>
 
-      <div *ngIf="loadingDetail" class="state-message">Loading packing detail…</div>
+    <div *ngIf="loadingDetail" class="state-message">Loading packing batch...</div>
 
-      <div *ngIf="!loadingDetail && detailError" class="state-message error">
-        {{ detailError }}
-        <app-ui-button variant="ghost" (clicked)="loadBatchDetail(selectedBatchKey)">Retry</app-ui-button>
-      </div>
+    <div *ngIf="!loadingDetail && detailError" class="state-message error">
+      {{ detailError }}
+      <app-ui-button variant="ghost" (clicked)="loadSelectedDate()">Retry</app-ui-button>
+    </div>
 
-      <ng-container *ngIf="!loadingDetail && !detailError && detail">
+    <div *ngIf="!loadingDetail && !detailError && noBatchForDate" class="state-message">
+      No purchased or partial packing batch exists for this date.
+    </div>
+
+    <ng-container *ngIf="!loadingDetail && !detailError && !noBatchForDate && detail">
         <div class="summary-bar">
           <div class="summary-bar__info">
             <span class="summary-bar__label">Purchase date</span>
@@ -135,11 +116,10 @@
         </div>
 
         <div class="form-actions">
-          <app-ui-button variant="ghost" [disabled]="loadingDetail || saving" (clicked)="loadBatchDetail(selectedBatchKey)">
+          <app-ui-button variant="ghost" [disabled]="loadingDetail || saving" (clicked)="loadSelectedDate()">
             Refresh Batch
           </app-ui-button>
         </div>
-      </ng-container>
     </ng-container>
   </app-management-panel>
 
