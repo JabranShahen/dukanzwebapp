@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 import { environment } from '../environments/environment';
@@ -18,7 +18,7 @@ describe('PackingService', () => {
   });
 
   afterEach(() => {
-    httpMock.verify();
+    httpMock.verify({ ignoreCancelled: true });
   });
 
   it('loads packing batches from the packing list endpoint', () => {
@@ -85,6 +85,24 @@ describe('PackingService', () => {
 
     expect(orderCount).toBe(1);
   });
+
+  it('times out stalled packing batch detail requests', fakeAsync(() => {
+    let errorName = '';
+
+    service.getBatch('2026-04-14').subscribe({
+      error: (error) => {
+        errorName = error.name;
+      }
+    });
+
+    const request = httpMock.expectOne(`${environment.apiBaseUrl}/Packing/2026-04-14`);
+    expect(request.request.method).toBe('GET');
+
+    tick(25000);
+
+    expect(errorName).toBe('TimeoutError');
+    expect(request.cancelled).toBeTrue();
+  }));
 
   it('posts selected order ids to mark packed', () => {
     let updatedCount = 0;

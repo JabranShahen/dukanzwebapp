@@ -3,7 +3,6 @@ import { Component, OnInit } from '@angular/core';
 import {
   MarkPackedResult,
   PackingBatchDetail,
-  PackingBatchSummary,
   PackingOrderSummary
 } from '../models/packing.model';
 import { PackingService } from '../services/packing.service';
@@ -14,77 +13,89 @@ import { PackingService } from '../services/packing.service';
   styleUrls: ['./packing-report.component.scss']
 })
 export class PackingReportComponent implements OnInit {
-  loadingList = true;
-  loadingDetail = false;
+  selectedPackingDate = this.todayIso();
+  loadingDetail = true;
   saving = false;
 
-  listError = '';
   detailError = '';
   feedbackMessage = '';
   feedbackTone: 'success' | 'error' = 'success';
+  noBatchForDate = false;
 
-  batches: PackingBatchSummary[] = [];
-  selectedBatchKey = '';
   detail: PackingBatchDetail | null = null;
   savingOrderIds = new Set<string>();
+  private loadSequence = 0;
 
   constructor(private readonly packingService: PackingService) {}
 
   ngOnInit(): void {
-    this.loadBatches();
+    this.loadSelectedDate();
   }
 
-  loadBatches(): void {
-    this.loadingList = true;
-    this.listError = '';
-    this.savingOrderIds.clear();
-
-    this.packingService.listBatches().subscribe({
-      next: (batches) => {
-        this.loadingList = false;
-        this.batches = batches;
-
-        if (batches.length === 0) {
-          this.selectedBatchKey = '';
-          this.detail = null;
-          return;
-        }
-
-        const nextSelectedKey = batches.some((batch) => batch.purchaseDateKey === this.selectedBatchKey)
-          ? this.selectedBatchKey
-          : batches[0].purchaseDateKey;
-        this.selectBatch(nextSelectedKey);
-      },
-      error: () => {
-        this.loadingList = false;
-        this.listError = 'Failed to load packing batches.';
-      }
-    });
+  todayIso(): string {
+    const date = new Date();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
 
-  selectBatch(purchaseDateKey: string): void {
-    if (!purchaseDateKey) {
+  onPackingDateChange(): void {
+    this.loadSelectedDate();
+  }
+
+  resetPackingDateToToday(): void {
+    this.selectedPackingDate = this.todayIso();
+    this.loadSelectedDate();
+  }
+
+  loadSelectedDate(): void {
+    const selectedDate = (this.selectedPackingDate || '').trim();
+    this.loadSequence += 1;
+    const requestSequence = this.loadSequence;
+
+    if (!selectedDate) {
+      this.detail = null;
+      this.noBatchForDate = false;
+      this.loadingDetail = false;
+      this.detailError = 'Select a packing date.';
       return;
     }
 
-    this.selectedBatchKey = purchaseDateKey;
-    this.loadBatchDetail(purchaseDateKey);
-  }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) {
+      this.detail = null;
+      this.noBatchForDate = false;
+      this.loadingDetail = false;
+      this.detailError = 'Select a valid packing date.';
+      return;
+    }
 
-  loadBatchDetail(purchaseDateKey: string): void {
     this.loadingDetail = true;
     this.detailError = '';
+    this.noBatchForDate = false;
     this.detail = null;
     this.savingOrderIds.clear();
 
-    this.packingService.getBatch(purchaseDateKey).subscribe({
+    this.packingService.getBatch(selectedDate).subscribe({
       next: (detail) => {
+        if (!this.isCurrentLoad(requestSequence, selectedDate)) {
+          return;
+        }
+
         this.loadingDetail = false;
         this.detail = detail;
       },
-      error: () => {
+      error: (error) => {
+        if (!this.isCurrentLoad(requestSequence, selectedDate)) {
+          return;
+        }
+
         this.loadingDetail = false;
-        this.detailError = 'Failed to load packing details.';
+        if (error?.status === 404) {
+          this.noBatchForDate = true;
+          return;
+        }
+
+        this.detailError = error?.name === 'TimeoutError'
+          ? 'Packing batch load timed out. Try again or choose another date.'
+          : 'Failed to load packing details.';
       }
     });
   }
@@ -123,10 +134,16 @@ export class PackingReportComponent implements OnInit {
 
         this.feedbackMessage = this.buildFeedbackMessage(result);
       },
-      error: () => {
+      error: (error) => {
         this.savingOrderIds.delete(order.orderId);
         this.saving = this.savingOrderIds.size > 0;
         this.feedbackTone = 'error';
+        if (error?.name === 'TimeoutError') {
+          this.feedbackMessage = `Timed out while marking ${this.shortOrderId(order.orderId)} as packed. Refreshing batch status.`;
+          this.loadSelectedDate();
+          return;
+        }
+
         this.feedbackMessage = `Failed to mark ${this.shortOrderId(order.orderId)} as packed.`;
       }
     });
@@ -211,23 +228,11 @@ export class PackingReportComponent implements OnInit {
 
     this.detail = nextDetail;
 
-    const batchIndex = this.batches.findIndex((batch) => batch.purchaseDateKey === nextDetail.purchaseDateKey);
-    if (batchIndex === -1) {
-      return;
-    }
+  }
 
-    const batch = this.batches[batchIndex];
-    this.batches[batchIndex] = {
-      ...batch,
-      orderCount: Math.max(0, batch.orderCount - 1),
-      readyOrderCount: this.isSelectable(removedOrder)
-        ? Math.max(0, batch.readyOrderCount - 1)
-        : batch.readyOrderCount,
-      blockedOrderCount: removedOrder.packingState === 'Blocked'
-        ? Math.max(0, batch.blockedOrderCount - 1)
-        : batch.blockedOrderCount,
-      packedOrderCount: batch.packedOrderCount + 1
-    };
+  private isCurrentLoad(requestSequence: number, selectedDate: string): boolean {
+    return requestSequence === this.loadSequence &&
+      (this.selectedPackingDate || '').trim() === selectedDate;
   }
 
   private buildFeedbackMessage(result: MarkPackedResult): string {
