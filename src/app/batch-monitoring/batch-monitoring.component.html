@@ -1,0 +1,122 @@
+<div class="page batch-monitoring-page">
+  <app-management-header eyebrow="SuperAdmin" title="Batch Monitoring"></app-management-header>
+
+  <app-management-panel>
+    <app-ui-snackbar
+      [message]="feedbackMessage"
+      [tone]="feedbackTone"
+      (dismissed)="onFeedbackDismissed()"
+    ></app-ui-snackbar>
+
+    <div class="toolbar">
+      <label class="field">
+        <span class="field__label">Area</span>
+        <select
+          [(ngModel)]="selectedAreaId"
+          (ngModelChange)="onAreaChange()"
+          [disabled]="loadingAreas"
+        >
+          <option [ngValue]="null">Select an area</option>
+          <option *ngFor="let area of areas" [ngValue]="area.id">
+            {{ area.name }}
+          </option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Date (PKT)</span>
+        <input
+          type="date"
+          [(ngModel)]="selectedDate"
+          (ngModelChange)="onDateChange()"
+        />
+      </label>
+
+      <app-ui-button
+        variant="ghost"
+        [disabled]="isLoading || !selectedAreaId || !selectedDate"
+        (clicked)="refresh()"
+      >
+        Refresh
+      </app-ui-button>
+    </div>
+
+    <div *ngIf="loadingAreas" class="state-message">Loading areas...</div>
+
+    <div *ngIf="loadingRows" class="progress" role="progressbar" aria-label="Loading batch monitoring data">
+      <span></span>
+    </div>
+
+    <app-ui-empty-state
+      *ngIf="showNoAreaState"
+      title="No areas available"
+      body="Create or enable an area before monitoring batch activity."
+    ></app-ui-empty-state>
+
+    <div *ngIf="showSelectAreaState" class="state-message">
+      Select an area to view batch monitoring.
+    </div>
+
+    <ng-container *ngIf="!loadingRows && hasLoadedRows && selectedAreaId">
+      <section *ngIf="rows.length > 0" class="summary">
+        <div>
+          <p class="summary__eyebrow">Batch slots for {{ selectedAreaName }}</p>
+          <h3>{{ selectedDateLabel }}</h3>
+        </div>
+        <div class="summary__metric">
+          <span>Total orders</span>
+          <strong>{{ grandTotal }}</strong>
+        </div>
+      </section>
+
+      <div *ngIf="rows.length > 0" class="table-wrap">
+        <table class="batch-table">
+          <thead>
+            <tr>
+              <th>Batch Window</th>
+              <th>Index</th>
+              <th>Window Times</th>
+              <th *ngFor="let status of statusColumns">{{ status.label }}</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let row of rows"
+              [class.row--disabled]="!row.enabled"
+              [class.row--unbatched]="row.isUnbatched"
+            >
+              <td>
+                <div class="batch-name">
+                  <span>{{ row.label }}</span>
+                  <small *ngIf="!row.enabled">Disabled</small>
+                </div>
+              </td>
+              <td>{{ row.batchIndex === null ? '-' : row.batchIndex }}</td>
+              <td>{{ row.windowTimes }}</td>
+              <td *ngFor="let status of statusColumns" class="count-cell">
+                {{ countFor(row, status.key) }}
+              </td>
+              <td class="count-cell count-cell--total">{{ row.total }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="showEmptyScheduleState" class="empty-schedule">
+        <app-ui-empty-state
+          title="No batch schedule configured for this area"
+          body="Configured batch windows will appear here with zero counts even before orders arrive."
+        ></app-ui-empty-state>
+        <a routerLink="/dashboard/batch-schedule">Configure batches</a>
+      </div>
+
+      <div
+        *ngIf="scheduleCount > 0 && rows.length === 0"
+        class="state-message"
+      >
+        No batch rows available for this area and date.
+      </div>
+    </ng-container>
+  </app-management-panel>
+</div>
