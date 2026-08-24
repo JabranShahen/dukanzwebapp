@@ -35,6 +35,11 @@ describe('DashboardComponent', () => {
       label: 'Data Admin',
       route: '/dashboard/data-updates'
     }));
+    expect(component.navItems).toContain(jasmine.objectContaining({
+      key: 'batch-monitoring',
+      label: 'Batch Monitoring',
+      route: '/dashboard/batch-monitoring'
+    }));
     expect(component.navItems.some((item) => item.key === 'users' || item.route === '/dashboard/users')).toBeFalse();
   });
 
@@ -53,6 +58,7 @@ describe('DashboardComponent', () => {
       key: 'claims',
       route: '/dashboard/claims'
     }));
+    expect(component.navItems.some((item) => item.key === 'batch-monitoring')).toBeFalse();
     expect(component.navItems.some((item) => item.key === 'data-updates')).toBeFalse();
   });
 });

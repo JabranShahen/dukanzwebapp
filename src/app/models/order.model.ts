@@ -106,6 +106,9 @@ export interface Order {
   orderItems?: OrderItem[];
   statusHistory?: OrderStatusEntry[];
   createdAtPk?: string | null;
+  batchId?: string | null;
+  expectedDeliveryFromPkt?: string | null;
+  expectedDeliveryToPkt?: string | null;
   purchaseStatus?: string | null;
   purchaseHistory?: OrderPurchaseEntry[];
   specialInstructions?: string | null;

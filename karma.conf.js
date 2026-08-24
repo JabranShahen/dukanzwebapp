@@ -36,6 +36,21 @@ module.exports = function (config) {
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
+    customLaunchers: {
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--no-sandbox',
+          '--disable-gpu',
+          '--disable-gpu-compositing',
+          '--disable-software-rasterizer',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--disable-features=VizDisplayCompositor',
+          '--remote-debugging-port=0'
+        ]
+      }
+    },
     autoWatch: true,
     browsers: ['Chrome'],
     singleRun: false,

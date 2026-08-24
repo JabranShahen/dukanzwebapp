@@ -23,6 +23,7 @@ import { LoginComponent } from './login/login.component';
 import { OrderManagementComponent } from './orders/order-management.component';
 import { OperationalDayDashboardComponent } from './operational-day/operational-day-dashboard.component';
 import { ClaimsManagementComponent } from './claims/claims-management.component';
+import { BatchScheduleComponent } from './batch-schedule/batch-schedule.component';
 
 const routes: Routes = [
   {
@@ -114,6 +115,15 @@ const routes: Routes = [
       {
         path: 'settings',
         component: SettingsComponent
+      },
+      {
+        path: 'batch-schedule',
+        component: BatchScheduleComponent
+      },
+      {
+        path: 'batch-monitoring',
+        loadChildren: () => import('./batch-monitoring/batch-monitoring.module')
+          .then((m) => m.BatchMonitoringModule)
       },
       {
         path: 'users',
