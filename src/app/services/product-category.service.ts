@@ -1,179 +1,127 @@
-﻿import { Injectable } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
-import { CreateProductCategoryRequest, ProductCategory, UpdateProductCategoryRequest } from '../entities/product-category';
-import { ApiService } from './api-service';
-import { createIdleState, ResourceState } from './resource-state';
-import { environment } from '../../environments/environment';
+import { ProductCategory, ProductCategoryMutation } from '../models/product-category.model';
+import { ApiService } from './api.service';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class ProductCategoryService {
-  private readonly stateSubject = new BehaviorSubject<ResourceState<ProductCategory[]>>(createIdleState([]));
-  readonly state$ = this.stateSubject.asObservable();
+  private readonly endpoint = 'ProductCategory';
 
   constructor(private readonly api: ApiService) {}
 
-  load(force = false): void {
-    const current = this.stateSubject.value;
-    if (!force && current.status === 'loading') {
-      return;
-    }
-
-    this.stateSubject.next({
-      status: 'loading',
-      data: current.data,
-      lastLoadedAt: current.lastLoadedAt,
-    });
-
-    this.api.get<ProductCategory[]>(environment.api.endpoints.productCategory).subscribe({
-      next: (data) => {
-        const categories = Array.isArray(data) ? data : [];
-        this.stateSubject.next({
-          status: categories.length > 0 ? 'ready' : 'empty',
-          data: categories,
-          lastLoadedAt: new Date().toISOString(),
-        });
-      },
-      error: () => {
-        this.stateSubject.next({
-          status: 'error',
-          data: [],
-          error: 'Category data could not be loaded from ProductCategory.',
-          lastLoadedAt: new Date().toISOString(),
-        });
-      },
-    });
+  getAll(): Observable<ProductCategory[]> {
+    return this.api.get<ProductCategory[] | null>(this.endpoint).pipe(
+      map((response) => Array.isArray(response) ? response : [])
+    );
   }
 
-  create(request: CreateProductCategoryRequest): Observable<unknown> {
+  create(payload: ProductCategoryMutation): Observable<ProductCategory> {
+    const id = (payload.id || '').trim() || this.generateId();
+    const requestPayload = this.toMutationPayload({ ...payload, id });
+
     return this.api
-      .post<unknown>(environment.api.endpoints.productCategory, this.toCreatePayload(request))
-      .pipe(catchError((error: unknown) => this.recoverMutationFrom2xxParseError(error)));
+      .post<{ id?: string; entity?: ProductCategory } | ProductCategory>(this.endpoint, requestPayload)
+      .pipe(
+        map((response) => {
+          const entityCandidate = (response as { entity?: ProductCategory })?.entity;
+          if (entityCandidate) {
+            return entityCandidate;
+          }
+
+          const responseId = (response as { id?: string })?.id;
+          return {
+            id: responseId || id,
+            partitionKey: responseId || id,
+            PartitionKey: responseId || id,
+            productCategoryName: (payload.productCategoryName || '').trim(),
+            productCategoryImageURL: (payload.productCategoryImageURL || '').trim(),
+            visible: !!payload.visible,
+            ...(typeof payload.order === 'number' ? { order: payload.order } : {})
+          };
+        })
+      );
   }
 
-  update(request: UpdateProductCategoryRequest): Observable<unknown> {
-    const endpoint = environment.api.endpoints.productCategory;
-    const payload = this.toUpdatePayload(request);
-    return this.api.put<unknown>(endpoint, payload).pipe(
-      catchError((error: unknown) => {
-        const status = (error as { status?: number })?.status;
-        if (status === 404 || status === 405 || status === 415) {
-          return this.api.post<unknown>(endpoint, payload);
-        }
+  update(payload: ProductCategoryMutation): Observable<ProductCategory> {
+    const requestPayload = this.toMutationPayload(payload);
 
-        return throwError(() => error);
-      }),
-      catchError((error: unknown) => this.recoverMutationFrom2xxParseError(error)),
-    );
+    return this.api
+      .put<{ updated?: boolean; entity?: ProductCategory } | ProductCategory>(this.endpoint, requestPayload)
+      .pipe(
+        map((response) => {
+          const entityCandidate = (response as { entity?: ProductCategory })?.entity;
+          if (entityCandidate) {
+            return entityCandidate;
+          }
+
+          const id = (payload.id || '').trim();
+          return {
+            id,
+            partitionKey: id || undefined,
+            PartitionKey: id || undefined,
+            productCategoryName: (payload.productCategoryName || '').trim(),
+            productCategoryImageURL: (payload.productCategoryImageURL || '').trim(),
+            visible: !!payload.visible,
+            ...(typeof payload.order === 'number' ? { order: payload.order } : {})
+          };
+        })
+      );
   }
 
-  delete(categoryOrId: ProductCategory | string): Observable<unknown> {
-    const endpoint = environment.api.endpoints.productCategory;
-    const payload = this.toDeletePayload(categoryOrId);
-    const id = payload.id;
-    const encodedId = encodeURIComponent(id);
+  delete(categoryId: string): Observable<boolean> {
+    const normalizedId = (categoryId || '').trim();
+    return this.api
+      .delete<{ deleted?: boolean } | string>(`${this.endpoint}/${encodeURIComponent(normalizedId)}`)
+      .pipe(
+        map((response) => {
+          if (typeof response === 'string') {
+            return true;
+          }
 
-    return this.api.delete<unknown>(endpoint, { body: payload }).pipe(
-      catchError((error: unknown) => {
-        const status = (error as { status?: number })?.status;
-        if (status === 400 || status === 404 || status === 405 || status === 415) {
-          return this.api.delete<unknown>(endpoint, { params: { id } }).pipe(
-            catchError((secondError: unknown) => {
-              const secondStatus = (secondError as { status?: number })?.status;
-              if (secondStatus === 404 || secondStatus === 405 || secondStatus === 415) {
-                return this.api.delete<unknown>(`${endpoint}/${encodedId}`);
-              }
+          if (typeof response?.deleted === 'boolean') {
+            return response.deleted;
+          }
 
-              return throwError(() => secondError);
-            }),
-          );
-        }
-
-        return throwError(() => error);
-      }),
-      catchError((error: unknown) => this.recoverMutationFrom2xxParseError(error)),
-    );
+          return true;
+        })
+      );
   }
 
-  getSnapshot(): ResourceState<ProductCategory[]> {
-    return this.stateSubject.value;
-  }
+  private toMutationPayload(payload: ProductCategoryMutation): Record<string, unknown> {
+    const id = (payload.id || '').trim();
 
-  private toCreatePayload(request: CreateProductCategoryRequest): ProductCategory {
-    const id = request.id ?? this.newGuid();
-    return {
-      id,
-      PartitionKey: id,
-      partitionKey: id,
-      productCategoryName: request.productCategoryName.trim(),
-      productCategoryImageURL: request.productCategoryImageURL?.trim() || '',
-      visible: request.visible,
-      order: Number(request.order),
+    const requestPayload: Record<string, unknown> = {
+      productCategoryName: (payload.productCategoryName || '').trim(),
+      productCategoryImageURL: (payload.productCategoryImageURL || '').trim(),
+      visible: !!payload.visible
     };
-  }
 
-  private toUpdatePayload(request: UpdateProductCategoryRequest): ProductCategory {
-    const id = request.id;
-    return {
-      id,
-      PartitionKey: id,
-      partitionKey: id,
-      productCategoryName: request.productCategoryName.trim(),
-      productCategoryImageURL: request.productCategoryImageURL?.trim() || '',
-      visible: request.visible,
-      order: Number(request.order),
-    };
-  }
-
-  private toDeletePayload(categoryOrId: ProductCategory | string): ProductCategory {
-    if (typeof categoryOrId === 'string') {
-      const id = categoryOrId;
-      return {
-        id,
-        PartitionKey: id,
-        partitionKey: id,
-        productCategoryName: '',
-        productCategoryImageURL: '',
-        visible: false,
-        order: 0,
-      };
+    if (typeof payload.order === 'number') {
+      requestPayload['order'] = payload.order;
     }
 
-    const id = categoryOrId.id;
-    return {
-      ...categoryOrId,
-      id,
-      PartitionKey: categoryOrId.PartitionKey || id,
-      partitionKey: categoryOrId.partitionKey || categoryOrId.PartitionKey || id,
-      productCategoryName: categoryOrId.productCategoryName || '',
-      productCategoryImageURL: categoryOrId.productCategoryImageURL || '',
-      visible: Boolean(categoryOrId.visible),
-      order: Number(categoryOrId.order),
-    };
-  }
-
-  private recoverMutationFrom2xxParseError(error: unknown): Observable<unknown> {
-    if (error instanceof HttpErrorResponse && error.status >= 200 && error.status < 300) {
-      return of({});
+    if (id) {
+      requestPayload['id'] = id;
+      requestPayload['partitionKey'] = id;
+      requestPayload['PartitionKey'] = id;
     }
 
-    return throwError(() => error);
+    return requestPayload;
   }
 
-  private newGuid(): string {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+  private generateId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
       return crypto.randomUUID();
     }
 
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
-      const random = Math.trunc(Math.random() * 16);
-      const value = char === 'x' ? random : (random & 0x3) | 0x8;
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
+      const random = Math.floor(Math.random() * 16);
+      const value = character === 'x' ? random : (random & 0x3) | 0x8;
       return value.toString(16);
     });
   }
 }
-

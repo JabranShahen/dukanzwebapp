@@ -1,0 +1,131 @@
+<div class="page">
+  <app-management-header eyebrow="Packing" title="Packing Queue"></app-management-header>
+
+  <app-management-panel>
+    <div class="toolbar">
+      <div class="date-control">
+        <label for="packing-date">Packing date</label>
+        <input
+          id="packing-date"
+          type="date"
+          [(ngModel)]="selectedPackingDate"
+          (change)="onPackingDateChange()"
+          [disabled]="loadingDetail || saving"
+        />
+        <app-ui-button variant="ghost" [disabled]="loadingDetail || saving" (clicked)="resetPackingDateToToday()">Today</app-ui-button>
+      </div>
+      <app-ui-button variant="ghost" [disabled]="loadingDetail || saving" (clicked)="loadSelectedDate()">Refresh</app-ui-button>
+    </div>
+
+    <div *ngIf="loadingDetail" class="state-message">Loading packing batch...</div>
+
+    <div *ngIf="!loadingDetail && detailError" class="state-message error">
+      {{ detailError }}
+      <app-ui-button variant="ghost" (clicked)="loadSelectedDate()">Retry</app-ui-button>
+    </div>
+
+    <div *ngIf="!loadingDetail && !detailError && noBatchForDate" class="state-message">
+      No purchased or partial packing batch exists for this date.
+    </div>
+
+    <ng-container *ngIf="!loadingDetail && !detailError && !noBatchForDate && detail">
+        <div class="summary-bar">
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Purchase date</span>
+            <span class="summary-bar__value">{{ formatDate(detail.purchaseDate) }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Delivery date</span>
+            <span class="summary-bar__value">{{ formatDate(detail.deliveryDate) }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Purchase status</span>
+            <span class="status-pill" [class]="'status-pill--' + statusTone(detail.purchaseStatus)">{{ detail.purchaseStatus }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Orders</span>
+            <span class="summary-bar__value">{{ detail.orderCount }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Ready</span>
+            <span class="summary-bar__value">{{ detail.readyOrderCount }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Blocked</span>
+            <span class="summary-bar__value">{{ detail.blockedOrderCount }}</span>
+          </div>
+          <div class="summary-bar__info">
+            <span class="summary-bar__label">Packed</span>
+            <span class="summary-bar__value">{{ detail.packedOrderCount }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="detail.orders.length === 0" class="state-message">
+          This batch has no orders.
+        </div>
+
+        <div *ngIf="detail.orders.length > 0 && !hasReadyOrders" class="state-message state-message--compact">
+          This batch has orders, but none are ready to pack.
+        </div>
+
+        <div *ngIf="detail.orders.length > 0" class="order-list">
+          <div *ngFor="let order of detail.orders" class="order-card" [class.order-card--disabled]="!isSelectable(order)">
+            <div class="card-header">
+              <span class="order-id">{{ shortOrderId(order.orderId) }}</span>
+              <span class="order-time">{{ formatDate(order.orderDate, true) }}</span>
+              <app-ui-button
+                class="order-pack-action"
+                [disabled]="!isSelectable(order) || isSavingOrder(order.orderId)"
+                (clicked)="markOrderPacked(order)"
+              >
+                {{ isSavingOrder(order.orderId) ? 'Packing...' : 'Packed' }}
+              </app-ui-button>
+              <span class="status-pill" [class]="'status-pill--' + statusTone(order.packingState)">{{ order.packingState }}</span>
+              <span class="status-pill" [class]="'status-pill--' + statusTone(order.orderStatus)">{{ order.orderStatus }}</span>
+            </div>
+
+            <div class="customer-info">
+              <span class="customer-name">{{ order.customerName || 'Unknown customer' }}</span>
+              <span class="customer-detail" *ngIf="order.customerPhone">{{ order.customerPhone }}</span>
+              <span class="customer-detail" *ngIf="order.customerAddress">{{ order.customerAddress }}</span>
+              <span class="customer-detail">Items: {{ order.itemCount }} · Gross: {{ order.grossTotal | number:'1.2-2' }}</span>
+              <span *ngIf="order.blockReason" class="block-reason">{{ stateDescription(order.blockReason) || order.blockReason }}</span>
+            </div>
+
+            <table class="items-table" *ngIf="order.items.length > 0">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th class="col-qty">Qty</th>
+                  <th class="col-unit">Unit</th>
+                  <th class="col-status">Purchase status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of order.items">
+                  <td>{{ item.productName }}</td>
+                  <td class="col-qty">{{ item.quantity }}</td>
+                  <td class="col-unit">{{ item.unitName || '—' }}</td>
+                  <td class="col-status">
+                    <span class="status-pill" [class]="'status-pill--' + statusTone(item.purchaseStatus)">{{ item.purchaseStatus }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <app-ui-button variant="ghost" [disabled]="loadingDetail || saving" (clicked)="loadSelectedDate()">
+            Refresh Batch
+          </app-ui-button>
+        </div>
+    </ng-container>
+  </app-management-panel>
+
+  <app-ui-snackbar
+    [message]="feedbackMessage"
+    [tone]="feedbackTone"
+    (dismissed)="onFeedbackDismissed()"
+  ></app-ui-snackbar>
+</div>

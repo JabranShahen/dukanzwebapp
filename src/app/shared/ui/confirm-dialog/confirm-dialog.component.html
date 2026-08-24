@@ -1,0 +1,19 @@
+<div class="dialog-backdrop" role="presentation">
+  <section class="dialog-card" role="dialog" aria-modal="true" [attr.aria-label]="title">
+    <h3 class="dialog-title">{{ title }}</h3>
+    <p class="dialog-message">{{ message }}</p>
+
+    <div class="dialog-actions">
+      <app-ui-button variant="ghost" [disabled]="pending" (clicked)="onCancel()">
+        {{ cancelLabel }}
+      </app-ui-button>
+      <app-ui-button
+        [variant]="destructive ? 'danger' : 'primary'"
+        [disabled]="pending"
+        (clicked)="onConfirm()"
+      >
+        {{ pending ? 'Working...' : confirmLabel }}
+      </app-ui-button>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,16 @@
+.empty-state {
+  border: 1px dashed var(--tone-border);
+  border-radius: 1rem;
+  padding: 2.2rem 1rem;
+  text-align: center;
+  color: var(--tone-muted);
+}
+
+h3 {
+  margin: 0;
+  color: var(--tone-ink);
+}
+
+p {
+  margin: 0.55rem 0 0;
+}

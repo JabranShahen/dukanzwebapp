@@ -1,156 +1,90 @@
-﻿import { of, throwError } from 'rxjs';
-import { vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-import { environment } from '../../environments/environment';
-import { ApiService } from './api-service';
+import { environment } from '../environments/environment';
+import { DukanzConfigMutation } from '../models/dukanz-config.model';
 import { DukanzConfigService } from './dukanz-config.service';
 
-describe('DukanzConfigService', () => {
-  let api: {
-    get: ReturnType<typeof vi.fn>;
-    post: ReturnType<typeof vi.fn>;
-    put: ReturnType<typeof vi.fn>;
-    delete: ReturnType<typeof vi.fn>;
+function makePayload(overrides: Partial<DukanzConfigMutation> = {}): DukanzConfigMutation {
+  return {
+    message: '',
+    deliveryCharges: 0,
+    minOrderSize: 0,
+    maxOrderSize: 0,
+    freeDeliveryOrderSize: 0,
+    cutoffTime: '',
+    maxNumberOfActiveOrders: 0,
+    minOrderActiveScreenPresenseHours: 0,
+    maxNumberOfHistoryOrders: 0,
+    contactPhoneNumber: '',
+    deliveryOffsetDays: 1,
+    latestAppVersion: '',
+    minimumSupportedAppVersion: '',
+    appUpgradePlayStoreUrl: '',
+    forceAppUpgrade: false,
+    claimsEnabled: true,
+    claimsPilotAreaIds: ['area-a'],
+    claimWindowDays: 7,
+    claimsRequirePhotos: false,
+    claimsMaxPhotos: 5,
+    claimsMaxPhotoSizeMb: 5,
+    claimsStorageContainer: 'claims',
+    claimsAttachmentRetentionDays: 90,
+    claimsDocumentRetentionDays: 365,
+    ...overrides
   };
+}
+
+describe('DukanzConfigService', () => {
   let service: DukanzConfigService;
+  let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    api = {
-      get: vi.fn(),
-      post: vi.fn(),
-      put: vi.fn(),
-      delete: vi.fn(),
-    };
-    service = new DukanzConfigService(api as unknown as ApiService);
-  });
-
-  it('normalizes list payload into active config record', () => {
-    api.get.mockReturnValue(
-      of([
-        {
-          id: 'cfg-1',
-          message: 'Welcome',
-          deliveryCharges: 2,
-          minOrderSize: 10,
-          maxOrderSize: 200,
-          freeDeliveryOrderSize: 80,
-          cutoffTime: '17:00',
-          maxNumberOfActiveOrders: 20,
-          minOrderActiveScreenPresenseHours: 4,
-          maxNumberOfHistoryOrders: 100,
-          contactPhoneNumber: '+44',
-        },
-      ]),
-    );
-
-    service.load();
-
-    expect(service.getSnapshot().status).toBe('ready');
-    expect(service.getSnapshot().data?.id).toBe('cfg-1');
-  });
-
-  it('marks empty when config payload is empty', () => {
-    api.get.mockReturnValue(of([]));
-
-    service.load();
-
-    expect(service.getSnapshot().status).toBe('empty');
-    expect(service.getSnapshot().data).toBeNull();
-  });
-
-  it('initializes config and surfaces errors', () => {
-    api.post.mockReturnValue(of({ id: 'cfg-1' }));
-
-    service.initialize({
-      message: 'Welcome',
-      deliveryCharges: 2,
-      minOrderSize: 10,
-      maxOrderSize: 200,
-      freeDeliveryOrderSize: 80,
-      cutoffTime: '17:00',
-      maxNumberOfActiveOrders: 20,
-      minOrderActiveScreenPresenseHours: 4,
-      maxNumberOfHistoryOrders: 100,
-      contactPhoneNumber: '+44',
-    }).subscribe();
-
-    expect(api.post).toHaveBeenCalledWith(
-      environment.api.endpoints.dukanzConfig,
-      expect.objectContaining({
-        id: expect.any(String),
-        PartitionKey: expect.any(String),
-      }),
-    );
-
-    api.post.mockReturnValue(throwError(() => ({ status: 500 })));
-
-    let capturedError: unknown;
-    service.initialize({
-      message: 'Welcome',
-      deliveryCharges: 2,
-      minOrderSize: 10,
-      maxOrderSize: 200,
-      freeDeliveryOrderSize: 80,
-      cutoffTime: '17:00',
-      maxNumberOfActiveOrders: 20,
-      minOrderActiveScreenPresenseHours: 4,
-      maxNumberOfHistoryOrders: 100,
-      contactPhoneNumber: '+44',
-    }).subscribe({
-      error: (error) => {
-        capturedError = error;
-      },
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule]
     });
 
-    expect(capturedError).toBeTruthy();
+    service = TestBed.inject(DukanzConfigService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('updates config and surfaces errors', () => {
-    api.put.mockReturnValue(of({ updated: true }));
+  afterEach(() => {
+    httpMock.verify();
+  });
 
-    service.update({
-      id: 'cfg-1',
-      message: 'Welcome',
-      deliveryCharges: 2,
-      minOrderSize: 10,
-      maxOrderSize: 200,
-      freeDeliveryOrderSize: 80,
-      cutoffTime: '17:00',
-      maxNumberOfActiveOrders: 20,
-      minOrderActiveScreenPresenseHours: 4,
-      maxNumberOfHistoryOrders: 100,
-      contactPhoneNumber: '+44',
-    }).subscribe();
+  it('normalizes claims settings from config responses', () => {
+    let claimsEnabled = false;
+    let pilotAreas: string[] = [];
 
-    expect(api.put).toHaveBeenCalledWith(
-      environment.api.endpoints.dukanzConfig,
-      expect.objectContaining({
-        id: 'cfg-1',
-        PartitionKey: 'cfg-1',
-      }),
-    );
-
-    api.put.mockReturnValue(throwError(() => ({ status: 500 })));
-
-    let capturedError: unknown;
-    service.update({
-      id: 'cfg-1',
-      message: 'Welcome',
-      deliveryCharges: 2,
-      minOrderSize: 10,
-      maxOrderSize: 200,
-      freeDeliveryOrderSize: 80,
-      cutoffTime: '17:00',
-      maxNumberOfActiveOrders: 20,
-      minOrderActiveScreenPresenseHours: 4,
-      maxNumberOfHistoryOrders: 100,
-      contactPhoneNumber: '+44',
-    }).subscribe({
-      error: (error) => {
-        capturedError = error;
-      },
+    service.getConfig('area-a').subscribe((config) => {
+      claimsEnabled = !!config?.claimsEnabled;
+      pilotAreas = config?.claimsPilotAreaIds ?? [];
     });
 
-    expect(capturedError).toBeTruthy();
+    const request = httpMock.expectOne(`${environment.apiBaseUrl}/DukanzConfig?areaId=area-a`);
+    expect(request.request.method).toBe('GET');
+    request.flush([{ id: 'cfg', claimsEnabled: true, claimsPilotAreaIds: ['area-a', ''] }]);
+
+    expect(claimsEnabled).toBeTrue();
+    expect(pilotAreas).toEqual(['area-a']);
+  });
+
+  it('saves claims settings in the config mutation payload', () => {
+    service.save(makePayload({ claimsPilotAreaIds: [' area-a ', 'area-b'] }), 'area-a').subscribe();
+
+    const request = httpMock.expectOne(`${environment.apiBaseUrl}/DukanzConfig?areaId=area-a`);
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual(jasmine.objectContaining({
+      claimsEnabled: true,
+      claimsPilotAreaIds: ['area-a', 'area-b'],
+      claimWindowDays: 7,
+      claimsRequirePhotos: false,
+      claimsMaxPhotos: 5,
+      claimsMaxPhotoSizeMb: 5,
+      claimsStorageContainer: 'claims',
+      claimsAttachmentRetentionDays: 90,
+      claimsDocumentRetentionDays: 365
+    }));
+    request.flush({ updated: true, entity: makePayload({ id: 'cfg' }) });
   });
 });

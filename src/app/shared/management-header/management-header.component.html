@@ -1,0 +1,15 @@
+<div class="page-header">
+  <div class="copy">
+    <p class="eyebrow" *ngIf="eyebrow">{{ eyebrow }}</p>
+    <h2>{{ title }}</h2>
+    <p class="subtext" *ngIf="subtext">{{ subtext }}</p>
+  </div>
+
+  <app-ui-button
+    *ngIf="ctaLabel"
+    variant="primary"
+    (clicked)="ctaClick.emit()"
+  >
+    {{ ctaLabel }}
+  </app-ui-button>
+</div>

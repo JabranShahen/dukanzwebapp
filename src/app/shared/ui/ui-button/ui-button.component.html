@@ -1,0 +1,11 @@
+<button
+  [attr.type]="buttonType"
+  class="btn"
+  [class.btn--secondary]="variant === 'secondary'"
+  [class.btn--ghost]="variant === 'ghost'"
+  [class.btn--danger]="variant === 'danger'"
+  [disabled]="disabled"
+  (click)="onClick()"
+>
+  <ng-content></ng-content>
+</button>

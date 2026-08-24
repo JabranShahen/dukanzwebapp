@@ -1,0 +1,25 @@
+<main class="login-shell">
+  <section class="login-card">
+    <p class="eyebrow">Dukanz Ops</p>
+    <h1>Login</h1>
+    <p class="description">Sign in to access dashboard management routes.</p>
+
+    <form [formGroup]="loginForm" (ngSubmit)="submit()" class="form">
+      <label>
+        Email
+        <input type="email" formControlName="email" placeholder="you@example.com" />
+      </label>
+
+      <label>
+        Password
+        <input type="password" formControlName="password" placeholder="Enter password" />
+      </label>
+
+      <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <button type="submit" [disabled]="loading">
+        {{ loading ? 'Signing in...' : 'Sign in' }}
+      </button>
+    </form>
+  </section>
+</main>

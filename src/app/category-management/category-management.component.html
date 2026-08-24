@@ -1,0 +1,98 @@
+<div class="page">
+  <app-management-header
+    eyebrow="Master Catalog"
+    title="Master Categories"
+    subtext="Manage reusable category records that can later be assigned across events and storefront experiences."
+    ctaLabel="Create master category"
+    (ctaClick)="openAddModal()"
+  ></app-management-header>
+
+  <app-management-panel>
+    <div class="panel-actions">
+      <app-ui-button variant="secondary" (clicked)="reload()">Refresh</app-ui-button>
+      <span class="count" *ngIf="!loading">{{ categoryCountLabel() }}</span>
+    </div>
+
+    <div *ngIf="feedbackMessage" class="feedback" [class.feedback--error]="feedbackTone === 'error'">
+      {{ feedbackMessage }}
+    </div>
+
+    <div *ngIf="error" class="error">{{ error }}</div>
+
+    <div class="table-wrap" *ngIf="!loading && !error && categories.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Image</th>
+            <th>Lifecycle</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let category of categories; trackBy: trackById">
+            <td>{{ category.productCategoryName }}</td>
+            <td>
+              <img
+                *ngIf="categoryImageUrl(category)"
+                [src]="categoryImageUrl(category)"
+                [alt]="category.productCategoryName"
+                class="category-thumb"
+              />
+              <span *ngIf="!categoryImageUrl(category)" class="no-image">—</span>
+            </td>
+            <td>
+              <app-ui-status-pill
+                [label]="statusLabel(category)"
+                [tone]="statusTone(category)"
+              ></app-ui-status-pill>
+            </td>
+            <td>
+              <div class="actions">
+                <app-ui-button variant="ghost" [disabled]="mutationPending" (clicked)="openEditModal(category)">Edit</app-ui-button>
+                <app-ui-button variant="danger" [disabled]="mutationPending" (clicked)="openDeleteDialog(category)">Remove</app-ui-button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-ui-empty-state
+      *ngIf="!loading && !error && categories.length === 0"
+      title="No master categories yet"
+      body="Create the first reusable master category to seed the catalog."
+    ></app-ui-empty-state>
+
+    <div class="loading" *ngIf="loading">Loading master categories...</div>
+  </app-management-panel>
+
+  <app-add-category-modal
+    *ngIf="addModalOpen"
+    [existingNames]="existingCategoryNames()"
+    [pending]="mutationPending"
+    (cancelled)="closeAddModal()"
+    (saved)="onAddCategory($event)"
+  ></app-add-category-modal>
+
+  <app-edit-category-modal
+    *ngIf="editModalOpen && selectedCategory"
+    [category]="selectedCategory"
+    [existingNames]="existingCategoryNames()"
+    [pending]="mutationPending"
+    (cancelled)="closeEditModal()"
+    (saved)="onEditCategory($event)"
+  ></app-edit-category-modal>
+
+  <app-confirm-dialog
+    *ngIf="deleteDialogOpen && pendingDeleteCategory"
+    title="Remove master category?"
+    [message]="deleteDialogMessage()"
+    confirmLabel="Remove category"
+    cancelLabel="Keep category"
+    [destructive]="true"
+    [pending]="mutationPending"
+    (cancelled)="closeDeleteDialog()"
+    (confirmed)="confirmDeleteCategory()"
+  ></app-confirm-dialog>
+</div>

@@ -1,0 +1,47 @@
+<div class="overview">
+  <app-management-header
+    eyebrow="Dukanz"
+    title="Dashboard"
+    subtext="Live overview"
+  ></app-management-header>
+
+  <!-- ── Stat cards ────────────────────────────────────────── -->
+  <div class="stat-grid">
+    <div class="stat-card stat-card--blue">
+      <div class="stat-label">Orders Today</div>
+      <div class="stat-value">{{ loading ? '—' : ordersToday.length }}</div>
+      <div class="stat-hint">outstanding</div>
+    </div>
+    <div class="stat-card stat-card--amber">
+      <div class="stat-label">Pending Deliveries</div>
+      <div class="stat-value">{{ loading ? '—' : pendingOrders.length }}</div>
+      <div class="stat-hint">active orders</div>
+    </div>
+    <div class="stat-card stat-card--teal">
+      <div class="stat-label">Active Customers</div>
+      <div class="stat-value">{{ loading ? '—' : activeCustomerCount }}</div>
+      <div class="stat-hint">with open orders</div>
+    </div>
+  </div>
+
+  <!-- ── Orders last 24h chart ────────────────────────────── -->
+  <app-management-panel>
+    <div class="panel-header">
+      <span class="section-title">Orders in the last 7 days</span>
+      <span class="section-subtitle">{{ loading ? '' : ordersLast7d + ' total' }}</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas *ngIf="!loading"
+        baseChart
+        [data]="hourlyChartData"
+        [options]="chartOptions"
+        type="line">
+      </canvas>
+      <div *ngIf="loading" class="chart-loading">Loading…</div>
+    </div>
+  </app-management-panel>
+
+  <!-- ── Error ─────────────────────────────────────────────── -->
+  <div *ngIf="error" class="error-bar">{{ error }}</div>
+
+</div>

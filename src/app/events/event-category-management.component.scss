@@ -1,0 +1,11 @@
+.redirect-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.loading {
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.85rem;
+  background: #eef2f1;
+  color: var(--tone-muted);
+}

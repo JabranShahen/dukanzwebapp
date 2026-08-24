@@ -1,48 +1,36 @@
-/* You can add global styles to this file, and also import other style files */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap');
-
+/* Global Dukanz web app styles */
 :root {
   --tone-ink: #16322d;
   --tone-muted: #526964;
-  --tone-accent-strong: #1f6f62;
+  --tone-accent: #1f6f62;
   --tone-surface: #f7f4eb;
+  --tone-panel: #ffffff;
+  --tone-border: rgba(20, 50, 46, 0.12);
+  --tone-sidebar: #163f72;
+  --tone-sidebar-hover: #225188;
+  --tone-sidebar-active: #2c6aa8;
+  --tone-danger: #a23f3a;
 }
 
-*,
-*::before,
-*::after {
+* {
   box-sizing: border-box;
 }
 
 html,
 body {
-  min-height: 100%;
+  height: 100%;
 }
 
 body {
   margin: 0;
   font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
-  color: var(--tone-ink);
   background: var(--tone-surface);
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
-  letter-spacing: -0.03em;
+  color: var(--tone-ink);
 }
 
 button,
 input,
-textarea,
-select {
+select,
+textarea {
   font: inherit;
-}
-
-a {
-  color: inherit;
 }

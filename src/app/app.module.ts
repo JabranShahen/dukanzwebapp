@@ -1,0 +1,100 @@
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AuthInterceptor } from './auth.interceptor';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { DashboardOverviewComponent } from './dashboard/dashboard-overview/dashboard-overview.component';
+import { OrderDetailModalComponent } from './dashboard/dashboard-overview/order-detail-modal/order-detail-modal.component';
+import { LoginComponent } from './login/login.component';
+import { CategoryManagementComponent } from './category-management/category-management.component';
+import { AddCategoryModalComponent } from './category-management/add-category-modal/add-category-modal.component';
+import { EditCategoryModalComponent } from './category-management/edit-category-modal/edit-category-modal.component';
+import { EventCompositionComponent } from './events/event-composition.component';
+import { EventCategoryManagementComponent } from './events/event-category-management.component';
+import { EventCategoryModalComponent } from './events/event-category-modal/event-category-modal.component';
+import { EventProductModalComponent } from './events/event-product-modal/event-product-modal.component';
+import { ProductManagementComponent } from './products/product-management.component';
+import { AddProductModalComponent } from './products/add-product-modal/add-product-modal.component';
+import { EditProductModalComponent } from './products/edit-product-modal/edit-product-modal.component';
+import { AddEventModalComponent } from './events/add-event-modal/add-event-modal.component';
+import { EditEventModalComponent } from './events/edit-event-modal/edit-event-modal.component';
+import { SettingsComponent } from './settings/settings.component';
+import { DriverOrdersComponent } from './driver/driver-orders.component';
+import { MonitoringDashboardComponent } from './monitoring/monitoring-dashboard.component';
+import { PackingReportComponent } from './packing/packing-report.component';
+import { PurchaseCreateComponent } from './purchase/purchase-create.component';
+import { PurchaseManagementComponent } from './purchase/purchase-management.component';
+import { PurchaseProcessComponent } from './purchase/purchase-process.component';
+import { AccountComponent } from './account/account.component';
+import { AreaManagementComponent } from './areas/area-management.component';
+import { CustomerAllocationComponent } from './allocation/customer-allocation.component';
+import { CustomerManagementComponent } from './customers/customer-management.component';
+import { StaffManagementComponent } from './staff/staff-management.component';
+import { DataUpdatesComponent } from './data-updates/data-updates.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { NgChartsModule } from 'ng2-charts';
+import { SharedUiModule } from './shared/shared-ui.module';
+import { OrderManagementComponent } from './orders/order-management.component';
+import { OrderPanelComponent } from './orders/order-panel/order-panel.component';
+import { OperationalDayDashboardComponent } from './operational-day/operational-day-dashboard.component';
+import { ClaimsManagementComponent } from './claims/claims-management.component';
+import { BatchScheduleComponent } from './batch-schedule/batch-schedule.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    DashboardComponent,
+    DashboardOverviewComponent,
+    OrderDetailModalComponent,
+    LoginComponent,
+    CategoryManagementComponent,
+    AddCategoryModalComponent,
+    EditCategoryModalComponent,
+    EventCompositionComponent,
+    EventCategoryManagementComponent,
+    EventCategoryModalComponent,
+    EventProductModalComponent,
+    AddEventModalComponent,
+    EditEventModalComponent,
+    ProductManagementComponent,
+    AddProductModalComponent,
+    EditProductModalComponent,
+    SettingsComponent,
+    DriverOrdersComponent,
+    MonitoringDashboardComponent,
+    PackingReportComponent,
+    PurchaseCreateComponent,
+    PurchaseManagementComponent,
+    PurchaseProcessComponent,
+    AccountComponent,
+    AreaManagementComponent,
+    CustomerAllocationComponent,
+    CustomerManagementComponent,
+    StaffManagementComponent,
+    DataUpdatesComponent,
+    OrderManagementComponent,
+    OrderPanelComponent,
+    OperationalDayDashboardComponent,
+    ClaimsManagementComponent,
+    BatchScheduleComponent
+  ],
+  imports: [
+    BrowserModule,
+    DragDropModule,
+    NgChartsModule,
+    HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule,
+    SharedUiModule,
+    AppRoutingModule
+  ],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule {}

@@ -1,0 +1,32 @@
+<div class="modal-backdrop" role="presentation">
+  <form class="modal-card" [formGroup]="categoryForm" (ngSubmit)="onSubmit()" novalidate>
+    <h3>Add master category</h3>
+
+    <label>
+      Master category name
+      <input type="text" formControlName="productCategoryName" placeholder="Category name" />
+      <span class="error" *ngIf="categoryForm.controls.productCategoryName.touched && categoryForm.controls.productCategoryName.invalid">
+        Name is required.
+      </span>
+      <span class="error" *ngIf="nameError">{{ nameError }}</span>
+    </label>
+
+    <label>
+      Category image
+      <input type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
+      <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
+      <span class="error" *ngIf="imageError">{{ imageError }}</span>
+    </label>
+
+    <label class="check-row">
+      <input type="checkbox" formControlName="visible" />
+      Active master category
+    </label>
+    <p class="hint">Turn this off later to retire the category without removing the master record.</p>
+
+    <div class="actions">
+      <app-ui-button variant="ghost" (clicked)="onCancel()">Cancel</app-ui-button>
+      <app-ui-button buttonType="submit" [disabled]="pending">Save category</app-ui-button>
+    </div>
+  </form>
+</div>

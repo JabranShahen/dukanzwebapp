@@ -1,0 +1,146 @@
+<div class="page">
+  <app-management-header eyebrow="Dukanz" title="Batch Schedule Settings"></app-management-header>
+
+  <app-management-panel>
+    <app-ui-snackbar
+      [message]="feedbackMessage"
+      [tone]="feedbackTone"
+      (dismissed)="onFeedbackDismissed()"
+    ></app-ui-snackbar>
+
+    <div *ngIf="isSuperAdmin" class="area-selector-row">
+      <label class="area-selector-label">
+        Area
+        <select [(ngModel)]="selectedAreaId" (ngModelChange)="onAreaChange()">
+          <option [ngValue]="null">— Select an area —</option>
+          <option *ngFor="let area of areas" [ngValue]="area.id">{{ area.name }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div *ngIf="!isSuperAdmin" class="area-readonly-label">
+      Viewing schedule for your area (read-only).
+    </div>
+
+    <div *ngIf="loading" class="state-message">Loading schedule…</div>
+
+    <div *ngIf="!loading && loadError" class="state-message error">
+      {{ loadError }}
+      <app-ui-button variant="ghost" (clicked)="loadSchedule()">Retry</app-ui-button>
+    </div>
+
+    <ng-container *ngIf="!loading && !loadError && (!!effectiveAreaId)">
+
+      <div *ngIf="apiError" class="error-banner">{{ apiError }}</div>
+
+      <app-ui-empty-state
+        *ngIf="windows.length === 0"
+        title="No batch windows configured"
+        body="Add your first delivery batch window to get started."
+      ></app-ui-empty-state>
+
+      <table *ngIf="windows.length > 0" class="batch-table">
+        <thead>
+          <tr>
+            <th class="col-index">#</th>
+            <th class="col-label">Label</th>
+            <th class="col-time">Start (PKT)</th>
+            <th class="col-time">End (PKT)</th>
+            <th class="col-enabled">Enabled</th>
+            <th *ngIf="canEdit" class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let win of windows; let i = index"
+            [class.row--disabled]="!win.enabled"
+            [class.row--error]="win.startEndError || win.overlapError"
+          >
+            <td class="col-index">{{ win.batchIndex }}</td>
+            <td class="col-label">
+              <input
+                *ngIf="canEdit"
+                type="text"
+                [(ngModel)]="win.label"
+                (ngModelChange)="onFieldChange()"
+                maxlength="50"
+                placeholder="e.g. Morning"
+                class="field-input"
+              />
+              <span *ngIf="!canEdit">{{ win.label }}</span>
+            </td>
+            <td class="col-time">
+              <input
+                *ngIf="canEdit"
+                type="time"
+                [(ngModel)]="win.startTimePkt"
+                (ngModelChange)="onFieldChange()"
+                class="field-input field-input--time"
+              />
+              <span *ngIf="!canEdit">{{ win.startTimePkt }}</span>
+            </td>
+            <td class="col-time">
+              <input
+                *ngIf="canEdit"
+                type="time"
+                [(ngModel)]="win.endTimePkt"
+                (ngModelChange)="onFieldChange()"
+                class="field-input field-input--time"
+              />
+              <span *ngIf="!canEdit">{{ win.endTimePkt }}</span>
+            </td>
+            <td class="col-enabled">
+              <input
+                type="checkbox"
+                [(ngModel)]="win.enabled"
+                (ngModelChange)="onFieldChange()"
+                [disabled]="!canEdit"
+                class="toggle-checkbox"
+              />
+            </td>
+            <td *ngIf="canEdit" class="col-actions">
+              <app-ui-button variant="danger" (clicked)="removeWindow(i)">Delete</app-ui-button>
+            </td>
+          </tr>
+          <tr
+            *ngFor="let win of windows; let i = index"
+            class="row-errors"
+            [class.row-errors--hidden]="!win.startEndError && !win.overlapError"
+          >
+            <td colspan="6" *ngIf="win.startEndError || win.overlapError" class="error-cell">
+              <span *ngIf="win.startEndError" class="inline-error">
+                Batch {{ win.batchIndex }}: {{ win.startEndError }}
+              </span>
+              <span *ngIf="win.overlapError" class="inline-error">
+                Batch {{ win.batchIndex }}: {{ win.overlapError }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="canEdit" class="add-row">
+        <app-ui-button
+          variant="ghost"
+          (clicked)="addWindow()"
+          [disabled]="windows.length >= 10"
+        >+ Add Batch Window</app-ui-button>
+        <span *ngIf="windows.length >= 10" class="hint">Maximum 10 batch windows allowed.</span>
+      </div>
+
+      <div *ngIf="canEdit" class="save-row">
+        <app-ui-button
+          variant="primary"
+          (clicked)="onSave()"
+          [disabled]="saving || hasValidationErrors"
+        >{{ saving ? 'Saving…' : 'Save' }}</app-ui-button>
+        <app-ui-button variant="ghost" (clicked)="onReset()" [disabled]="saving">Reset</app-ui-button>
+      </div>
+
+    </ng-container>
+
+    <div *ngIf="!loading && !loadError && isSuperAdmin && !effectiveAreaId" class="state-message">
+      Select an area above to view or configure its batch schedule.
+    </div>
+  </app-management-panel>
+</div>

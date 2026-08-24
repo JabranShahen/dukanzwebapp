@@ -1,0 +1,30 @@
+.btn {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.58rem 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--tone-accent);
+  color: #fff;
+}
+
+.btn--secondary {
+  background: #e8efed;
+  color: var(--tone-ink);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--tone-border);
+  color: var(--tone-ink);
+}
+
+.btn--danger {
+  background: #f8e6e5;
+  color: var(--tone-danger);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

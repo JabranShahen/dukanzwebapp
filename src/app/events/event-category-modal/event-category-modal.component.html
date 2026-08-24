@@ -1,0 +1,76 @@
+<div class="modal-backdrop" role="presentation">
+  <form class="modal-card" [formGroup]="assignmentForm" (ngSubmit)="onSubmit()" novalidate>
+    <h3>{{ mode === 'add' ? 'Add event category' : 'Edit event category settings' }}</h3>
+
+    <div class="field-grid">
+      <div class="field-span field-with-action" *ngIf="mode === 'add'">
+        <label>
+          Master category
+          <select formControlName="productCategoryId" (change)="onCategorySelectionChange()">
+            <option value="">Select a master category</option>
+            <option *ngFor="let category of availableCategories" [value]="category.id">
+              {{ category.productCategoryName }}{{ category.visible ? '' : ' (Retired)' }}
+            </option>
+          </select>
+          <span class="error" *ngIf="assignmentForm.controls.productCategoryId.touched && assignmentForm.controls.productCategoryId.invalid">
+            Master category selection is required.
+          </span>
+          <span class="error" *ngIf="categoryError">{{ categoryError }}</span>
+        </label>
+        <app-ui-button variant="ghost" [disabled]="pending" (clicked)="openAddMasterCategory()">+ Add master category</app-ui-button>
+      </div>
+
+      <app-add-category-modal
+        *ngIf="addMasterCategoryOpen"
+        [existingNames]="existingMasterCategoryNames()"
+        [pending]="addMasterCategoryPending"
+        (cancelled)="closeAddMasterCategory()"
+        (saved)="onMasterCategorySaved($event)"
+      ></app-add-category-modal>
+
+      <label class="field-span" *ngIf="mode === 'edit'">
+        Category name
+        <input type="text" formControlName="categoryName" />
+        <span class="error" *ngIf="assignmentForm.controls.categoryName.touched && assignmentForm.controls.categoryName.invalid">
+          Category name is required.
+        </span>
+      </label>
+
+      <label>
+        Event visibility
+        <select formControlName="visible">
+          <option [ngValue]="true">Visible in this event</option>
+          <option [ngValue]="false">Hidden in this event</option>
+        </select>
+      </label>
+
+      <label class="field-span">
+        Image
+        <input type="file" accept="image/*" (change)="onImageSelected($event)" [disabled]="pending" />
+        <span class="hint" *ngIf="selectedImageFile">{{ selectedImageFile.name }}</span>
+        <span class="hint" *ngIf="!selectedImageFile && currentOverrideImagePath">Current image stored.</span>
+        <span class="hint" *ngIf="!selectedImageFile && !currentOverrideImagePath">Upload an image for this event category.</span>
+        <span class="error" *ngIf="imageError">{{ imageError }}</span>
+      </label>
+
+      <label class="field-span check-row" *ngIf="currentOverrideImagePath">
+        <input type="checkbox" [checked]="removeCurrentImage" (change)="onRemoveCurrentImageChange($event)" [disabled]="pending" />
+        Remove current image
+      </label>
+
+      <div class="field-span image-preview" *ngIf="previewImageUrl()">
+        <div>
+          <div class="hint">{{ previewLabel() }}</div>
+          <img [src]="previewImageUrl()" [alt]="categoryLabel() || 'Event category image preview'" />
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <app-ui-button variant="ghost" (clicked)="onCancel()">Cancel</app-ui-button>
+      <app-ui-button buttonType="submit" [disabled]="pending">
+        {{ mode === 'add' ? 'Save assignment' : 'Save changes' }}
+      </app-ui-button>
+    </div>
+  </form>
+</div>

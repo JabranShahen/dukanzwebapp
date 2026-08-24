@@ -1,15 +1,12 @@
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
-# Compiled output
-/dist
+# compiled output
 /tmp
 /out-tsc
 /bazel-out
 
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
+# dependencies
+node_modules
 
 # IDEs and editors
 .idea/
@@ -42,3 +39,11 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# local release/signing secrets
+key.properties
+*.jks
+*.jsk
+
+# local host shell build output
+dist/dukanzwebapp-next-host/

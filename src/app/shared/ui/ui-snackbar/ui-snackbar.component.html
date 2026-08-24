@@ -1,0 +1,10 @@
+<div
+  class="snackbar"
+  [class.snackbar--visible]="visible"
+  [class.snackbar--error]="tone === 'error'"
+  role="status"
+  aria-live="polite"
+>
+  <span class="snackbar__message">{{ message }}</span>
+  <button type="button" class="snackbar__close" (click)="dismiss()" aria-label="Dismiss">&#x2715;</button>
+</div>
