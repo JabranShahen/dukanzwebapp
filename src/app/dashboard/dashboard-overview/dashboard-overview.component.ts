@@ -31,9 +31,8 @@ const ALL_STATUSES = Object.keys(STATUS_PALETTE) as OrderStatus[];
 export class DashboardOverviewComponent implements OnInit {
   loading = true;
   error = '';
-  outstandingOrders: Order[] = [];   // active only — used for stat cards + table
-  allRecentOrders: Order[] = [];     // all statuses, last 7 days — used for chart
-  selectedOrder: Order | null = null;
+  outstandingOrders: Order[] = [];
+  allRecentOrders: Order[] = [];
 
   // ── Chart ──────────────────────────────────────────────────
   hourlyChartData: ChartData<'line'> = { labels: [], datasets: [] };
@@ -197,13 +196,6 @@ export class DashboardOverviewComponent implements OnInit {
     return this.outstandingOrders.filter((o) => isActiveOrderStatus(o.status));
   }
 
-  get lateOrders(): Order[] {
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-    return this.outstandingOrders.filter(
-      (o) => isActiveOrderStatus(o.status) && new Date(o.orderDeviceDttm).getTime() < cutoff
-    );
-  }
-
   get activeCustomerCount(): number {
     const ids = new Set(
       this.outstandingOrders.map((o) => o.user?.id).filter(Boolean)
@@ -211,58 +203,8 @@ export class DashboardOverviewComponent implements OnInit {
     return ids.size;
   }
 
-  get recentOrders(): Order[] {
-    return [...this.outstandingOrders]
-      .sort(
-        (a, b) =>
-          new Date(b.orderDeviceDttm).getTime() -
-          new Date(a.orderDeviceDttm).getTime()
-      )
-      .slice(0, 15);
-  }
-
   get ordersLast7d(): number {
     return this.allRecentOrders.length;
   }
 
-  formatAge(dttm: string): string {
-    const diffMs = Date.now() - new Date(dttm).getTime();
-    const diffH = Math.floor(diffMs / 3_600_000);
-    const diffM = Math.floor(diffMs / 60_000);
-    if (diffH >= 48) return `${Math.floor(diffH / 24)}d ago`;
-    if (diffH >= 1) return `${diffH}h ago`;
-    if (diffM >= 1) return `${diffM}m ago`;
-    return 'just now';
-  }
-
-  statusTone(status: string): string {
-    switch (normalizeOrderStatus(status)) {
-      case 'Approved':
-        return 'pending';
-      case 'Packed':
-        return 'info';
-      case 'Dispatched':
-        return 'warning';
-      case 'Delivered':
-        return 'success';
-      default:
-        return 'muted';
-    }
-  }
-
-  displayStatus(status: string): string {
-    return normalizeOrderStatus(status) || status;
-  }
-
-  openOrder(order: Order): void {
-    this.selectedOrder = order;
-  }
-
-  closeOrder(): void {
-    this.selectedOrder = null;
-  }
-
-  trackById(_: number, order: Order): string {
-    return order.id;
-  }
 }

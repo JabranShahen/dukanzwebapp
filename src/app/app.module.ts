@@ -37,17 +37,12 @@ import { StaffManagementComponent } from './staff/staff-management.component';
 import { DataUpdatesComponent } from './data-updates/data-updates.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { NgChartsModule } from 'ng2-charts';
-import { ManagementHeaderComponent } from './shared/management-header/management-header.component';
-import { ManagementPanelComponent } from './shared/management-panel/management-panel.component';
-import { UiButtonComponent } from './shared/ui/ui-button/ui-button.component';
-import { ConfirmDialogComponent } from './shared/ui/confirm-dialog/confirm-dialog.component';
-import { UiEmptyStateComponent } from './shared/ui/ui-empty-state/ui-empty-state.component';
-import { UiStatusPillComponent } from './shared/ui/ui-status-pill/ui-status-pill.component';
-import { UiSnackbarComponent } from './shared/ui/ui-snackbar/ui-snackbar.component';
+import { SharedUiModule } from './shared/shared-ui.module';
 import { OrderManagementComponent } from './orders/order-management.component';
 import { OrderPanelComponent } from './orders/order-panel/order-panel.component';
 import { OperationalDayDashboardComponent } from './operational-day/operational-day-dashboard.component';
 import { ClaimsManagementComponent } from './claims/claims-management.component';
+import { BatchScheduleComponent } from './batch-schedule/batch-schedule.component';
 
 @NgModule({
   declarations: [
@@ -81,17 +76,11 @@ import { ClaimsManagementComponent } from './claims/claims-management.component'
     CustomerManagementComponent,
     StaffManagementComponent,
     DataUpdatesComponent,
-    ManagementHeaderComponent,
-    ManagementPanelComponent,
-    UiButtonComponent,
-    ConfirmDialogComponent,
-    UiEmptyStateComponent,
-    UiStatusPillComponent,
-    UiSnackbarComponent,
     OrderManagementComponent,
     OrderPanelComponent,
     OperationalDayDashboardComponent,
-    ClaimsManagementComponent
+    ClaimsManagementComponent,
+    BatchScheduleComponent
   ],
   imports: [
     BrowserModule,
@@ -100,6 +89,7 @@ import { ClaimsManagementComponent } from './claims/claims-management.component'
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
+    SharedUiModule,
     AppRoutingModule
   ],
   providers: [

@@ -17,6 +17,7 @@ describe('AppRoutingModule', () => {
     expect(children.some((route) => route.path === 'staff')).toBeTrue();
     expect(children.some((route) => route.path === 'data-updates')).toBeTrue();
     expect(children.some((route) => route.path === 'claims')).toBeTrue();
+    expect(children.some((route) => route.path === 'batch-monitoring' && !!route.loadChildren)).toBeTrue();
     expect(children).toContain(jasmine.objectContaining({
       path: 'users',
       redirectTo: 'customers',
