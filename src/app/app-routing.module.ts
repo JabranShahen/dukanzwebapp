@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { AuthGuard } from './auth.guard';
+import { TestDashboardGuard } from './test-dashboard.guard';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DashboardOverviewComponent } from './dashboard/dashboard-overview/dashboard-overview.component';
 import { CategoryManagementComponent } from './category-management/category-management.component';
@@ -145,6 +146,12 @@ const routes: Routes = [
       {
         path: 'account',
         component: AccountComponent
+      },
+      {
+        path: 'test-dashboard',
+        canActivate: [TestDashboardGuard],
+        // TODO: replace redirectTo with TestDashboardComponent once ENABLE_TEST_DASHBOARD=true
+        redirectTo: ''
       }
     ]
   },
