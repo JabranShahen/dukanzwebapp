@@ -6,6 +6,7 @@ import {
   PackingOrderSummary
 } from '../models/packing.model';
 import { PackingService } from '../services/packing.service';
+import { TimeService } from '../services/time.service';
 
 @Component({
   selector: 'app-packing-report',
@@ -26,14 +27,17 @@ export class PackingReportComponent implements OnInit {
   savingOrderIds = new Set<string>();
   private loadSequence = 0;
 
-  constructor(private readonly packingService: PackingService) {}
+  constructor(
+    private readonly packingService: PackingService,
+    private readonly timeService: TimeService
+  ) {}
 
   ngOnInit(): void {
     this.loadSelectedDate();
   }
 
   todayIso(): string {
-    const date = new Date();
+    const date = this.timeService.now();
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
 

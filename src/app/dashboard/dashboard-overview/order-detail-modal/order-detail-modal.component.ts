@@ -8,6 +8,7 @@ import {
 
 import { normalizeOrderStatus } from '../../../models/order.model';
 import { Order } from '../../../models/order.model';
+import { TimeService } from '../../../services/time.service';
 
 @Component({
   selector: 'app-order-detail-modal',
@@ -17,6 +18,8 @@ import { Order } from '../../../models/order.model';
 export class OrderDetailModalComponent {
   @Input() order!: Order;
   @Output() closed = new EventEmitter<void>();
+
+  constructor(private readonly timeService: TimeService) {}
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
@@ -61,7 +64,7 @@ export class OrderDetailModalComponent {
   }
 
   formatAge(dttm: string): string {
-    const diffMs = Date.now() - new Date(dttm).getTime();
+    const diffMs = this.timeService.now().getTime() - new Date(dttm).getTime();
     const diffH = Math.floor(diffMs / 3_600_000);
     const diffM = Math.floor(diffMs / 60_000);
     if (diffH >= 48) return `${Math.floor(diffH / 24)} days ago`;
@@ -71,7 +74,7 @@ export class OrderDetailModalComponent {
   }
 
   get isLate(): boolean {
-    const diffMs = Date.now() - new Date(this.order.orderDeviceDttm).getTime();
+    const diffMs = this.timeService.now().getTime() - new Date(this.order.orderDeviceDttm).getTime();
     return diffMs > 24 * 3_600_000;
   }
 }

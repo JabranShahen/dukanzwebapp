@@ -9,6 +9,7 @@ import {
   BatchMonitoringStatus,
   BatchSlotRow
 } from './batch-monitoring.service';
+import { TimeService } from '../services/time.service';
 
 const PAKISTAN_UTC_OFFSET_MS = 5 * 60 * 60 * 1000;
 
@@ -26,7 +27,7 @@ export class BatchMonitoringComponent implements OnInit {
 
   areas: Area[] = [];
   selectedAreaId: string | null = null;
-  selectedDate = todayPakistanDateKey();
+  selectedDate = '';
 
   loadingAreas = false;
   loadingRows = false;
@@ -42,10 +43,12 @@ export class BatchMonitoringComponent implements OnInit {
 
   constructor(
     private readonly areaService: AreaService,
-    private readonly batchMonitoringService: BatchMonitoringService
+    private readonly batchMonitoringService: BatchMonitoringService,
+    private readonly timeService: TimeService
   ) {}
 
   ngOnInit(): void {
+    this.selectedDate = todayPakistanDateKey(this.timeService.now());
     this.loadAreas();
   }
 

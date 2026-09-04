@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { normalizeOrderStatus, Order } from '../models/order.model';
 import { OrderService } from '../services/order.service';
+import { TimeService } from '../services/time.service';
 
 interface MonitoringMetric {
   label: string;
@@ -31,7 +32,10 @@ export class MonitoringDashboardComponent implements OnInit {
   stageMetrics: MonitoringStage[] = [];
   summaryMetrics: MonitoringMetric[] = [];
 
-  constructor(private readonly orderService: OrderService) {}
+  constructor(
+    private readonly orderService: OrderService,
+    private readonly timeService: TimeService
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -233,6 +237,6 @@ export class MonitoringDashboardComponent implements OnInit {
   }
 
   private todayIso(): string {
-    return new Date().toISOString().split('T')[0];
+    return this.timeService.now().toISOString().split('T')[0];
   }
 }

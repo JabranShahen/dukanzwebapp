@@ -3,6 +3,7 @@ import { forkJoin } from 'rxjs';
 
 import { normalizeOrderStatus, Order } from '../models/order.model';
 import { OrderService } from '../services/order.service';
+import { TimeService } from '../services/time.service';
 
 @Component({
   selector: 'app-order-management',
@@ -21,7 +22,10 @@ export class OrderManagementComponent implements OnInit, OnDestroy {
 
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
 
-  constructor(private readonly orderService: OrderService) {}
+  constructor(
+    private readonly orderService: OrderService,
+    private readonly timeService: TimeService
+  ) {}
 
   ngOnInit(): void {
     this.loadLive();
@@ -142,7 +146,7 @@ export class OrderManagementComponent implements OnInit, OnDestroy {
 
   ageLabel(dateStr: string): string {
     if (!dateStr) return '—';
-    const ms = Date.now() - new Date(dateStr).getTime();
+    const ms = this.timeService.now().getTime() - new Date(dateStr).getTime();
     const mins = Math.floor(ms / 60_000);
     if (mins < 60) return `${mins}m`;
     const hours = Math.floor(mins / 60);
@@ -170,7 +174,7 @@ export class OrderManagementComponent implements OnInit, OnDestroy {
   }
 
   private todayIso(): string {
-    return new Date().toISOString().split('T')[0];
+    return this.timeService.now().toISOString().split('T')[0];
   }
 
   private normalizeHistoryRange(): void {
