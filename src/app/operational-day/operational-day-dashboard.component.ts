@@ -8,7 +8,6 @@ import { AreaService } from '../services/area.service';
 import { OrderService } from '../services/order.service';
 import { PackingService } from '../services/packing.service';
 import { StaffService } from '../services/staff.service';
-import { TimeService } from '../services/time.service';
 
 const DELIVERY_OFFSET_DAYS = 1;
 
@@ -41,8 +40,7 @@ export class OperationalDayDashboardComponent implements OnInit {
     private readonly packingService: PackingService,
     private readonly authService: AuthService,
     private readonly staffService: StaffService,
-    private readonly areaService: AreaService,
-    private readonly timeService: TimeService
+    private readonly areaService: AreaService
   ) {}
 
   ngOnInit(): void {
@@ -233,6 +231,6 @@ export class OperationalDayDashboardComponent implements OnInit {
   }
 
   private todayIso(): string {
-    return this.timeService.now().toISOString().split('T')[0];
+    return new Date().toISOString().split('T')[0];
   }
 }

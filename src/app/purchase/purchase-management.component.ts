@@ -10,7 +10,6 @@ import {
 } from '../models/purchase.model';
 import { OrderService } from '../services/order.service';
 import { PurchaseService } from '../services/purchase.service';
-import { TimeService } from '../services/time.service';
 
 type PdfLine = {
   text: string;
@@ -70,8 +69,7 @@ export class PurchaseManagementComponent implements OnInit {
 
   constructor(
     private readonly purchaseService: PurchaseService,
-    private readonly orderService: OrderService,
-    private readonly timeService: TimeService
+    private readonly orderService: OrderService
   ) {}
 
   ngOnInit(): void {
@@ -80,7 +78,7 @@ export class PurchaseManagementComponent implements OnInit {
   }
 
   todayIso(): string {
-    const d = this.timeService.now();
+    const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 

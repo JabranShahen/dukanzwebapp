@@ -21,7 +21,6 @@ import { AuthService } from '../../auth.service';
 import { AreaService } from '../../services/area.service';
 import { OrderService } from '../../services/order.service';
 import { UserService } from '../../services/user.service';
-import { TimeService } from '../../services/time.service';
 
 @Component({
   selector: 'app-order-panel',
@@ -51,8 +50,7 @@ export class OrderPanelComponent implements OnInit, OnChanges {
     public readonly authService: AuthService,
     private readonly orderService: OrderService,
     private readonly userService: UserService,
-    private readonly areaService: AreaService,
-    private readonly timeService: TimeService
+    private readonly areaService: AreaService
   ) {}
 
   ngOnInit(): void {
@@ -189,7 +187,7 @@ export class OrderPanelComponent implements OnInit, OnChanges {
 
   ageLabel(): string {
     if (!this.order?.orderDeviceDttm) return '—';
-    const ms = this.timeService.now().getTime() - new Date(this.order.orderDeviceDttm).getTime();
+    const ms = Date.now() - new Date(this.order.orderDeviceDttm).getTime();
     const mins = Math.floor(ms / 60_000);
     if (mins < 60) return `${mins}m ago`;
     const hours = Math.floor(mins / 60);
@@ -199,7 +197,7 @@ export class OrderPanelComponent implements OnInit, OnChanges {
 
   isOld(): boolean {
     if (!this.order?.orderDeviceDttm) return false;
-    const ms = this.timeService.now().getTime() - new Date(this.order.orderDeviceDttm).getTime();
+    const ms = Date.now() - new Date(this.order.orderDeviceDttm).getTime();
     return ms > 24 * 60 * 60 * 1000;
   }
 

@@ -10,7 +10,6 @@ import {
   OrderStatus
 } from '../../models/order.model';
 import { OrderService } from '../../services/order.service';
-import { TimeService } from '../../services/time.service';
 
 // All statuses in display order with their chart colours
 const STATUS_PALETTE: Record<OrderStatus, string> = {
@@ -93,7 +92,7 @@ export class DashboardOverviewComponent implements OnInit {
   };
 
   private buildHourlyChartData(): void {
-    const now = this.timeService.now();
+    const now = new Date();
     const DAYS = 7;
     const labels: string[] = [];
     const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -112,11 +111,11 @@ export class DashboardOverviewComponent implements OnInit {
       statusBuckets[s] = Array(DAYS).fill(0);
     }
 
-    const windowStart = this.timeService.now().getTime() - DAYS * 24 * 3_600_000;
+    const windowStart = Date.now() - DAYS * 24 * 3_600_000;
     for (const order of this.allRecentOrders) {
       const t = new Date(order.orderDeviceDttm).getTime();
       if (t < windowStart) continue;
-      const diffDays = Math.floor((this.timeService.now().getTime() - t) / (24 * 3_600_000));
+      const diffDays = Math.floor((Date.now() - t) / (24 * 3_600_000));
       const slot = (DAYS - 1) - diffDays;
       const normalizedStatus = normalizeOrderStatus(order.status);
       if (slot >= 0 && slot < DAYS && statusBuckets[normalizedStatus]) {
@@ -145,10 +144,7 @@ export class DashboardOverviewComponent implements OnInit {
   }
 
   // ── Data ───────────────────────────────────────────────────
-  constructor(
-    private readonly orderService: OrderService,
-    private readonly timeService: TimeService
-  ) {}
+  constructor(private readonly orderService: OrderService) {}
 
   ngOnInit(): void {
     this.load();
@@ -159,7 +155,7 @@ export class DashboardOverviewComponent implements OnInit {
     this.error = '';
 
     // Build requests for each of the last 7 days
-    const today = this.timeService.now();
+    const today = new Date();
     const dailyRequests = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
@@ -190,7 +186,7 @@ export class DashboardOverviewComponent implements OnInit {
   }
 
   get ordersToday(): Order[] {
-    const todayStr = this.timeService.now().toDateString();
+    const todayStr = new Date().toDateString();
     return this.outstandingOrders.filter(
       (o) => new Date(o.orderDeviceDttm).toDateString() === todayStr
     );
