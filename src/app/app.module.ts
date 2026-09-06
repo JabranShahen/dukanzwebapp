@@ -43,6 +43,7 @@ import { OrderPanelComponent } from './orders/order-panel/order-panel.component'
 import { OperationalDayDashboardComponent } from './operational-day/operational-day-dashboard.component';
 import { ClaimsManagementComponent } from './claims/claims-management.component';
 import { BatchScheduleComponent } from './batch-schedule/batch-schedule.component';
+import { SystemTestsComponent } from './system-tests/system-tests.component';
 
 @NgModule({
   declarations: [
@@ -80,7 +81,8 @@ import { BatchScheduleComponent } from './batch-schedule/batch-schedule.componen
     OrderPanelComponent,
     OperationalDayDashboardComponent,
     ClaimsManagementComponent,
-    BatchScheduleComponent
+    BatchScheduleComponent,
+    SystemTestsComponent
   ],
   imports: [
     BrowserModule,

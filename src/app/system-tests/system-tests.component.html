@@ -1,0 +1,126 @@
+<div class="system-tests">
+  <h2>Dukanz System Tests</h2>
+  <p class="subtitle">Outside-in testing via existing Dukanz APIs — SuperAdmin only.</p>
+
+  <!-- Test Environment Controls -->
+  <section class="controls">
+    <h3>Test Environment</h3>
+    <div class="control-row">
+      <label for="areaId">Test Area ID</label>
+      <input id="areaId" type="text" [(ngModel)]="areaId" placeholder="area_test_01" />
+      <button (click)="loadBatchSchedule()" [disabled]="!areaId">Load Schedule</button>
+    </div>
+    <div class="control-row">
+      <label for="clockUtc">Controlled Clock (UTC)</label>
+      <input id="clockUtc" type="datetime-local" [(ngModel)]="controlledClockUtc" />
+    </div>
+
+    <div *ngIf="scheduleError" class="error">{{ scheduleError }}</div>
+    <div *ngIf="scheduleLoaded && batchSchedule.length > 0" class="schedule-preview">
+      <strong>Batch Schedule for {{ areaId }}:</strong>
+      <ul>
+        <li *ngFor="let w of batchSchedule" [class.disabled]="!w.enabled">
+          <span class="batch-label">{{ w.label }}</span>
+          {{ w.startTimePkt }} – {{ w.endTimePkt }} PKT
+          <span *ngIf="!w.enabled">(disabled)</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Scenario Selection -->
+  <section class="scenarios">
+    <h3>Scenarios</h3>
+    <div class="scenario-list">
+      <div
+        *ngFor="let s of scenarios"
+        class="scenario-item"
+        [class.selected]="s.key === selectedScenario.key"
+        (click)="selectScenario(s)"
+      >
+        <div class="scenario-name">{{ s.label }}</div>
+        <div class="scenario-desc">{{ s.description }}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Selected Scenario Details -->
+  <section class="scenario-detail">
+    <h3>Scenario: {{ selectedScenario.label }}</h3>
+    <table class="detail-table">
+      <tr><th>Test Clock (UTC)</th><td>{{ effectiveClockUtcIso }}</td></tr>
+      <tr><th>Area</th><td>{{ areaId }}</td></tr>
+      <tr><th>Order Count</th><td>{{ selectedScenario.orderCount }}</td></tr>
+      <tr><th>Clock Offset</th><td>{{ selectedScenario.clockOffsetMinutes }} min</td></tr>
+      <tr *ngIf="scheduleLoaded">
+        <th>Expected Batch</th>
+        <td><strong>{{ expectedBatchLabel }}</strong></td>
+      </tr>
+    </table>
+
+    <div class="run-controls">
+      <button
+        class="btn-run"
+        (click)="runTest()"
+        [disabled]="running || !areaId || !controlledClockUtc"
+      >
+        <span *ngIf="!running">&#9654; Run Test</span>
+        <span *ngIf="running">Running…</span>
+      </button>
+
+      <button
+        class="btn-cleanup"
+        *ngIf="lastCreatedOrderIds.length > 0 && runResult"
+        (click)="cleanup()"
+      >
+        &#128465; Cleanup ({{ lastCreatedOrderIds.length }} orders)
+      </button>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section *ngIf="runResult" class="results">
+    <h3>
+      Result:
+      <span [class.pass]="runResult.overallResult === 'PASS'"
+            [class.fail]="runResult.overallResult === 'FAIL'">
+        {{ runResult.overallResult }}
+      </span>
+    </h3>
+
+    <div class="result-meta">
+      <div><strong>Test Run ID:</strong> {{ runResult.testRunId }}</div>
+      <div><strong>Scenario:</strong> {{ runResult.scenario }}</div>
+      <div><strong>Clock (UTC):</strong> {{ runResult.clockUtc }}</div>
+      <div><strong>Area:</strong> {{ runResult.areaId }}</div>
+      <div><strong>Duration:</strong> {{ runResult.durationMs / 1000 | number:'1.1-1' }}s</div>
+      <div><strong>Summary:</strong> {{ runResult.summary }}</div>
+    </div>
+
+    <table class="results-table" *ngIf="runResult.orderResults.length > 0">
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Expected Batch</th>
+          <th>Actual Batch</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of runResult.orderResults"
+            [class.row-pass]="r.result === 'PASS'"
+            [class.row-fail]="r.result === 'FAIL'">
+          <td class="mono">{{ r.orderId }}</td>
+          <td>{{ r.expectedBatch }}</td>
+          <td>{{ r.actualBatch ?? '(unassigned)' }}</td>
+          <td><span [class.pass]="r.result === 'PASS'" [class.fail]="r.result === 'FAIL'">{{ r.result }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="runResult.orderResults.length === 0" class="no-orders">
+      No orders were created. Verify the test area, products, and user configuration, and that the
+      clock override header is accepted by the backend (SuperAdmin login required).
+    </div>
+  </section>
+</div>

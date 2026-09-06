@@ -24,6 +24,7 @@ import { OrderManagementComponent } from './orders/order-management.component';
 import { OperationalDayDashboardComponent } from './operational-day/operational-day-dashboard.component';
 import { ClaimsManagementComponent } from './claims/claims-management.component';
 import { BatchScheduleComponent } from './batch-schedule/batch-schedule.component';
+import { SystemTestsComponent } from './system-tests/system-tests.component';
 
 const routes: Routes = [
   {
@@ -145,6 +146,10 @@ const routes: Routes = [
       {
         path: 'account',
         component: AccountComponent
+      },
+      {
+        path: 'system-tests',
+        component: SystemTestsComponent
       }
     ]
   },

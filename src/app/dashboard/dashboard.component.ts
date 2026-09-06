@@ -52,7 +52,8 @@ export class DashboardComponent implements OnInit {
         { key: 'settings', label: 'Settings', route: '/dashboard/settings' },
         { key: 'batch-schedule', label: 'Batch Schedule', route: '/dashboard/batch-schedule' },
         { key: 'batch-monitoring', label: 'Batch Monitoring', route: '/dashboard/batch-monitoring' },
-        { key: 'data-updates', label: 'Data Admin', route: '/dashboard/data-updates' }
+        { key: 'data-updates', label: 'Data Admin', route: '/dashboard/data-updates' },
+        { key: 'system-tests', label: 'System Tests', route: '/dashboard/system-tests' }
       );
     }
 
