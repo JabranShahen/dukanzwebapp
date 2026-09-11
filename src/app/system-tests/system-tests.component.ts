@@ -5,6 +5,8 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { SystemTestsService } from '../services/system-tests.service';
 import { BatchService } from '../services/batch.service';
+import { AreaService } from '../services/area.service';
+import { Area } from '../models/area.model';
 import { Order } from '../models/order.model';
 import { BatchScheduleWindow } from '../models/batch-schedule.model';
 
@@ -109,7 +111,9 @@ const POLL_TIMEOUT_MS = 30000;
 export class SystemTestsComponent implements OnInit {
   readonly scenarios = SCENARIOS;
 
-  areaId = 'area_test_01';
+  areas: Area[] = [];
+  areasLoading = false;
+  areaId = '';
   controlledClockUtc = '';
   cutoffTimeLocal = '10:00';
   selectedScenario: ScenarioConfig = SCENARIOS[0];
@@ -124,7 +128,8 @@ export class SystemTestsComponent implements OnInit {
 
   constructor(
     private readonly systemTestsService: SystemTestsService,
-    private readonly batchService: BatchService
+    private readonly batchService: BatchService,
+    private readonly areaService: AreaService
   ) {}
 
   ngOnInit(): void {
@@ -132,6 +137,25 @@ export class SystemTestsComponent implements OnInit {
     // Default controlled clock to today at 10:15 UTC (a common mid-morning slot)
     const defaultClock = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 10, 15, 0));
     this.controlledClockUtc = defaultClock.toISOString().slice(0, 16); // 'YYYY-MM-DDTHH:mm' for datetime-local input
+
+    this.areasLoading = true;
+    this.areaService.getAll().subscribe({
+      next: (areas) => {
+        this.areas = areas;
+        this.areasLoading = false;
+        if (areas.length > 0) {
+          this.areaId = areas[0].id;
+          this.loadBatchSchedule();
+        }
+      },
+      error: () => {
+        this.areasLoading = false;
+      }
+    });
+  }
+
+  get selectedAreaName(): string {
+    return this.areas.find(a => a.id === this.areaId)?.name ?? this.areaId;
   }
 
   loadBatchSchedule(): void {
