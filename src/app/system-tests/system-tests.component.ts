@@ -185,7 +185,9 @@ export class SystemTestsComponent implements OnInit {
     if (!details || typeof details !== 'object' || Array.isArray(details)) return [];
     return Object.entries(details as Record<string, unknown>).map(([key, val]) => ({
       key,
-      value: Array.isArray(val) ? val.join(', ') : String(val)
+      value: Array.isArray(val)
+        ? val.map((item) => this.stringifyErrorDetail(item)).join(', ')
+        : this.stringifyErrorDetail(val)
     }));
   }
 
@@ -396,29 +398,37 @@ export class SystemTestsComponent implements OnInit {
 
     if (err instanceof HttpErrorResponse) {
       out.errorStatus = err.status;
-      out.rawResponse = err.error;
-
-      const body = err.error;
+      const body = this.parseErrorBody(err.error);
+      out.rawResponse = body ?? err.error;
       if (typeof body === 'string' && body) {
         out.errorMessage = body;
+      } else if (body instanceof Error) {
+        out.errorMessage = err.status === 200
+          ? `HTTP 200 response could not be parsed: ${body.message}`
+          : body.message;
       } else if (body && typeof body === 'object') {
         const b = body as Record<string, unknown>;
-        const msg = b['message'] ?? b['title'] ?? b['error'] ?? err.statusText;
-        out.errorMessage = typeof msg === 'string' ? msg : undefined;
-        if (b['errors'] && typeof b['errors'] === 'object') {
-          out.errorDetails = b['errors'];
-        }
+        out.errorMessage = this.firstString(b, ['message', 'errorMessage', 'title', 'error', 'detail']);
+        out.errorDetails = this.extractErrorDetails(b);
       } else {
         out.errorMessage = err.message || err.statusText || `HTTP ${err.status}`;
       }
 
+      out.errorMessage = out.errorMessage || err.message || err.statusText || `HTTP ${err.status}`;
+
       if (err.status === 0 || err.status >= 500) {
+        out.errorCategory = 'infra';
+      } else if (err.status === 200) {
         out.errorCategory = 'infra';
       } else if (err.status === 404) {
         out.errorCategory = 'misconfiguration';
       } else {
         // 400 / 422 — distinguish misconfiguration from field validation
-        const haystack = [out.errorMessage ?? '', JSON.stringify(out.errorDetails ?? '')].join(' ').toLowerCase();
+        const haystack = [
+          out.errorMessage ?? '',
+          this.stringifyErrorDetail(out.errorDetails ?? ''),
+          this.stringifyErrorDetail(body ?? '')
+        ].join(' ').toLowerCase();
         out.errorCategory = (haystack.includes('product') || haystack.includes('area') || haystack.includes('not found'))
           ? 'misconfiguration'
           : 'validation';
@@ -432,6 +442,73 @@ export class SystemTestsComponent implements OnInit {
     }
 
     return out;
+  }
+
+  private parseErrorBody(body: unknown): unknown {
+    if (typeof body !== 'string') return body;
+
+    const trimmed = body.trim();
+    if (!trimmed) return body;
+
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return body;
+    }
+  }
+
+  private extractErrorDetails(body: Record<string, unknown>): unknown {
+    const errors = body['errors'];
+    if (errors && typeof errors === 'object') {
+      return errors;
+    }
+
+    const fieldErrors = body['fieldErrors'];
+    if (Array.isArray(fieldErrors)) {
+      return this.groupFieldErrors(fieldErrors);
+    }
+
+    const details = body['errorDetails'] ?? body['details'];
+    return details === undefined ? undefined : details;
+  }
+
+  private groupFieldErrors(fieldErrors: unknown[]): Record<string, string[]> {
+    return fieldErrors.reduce((acc, item) => {
+      if (!item || typeof item !== 'object') return acc;
+
+      const error = item as Record<string, unknown>;
+      const field = this.firstString(error, ['field', 'name', 'key']) || 'general';
+      const message = this.firstString(error, ['message', 'errorMessage', 'error'])
+        || this.stringifyErrorDetail(error);
+
+      if (!acc[field]) acc[field] = [];
+      acc[field].push(message);
+      return acc;
+    }, {} as Record<string, string[]>);
+  }
+
+  private firstString(source: Record<string, unknown>, keys: string[]): string | undefined {
+    for (const key of keys) {
+      const value = source[key];
+      if (typeof value === 'string' && value.trim()) {
+        return value;
+      }
+    }
+
+    return undefined;
+  }
+
+  private stringifyErrorDetail(value: unknown): string {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    if (value instanceof Error) return value.message;
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
   }
 
   private describeBatchAssignmentFailure(

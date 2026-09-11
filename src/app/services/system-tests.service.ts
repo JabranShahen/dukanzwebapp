@@ -50,7 +50,9 @@ export class SystemTestsService {
     });
     // Store testRunId in deviceID so the cleanup endpoint can verify test ownership
     const payload: Partial<Order> = { ...order, deviceID: testRunId };
-    return this.http.post<string>(url, payload, { headers });
+    return this.http.post<{ orderId: string }>(url, payload, { headers }).pipe(
+      map(res => res.orderId)
+    );
   }
 
   /**
