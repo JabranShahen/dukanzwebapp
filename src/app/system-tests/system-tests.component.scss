@@ -79,4 +79,99 @@
   .fail { color: #c62828; font-weight: 700; }
 
   .no-orders { font-size: 13px; color: #666; font-style: italic; }
+
+  .failure-detail-cell {
+    min-width: 240px;
+    max-width: 400px;
+    font-size: 12px;
+  }
+
+  .error-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 5px;
+  }
+
+  .error-stage-badge {
+    background: #37474f;
+    color: #fff;
+    border-radius: 3px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .error-category-badge {
+    border-radius: 3px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    &.cat-misconfiguration { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+    &.cat-validation       { background: #ffe0b2; color: #e65100; border: 1px solid #ff9800; }
+    &.cat-infra            { background: #fce4ec; color: #ad1457; border: 1px solid #e91e63; }
+  }
+
+  .error-status-badge {
+    background: #e8eaf6;
+    color: #3949ab;
+    border-radius: 3px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .error-message {
+    color: #b71c1c;
+    font-size: 12px;
+    margin: 2px 0 4px;
+    line-height: 1.4;
+  }
+
+  .error-details-label {
+    font-size: 11px;
+    color: #555;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .error-details-list {
+    margin: 2px 0 4px;
+    padding-left: 16px;
+    font-size: 11px;
+    color: #555;
+    li { margin: 1px 0; }
+  }
+
+  .btn-toggle-raw {
+    margin-top: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    background: #fff;
+    cursor: pointer;
+    color: #444;
+    &:hover { background: #f0f0f0; }
+  }
+
+  .raw-response-row td {
+    background: #1e1e1e;
+    padding: 0;
+  }
+
+  .raw-response-pre {
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 11px;
+    color: #d4d4d4;
+    overflow-x: auto;
+    max-height: 280px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
 }

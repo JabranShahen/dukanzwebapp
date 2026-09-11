@@ -104,17 +104,48 @@
           <th>Expected Batch</th>
           <th>Actual Batch</th>
           <th>Result</th>
+          <th>Failure Detail</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let r of runResult.orderResults"
-            [class.row-pass]="r.result === 'PASS'"
-            [class.row-fail]="r.result === 'FAIL'">
-          <td class="mono">{{ r.orderId }}</td>
-          <td>{{ r.expectedBatch }}</td>
-          <td>{{ r.actualBatch ?? '(unassigned)' }}</td>
-          <td><span [class.pass]="r.result === 'PASS'" [class.fail]="r.result === 'FAIL'">{{ r.result }}</span></td>
-        </tr>
+        <ng-container *ngFor="let r of runResult.orderResults">
+          <tr [class.row-pass]="r.result === 'PASS'" [class.row-fail]="r.result === 'FAIL'">
+            <td class="mono">{{ r.orderId }}</td>
+            <td>{{ r.expectedBatch }}</td>
+            <td>{{ r.actualBatch ?? '(unassigned)' }}</td>
+            <td><span [class.pass]="r.result === 'PASS'" [class.fail]="r.result === 'FAIL'">{{ r.result }}</span></td>
+            <td class="failure-detail-cell">
+              <ng-container *ngIf="r.result === 'FAIL'">
+                <div class="error-badges">
+                  <span *ngIf="r.errorStage" class="error-stage-badge">{{ r.errorStage }} Error</span>
+                  <span *ngIf="r.errorCategory" class="error-category-badge cat-{{ r.errorCategory }}">{{ r.errorCategory }}</span>
+                  <span *ngIf="r.errorStatus" class="error-status-badge">HTTP {{ r.errorStatus }}</span>
+                </div>
+                <div *ngIf="r.errorMessage" class="error-message">{{ r.errorMessage }}</div>
+                <ng-container *ngIf="errorDetailsEntries(r.errorDetails).length > 0">
+                  <div class="error-details-label">Validation details:</div>
+                  <ul class="error-details-list">
+                    <li *ngFor="let item of errorDetailsEntries(r.errorDetails)">
+                      <strong>{{ item.key }}:</strong> {{ item.value }}
+                    </li>
+                  </ul>
+                </ng-container>
+                <button
+                  *ngIf="r.rawResponse !== undefined"
+                  class="btn-toggle-raw"
+                  (click)="toggleRawResponse(r)"
+                >
+                  {{ r.showRawResponse ? '▲ Hide raw response' : '▼ View raw response' }}
+                </button>
+              </ng-container>
+            </td>
+          </tr>
+          <tr *ngIf="r.result === 'FAIL' && r.showRawResponse" class="raw-response-row">
+            <td colspan="5">
+              <pre class="raw-response-pre">{{ r.rawResponse | json }}</pre>
+            </td>
+          </tr>
+        </ng-container>
       </tbody>
     </table>
 
