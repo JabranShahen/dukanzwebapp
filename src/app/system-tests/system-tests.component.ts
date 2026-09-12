@@ -473,7 +473,7 @@ export class SystemTestsComponent implements OnInit {
   }
 
   private groupFieldErrors(fieldErrors: unknown[]): Record<string, string[]> {
-    return fieldErrors.reduce((acc, item) => {
+    return fieldErrors.reduce<Record<string, string[]>>((acc, item) => {
       if (!item || typeof item !== 'object') return acc;
 
       const error = item as Record<string, unknown>;
