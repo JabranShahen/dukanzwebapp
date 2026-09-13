@@ -66,6 +66,19 @@
     div strong { margin-right: 6px; }
   }
 
+  .created-order-ids {
+    grid-column: 1 / -1;
+    ul { margin: 4px 0 0; padding-left: 18px; }
+    li { font-size: 12px; margin: 1px 0; }
+  }
+
+  .order-ref-subtext {
+    font-family: sans-serif;
+    font-size: 11px;
+    color: #777;
+    margin-top: 2px;
+  }
+
   .results-table {
     width: 100%; border-collapse: collapse; font-size: 13px;
     th { background: #f0f0f0; padding: 8px 12px; text-align: left; }

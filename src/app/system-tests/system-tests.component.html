@@ -98,12 +98,18 @@
       <div><strong>Area:</strong> {{ runResult.areaId }}</div>
       <div><strong>Duration:</strong> {{ runResult.durationMs / 1000 | number:'1.1-1' }}s</div>
       <div><strong>Summary:</strong> {{ runResult.summary }}</div>
+      <div *ngIf="lastCreatedOrderIds.length > 0" class="created-order-ids">
+        <strong>Created Order ID(s) (DB lookup — not the test reference):</strong>
+        <ul>
+          <li *ngFor="let id of lastCreatedOrderIds" class="mono">{{ id }}</li>
+        </ul>
+      </div>
     </div>
 
     <table class="results-table" *ngIf="runResult.orderResults.length > 0">
       <thead>
         <tr>
-          <th>Order ID</th>
+          <th>Order ID (DB)</th>
           <th>Expected Batch</th>
           <th>Actual Batch</th>
           <th>Result</th>
@@ -113,7 +119,12 @@
       <tbody>
         <ng-container *ngFor="let r of runResult.orderResults">
           <tr [class.row-pass]="r.result === 'PASS'" [class.row-fail]="r.result === 'FAIL'">
-            <td class="mono">{{ r.orderReference || r.orderId }}</td>
+            <td class="mono">
+              {{ r.orderId }}
+              <div *ngIf="r.orderReference && r.orderReference !== r.orderId" class="order-ref-subtext">
+                test ref: {{ r.orderReference }}
+              </div>
+            </td>
             <td>{{ r.expectedBatch }}</td>
             <td>
               <ng-container *ngIf="r.actualBatch != null">
