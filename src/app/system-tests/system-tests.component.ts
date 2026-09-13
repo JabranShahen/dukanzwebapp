@@ -31,6 +31,7 @@ export interface OrderResult {
   orderReference: string;
   expectedBatch: string;
   actualBatch: string | null;
+  resolvedBatchName: string | null;
   result: 'PASS' | 'FAIL' | 'PENDING';
   errorStage?: string;
   errorStatus?: number;
@@ -256,6 +257,7 @@ export class SystemTestsComponent implements OnInit {
           orderReference: '',
           expectedBatch,
           actualBatch: null,
+          resolvedBatchName: null,
           result: 'FAIL' as const,
           ...this.parseHttpError(o.error, 'Order Creation')
         }));
@@ -274,16 +276,18 @@ export class SystemTestsComponent implements OnInit {
         const polledResults: OrderResult[] = okOutcomes.map((outcome) => {
           const found = orders.find((o) => o.id === outcome.orderId);
           const actual = found?.batchId ?? null;
+          const resolvedName = this.resolveBatchIdToName(actual);
           const pass = actual != null && this.batchLabelMatches(actual, expectedBatch);
           const entry: OrderResult = {
             orderId: outcome.orderId,
             orderReference: outcome.orderReference,
             expectedBatch,
             actualBatch: actual,
+            resolvedBatchName: resolvedName,
             result: found ? (pass ? 'PASS' : 'FAIL') : 'FAIL'
           };
           if (entry.result === 'FAIL') {
-            Object.assign(entry, this.describeBatchAssignmentFailure(actual, expectedBatch, found != null));
+            Object.assign(entry, this.describeBatchAssignmentFailure(actual, resolvedName, expectedBatch, found != null));
           }
           return entry;
         });
@@ -389,9 +393,23 @@ export class SystemTestsComponent implements OnInit {
     return poll();
   }
 
+  private resolveBatchIdToName(batchId: string | null): string | null {
+    if (!batchId || this.batchSchedule.length === 0) return null;
+    // Batch ID format: {areaId}-{YYYY}-{MM}-{DD}-{batchIndex}; extract the trailing numeric index
+    const lastSegment = batchId.split('-').pop();
+    if (lastSegment == null) return null;
+    const index = parseInt(lastSegment, 10);
+    if (isNaN(index)) return null;
+    return this.batchSchedule.find(w => w.batchIndex === index)?.label ?? null;
+  }
+
   private batchLabelMatches(batchId: string, expectedLabel: string): boolean {
     if (!expectedLabel || expectedLabel.startsWith('(')) return false;
-    // Compare by label or id — backend may return batchId or label
+    const resolvedName = this.resolveBatchIdToName(batchId);
+    if (resolvedName != null) {
+      return resolvedName.toLowerCase() === expectedLabel.toLowerCase();
+    }
+    // Fallback substring match when schedule lookup fails
     return batchId.toLowerCase().includes(expectedLabel.toLowerCase()) ||
            expectedLabel.toLowerCase().includes(batchId.toLowerCase());
   }
@@ -521,6 +539,7 @@ export class SystemTestsComponent implements OnInit {
 
   private describeBatchAssignmentFailure(
     actual: string | null,
+    resolvedName: string | null,
     expected: string,
     orderFound: boolean
   ): Pick<OrderResult, 'errorStage' | 'errorMessage' | 'errorCategory'> {
@@ -538,9 +557,12 @@ export class SystemTestsComponent implements OnInit {
         errorCategory: 'misconfiguration'
       };
     }
+    const displayActual = resolvedName != null
+      ? `"${resolvedName}" (raw batch ID: ${actual})`
+      : `"${actual}"`;
     return {
       errorStage: 'Batch Assignment',
-      errorMessage: `Batch mismatch — expected "${expected}", got "${actual}". Check the batch schedule for area "${this.areaId}" at the controlled clock time.`,
+      errorMessage: `Batch mismatch — expected "${expected}", got ${displayActual}. Check the batch schedule for area "${this.areaId}" at the controlled clock time.`,
       errorCategory: 'misconfiguration'
     };
   }

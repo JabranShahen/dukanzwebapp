@@ -115,7 +115,13 @@
           <tr [class.row-pass]="r.result === 'PASS'" [class.row-fail]="r.result === 'FAIL'">
             <td class="mono">{{ r.orderReference || r.orderId }}</td>
             <td>{{ r.expectedBatch }}</td>
-            <td>{{ r.actualBatch ?? '(unassigned)' }}</td>
+            <td>
+              <ng-container *ngIf="r.actualBatch != null">
+                {{ r.resolvedBatchName ?? r.actualBatch }}
+                <span *ngIf="r.resolvedBatchName" class="batch-id-diag mono"> ({{ r.actualBatch }})</span>
+              </ng-container>
+              <ng-container *ngIf="r.actualBatch == null">(unassigned)</ng-container>
+            </td>
             <td><span [class.pass]="r.result === 'PASS'" [class.fail]="r.result === 'FAIL'">{{ r.result }}</span></td>
             <td class="failure-detail-cell">
               <ng-container *ngIf="r.result === 'FAIL'">
