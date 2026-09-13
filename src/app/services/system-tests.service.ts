@@ -7,6 +7,11 @@ import { environment } from '../environments/environment';
 import { Order } from '../models/order.model';
 import { BatchScheduleWindow } from '../models/batch-schedule.model';
 
+export interface CreateOrderResponse {
+  orderId: string;
+  orderReference: string;
+}
+
 export interface TestCleanupRequest {
   orderIds: string[];
 }
@@ -42,7 +47,7 @@ export class SystemTestsService {
    * sending the controlled test clock and testRunId correlation.
    * The auth token is added automatically by AuthInterceptor.
    */
-  createOrder(order: Partial<Order>, clockUtcIso: string, testRunId: string): Observable<string> {
+  createOrder(order: Partial<Order>, clockUtcIso: string, testRunId: string): Observable<{ orderId: string; orderReference: string }> {
     const url = `${this.baseUrl}/Order`;
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
@@ -50,8 +55,8 @@ export class SystemTestsService {
     });
     // Store testRunId in deviceID so the cleanup endpoint can verify test ownership
     const payload: Partial<Order> = { ...order, deviceID: testRunId };
-    return this.http.post<{ orderId: string }>(url, payload, { headers }).pipe(
-      map(res => res.orderId)
+    return this.http.post<CreateOrderResponse>(url, payload, { headers }).pipe(
+      map(res => ({ orderId: res.orderId, orderReference: res.orderReference }))
     );
   }
 

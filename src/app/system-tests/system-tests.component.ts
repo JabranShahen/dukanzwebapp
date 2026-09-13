@@ -28,6 +28,7 @@ export interface ScenarioConfig {
 
 export interface OrderResult {
   orderId: string;
+  orderReference: string;
   expectedBatch: string;
   actualBatch: string | null;
   result: 'PASS' | 'FAIL' | 'PENDING';
@@ -52,7 +53,7 @@ export interface TestRunResult {
 }
 
 type OrderCreationOutcome =
-  | { kind: 'ok'; orderId: string }
+  | { kind: 'ok'; orderId: string; orderReference: string }
   | { kind: 'err'; error: unknown };
 
 const SCENARIOS: ScenarioConfig[] = [
@@ -238,20 +239,21 @@ export class SystemTestsComponent implements OnInit {
         clockIso,
         testRunId
       ).pipe(
-        map((id): OrderCreationOutcome => ({ kind: 'ok', orderId: id })),
+        map((res): OrderCreationOutcome => ({ kind: 'ok', orderId: res.orderId, orderReference: res.orderReference })),
         catchError((err): Observable<OrderCreationOutcome> => of({ kind: 'err', error: err }))
       )
     );
 
     forkJoin(orderCreations).pipe(
       switchMap((outcomes) => {
-        const okOutcomes = outcomes.filter((o): o is { kind: 'ok'; orderId: string } => o.kind === 'ok');
+        const okOutcomes = outcomes.filter((o): o is { kind: 'ok'; orderId: string; orderReference: string } => o.kind === 'ok');
         const errOutcomes = outcomes.filter((o): o is { kind: 'err'; error: unknown } => o.kind === 'err');
         const validIds = okOutcomes.map((o) => o.orderId);
         this.lastCreatedOrderIds = validIds;
 
         const creationFailureResults: OrderResult[] = errOutcomes.map((o, i) => ({
           orderId: `(creation failed #${i + 1})`,
+          orderReference: '',
           expectedBatch,
           actualBatch: null,
           result: 'FAIL' as const,
@@ -259,22 +261,23 @@ export class SystemTestsComponent implements OnInit {
         }));
 
         if (validIds.length === 0) {
-          return of({ validIds, orders: [] as Order[], creationFailureResults });
+          return of({ okOutcomes, orders: [] as Order[], creationFailureResults });
         }
 
         const clockDate = new Date(clockIso);
         return this.pollForOrders(validIds, clockDate, testRunId).pipe(
-          map((orders) => ({ validIds, orders, creationFailureResults }))
+          map((orders) => ({ okOutcomes, orders, creationFailureResults }))
         );
       })
     ).subscribe({
-      next: ({ validIds, orders, creationFailureResults }) => {
-        const polledResults: OrderResult[] = validIds.map((id) => {
-          const found = orders.find((o) => o.id === id);
+      next: ({ okOutcomes, orders, creationFailureResults }) => {
+        const polledResults: OrderResult[] = okOutcomes.map((outcome) => {
+          const found = orders.find((o) => o.id === outcome.orderId);
           const actual = found?.batchId ?? null;
           const pass = actual != null && this.batchLabelMatches(actual, expectedBatch);
           const entry: OrderResult = {
-            orderId: id,
+            orderId: outcome.orderId,
+            orderReference: outcome.orderReference,
             expectedBatch,
             actualBatch: actual,
             result: found ? (pass ? 'PASS' : 'FAIL') : 'FAIL'
@@ -326,7 +329,12 @@ export class SystemTestsComponent implements OnInit {
         alert(`Cleanup done: ${result.summary}`);
         this.lastCreatedOrderIds = [];
       },
-      error: () => alert('Cleanup call failed. Orders may need manual removal.')
+      error: (err: unknown) => {
+        const httpErr = err as { status?: number; error?: { message?: string; errorMessage?: string }; message?: string };
+        const status = httpErr?.status ? `HTTP ${httpErr.status}` : 'Unknown error';
+        const message = httpErr?.error?.message || httpErr?.error?.errorMessage || httpErr?.message || 'No details available';
+        alert(`Cleanup failed (${status}): ${message}\n\nOrders may need manual removal.`);
+      }
     });
   }
 

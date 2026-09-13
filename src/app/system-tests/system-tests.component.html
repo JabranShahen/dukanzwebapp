@@ -113,7 +113,7 @@
       <tbody>
         <ng-container *ngFor="let r of runResult.orderResults">
           <tr [class.row-pass]="r.result === 'PASS'" [class.row-fail]="r.result === 'FAIL'">
-            <td class="mono">{{ r.orderId }}</td>
+            <td class="mono">{{ r.orderReference || r.orderId }}</td>
             <td>{{ r.expectedBatch }}</td>
             <td>{{ r.actualBatch ?? '(unassigned)' }}</td>
             <td><span [class.pass]="r.result === 'PASS'" [class.fail]="r.result === 'FAIL'">{{ r.result }}</span></td>
