@@ -9,8 +9,8 @@
     "test": "ng test --watch=false"
   },
   "engines": {
-    "node": "16.x",
-    "npm": "8.x"
+    "node": ">=18",
+    "npm": ">=10"
   },
   "private": true,
   "packageManager": "npm@10.9.3",

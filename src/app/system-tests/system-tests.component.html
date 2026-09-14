@@ -1,0 +1,178 @@
+<div class="system-tests">
+  <h2>Dukanz System Tests</h2>
+  <p class="subtitle">Outside-in testing via existing Dukanz APIs — SuperAdmin only.</p>
+
+  <!-- Test Environment Controls -->
+  <section class="controls">
+    <h3>Test Environment</h3>
+    <div class="control-row">
+      <label for="areaId">Test Area</label>
+      <select id="areaId" [(ngModel)]="areaId" (change)="loadBatchSchedule()" [disabled]="areasLoading">
+        <option value="" disabled>{{ areasLoading ? 'Loading areas…' : 'Select an area' }}</option>
+        <option *ngFor="let a of areas" [value]="a.id">{{ a.name }}</option>
+      </select>
+      <button (click)="loadBatchSchedule()" [disabled]="!areaId || areasLoading">Refresh Schedule</button>
+    </div>
+    <div class="control-row">
+      <label for="clockPkt">Controlled Clock (PKT)</label>
+      <input id="clockPkt" type="datetime-local" [(ngModel)]="controlledClockPkt" />
+      <span class="tz-hint">Pakistan Standard Time (UTC+5)</span>
+    </div>
+
+    <div *ngIf="scheduleError" class="error">{{ scheduleError }}</div>
+    <div *ngIf="scheduleLoaded && batchSchedule.length > 0" class="schedule-preview">
+      <strong>Batch Schedule for {{ selectedAreaName }}:</strong>
+      <ul>
+        <li *ngFor="let w of batchSchedule" [class.disabled]="!w.enabled">
+          <span class="batch-label">{{ w.label }}</span>
+          {{ w.startTimePkt }} – {{ w.endTimePkt }} PKT
+          <span *ngIf="!w.enabled">(disabled)</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Scenario Selection -->
+  <section class="scenarios">
+    <h3>Scenarios</h3>
+    <div class="scenario-list">
+      <div
+        *ngFor="let s of scenarios"
+        class="scenario-item"
+        [class.selected]="s.key === selectedScenario.key"
+        (click)="selectScenario(s)"
+      >
+        <div class="scenario-name">{{ s.label }}</div>
+        <div class="scenario-desc">{{ s.description }}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Selected Scenario Details -->
+  <section class="scenario-detail">
+    <h3>Scenario: {{ selectedScenario.label }}</h3>
+    <table class="detail-table">
+      <tr><th>Test Clock (PKT)</th><td>{{ effectiveClockPktDisplay }}</td></tr>
+      <tr><th>Area</th><td>{{ selectedAreaName }}</td></tr>
+      <tr><th>Order Count</th><td>{{ selectedScenario.orderCount }}</td></tr>
+      <tr><th>Clock Offset</th><td>{{ selectedScenario.clockOffsetMinutes }} min</td></tr>
+      <tr *ngIf="scheduleLoaded">
+        <th>Expected Batch</th>
+        <td><strong>{{ expectedBatchLabel }}</strong></td>
+      </tr>
+    </table>
+
+    <div class="run-controls">
+      <button
+        class="btn-run"
+        (click)="runTest()"
+        [disabled]="running || !areaId || !controlledClockPkt"
+      >
+        <span *ngIf="!running">&#9654; Run Test</span>
+        <span *ngIf="running">Running…</span>
+      </button>
+
+      <button
+        class="btn-cleanup"
+        *ngIf="lastCreatedOrderIds.length > 0 && runResult"
+        (click)="cleanup()"
+      >
+        &#128465; Cleanup ({{ lastCreatedOrderIds.length }} orders)
+      </button>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section *ngIf="runResult" class="results">
+    <h3>
+      Result:
+      <span [class.pass]="runResult.overallResult === 'PASS'"
+            [class.fail]="runResult.overallResult === 'FAIL'">
+        {{ runResult.overallResult }}
+      </span>
+    </h3>
+
+    <div class="result-meta">
+      <div><strong>Test Run ID:</strong> {{ runResult.testRunId }}</div>
+      <div><strong>Scenario:</strong> {{ runResult.scenario }}</div>
+      <div><strong>Clock (PKT):</strong> {{ runResult.clockPkt }}</div>
+      <div><strong>Area:</strong> {{ runResult.areaId }}</div>
+      <div><strong>Duration:</strong> {{ runResult.durationMs / 1000 | number:'1.1-1' }}s</div>
+      <div><strong>Summary:</strong> {{ runResult.summary }}</div>
+      <div *ngIf="lastCreatedOrderIds.length > 0" class="created-order-ids">
+        <strong>Created Order ID(s) (DB lookup — not the test reference):</strong>
+        <ul>
+          <li *ngFor="let id of lastCreatedOrderIds" class="mono">{{ id }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <table class="results-table" *ngIf="runResult.orderResults.length > 0">
+      <thead>
+        <tr>
+          <th>Order ID (DB)</th>
+          <th>Expected Batch</th>
+          <th>Actual Batch</th>
+          <th>Result</th>
+          <th>Failure Detail</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let r of runResult.orderResults">
+          <tr [class.row-pass]="r.result === 'PASS'" [class.row-fail]="r.result === 'FAIL'">
+            <td class="mono">
+              {{ r.orderId }}
+              <div *ngIf="r.orderReference && r.orderReference !== r.orderId" class="order-ref-subtext">
+                test ref: {{ r.orderReference }}
+              </div>
+            </td>
+            <td>{{ r.expectedBatch }}</td>
+            <td>
+              <ng-container *ngIf="r.actualBatch != null">
+                {{ r.resolvedBatchName ?? r.actualBatch }}
+                <span *ngIf="r.resolvedBatchName" class="batch-id-diag mono"> ({{ r.actualBatch }})</span>
+              </ng-container>
+              <ng-container *ngIf="r.actualBatch == null">(unassigned)</ng-container>
+            </td>
+            <td><span [class.pass]="r.result === 'PASS'" [class.fail]="r.result === 'FAIL'">{{ r.result }}</span></td>
+            <td class="failure-detail-cell">
+              <ng-container *ngIf="r.result === 'FAIL'">
+                <div class="error-badges">
+                  <span *ngIf="r.errorStage" class="error-stage-badge">{{ r.errorStage }} Error</span>
+                  <span *ngIf="r.errorCategory" class="error-category-badge cat-{{ r.errorCategory }}">{{ r.errorCategory }}</span>
+                  <span *ngIf="r.errorStatus" class="error-status-badge">HTTP {{ r.errorStatus }}</span>
+                </div>
+                <div *ngIf="r.errorMessage" class="error-message">{{ r.errorMessage }}</div>
+                <ng-container *ngIf="errorDetailsEntries(r.errorDetails).length > 0">
+                  <div class="error-details-label">Validation details:</div>
+                  <ul class="error-details-list">
+                    <li *ngFor="let item of errorDetailsEntries(r.errorDetails)">
+                      <strong>{{ item.key }}:</strong> {{ item.value }}
+                    </li>
+                  </ul>
+                </ng-container>
+                <button
+                  *ngIf="r.rawResponse !== undefined"
+                  class="btn-toggle-raw"
+                  (click)="toggleRawResponse(r)"
+                >
+                  {{ r.showRawResponse ? '▲ Hide raw response' : '▼ View raw response' }}
+                </button>
+              </ng-container>
+            </td>
+          </tr>
+          <tr *ngIf="r.result === 'FAIL' && r.showRawResponse" class="raw-response-row">
+            <td colspan="5">
+              <pre class="raw-response-pre">{{ r.rawResponse | json }}</pre>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+
+    <div *ngIf="runResult.orderResults.length === 0" class="no-orders">
+      No orders were created. Verify the test area, products, and user configuration, and that the
+      clock override header is accepted by the backend (SuperAdmin login required).
+    </div>
+  </section>
+</div>
