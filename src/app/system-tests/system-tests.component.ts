@@ -45,7 +45,7 @@ export interface OrderResult {
 export interface TestRunResult {
   testRunId: string;
   scenario: string;
-  clockUtc: string;
+  clockPkt: string; // PKT (Pakistan Standard Time, UTC+5) display string
   areaId: string;
   orderResults: OrderResult[];
   overallResult: 'PASS' | 'FAIL' | 'PENDING';
@@ -116,7 +116,7 @@ export class SystemTestsComponent implements OnInit {
   areas: Area[] = [];
   areasLoading = false;
   areaId = '';
-  controlledClockUtc = '';
+  controlledClockPkt = ''; // PKT (Pakistan Standard Time, UTC+5) — converted to UTC before sending to API
   cutoffTimeLocal = '10:00';
   selectedScenario: ScenarioConfig = SCENARIOS[0];
 
@@ -136,9 +136,11 @@ export class SystemTestsComponent implements OnInit {
 
   ngOnInit(): void {
     const now = new Date();
-    // Default controlled clock to today at 10:15 UTC (a common mid-morning slot)
-    const defaultClock = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 10, 15, 0));
-    this.controlledClockUtc = defaultClock.toISOString().slice(0, 16); // 'YYYY-MM-DDTHH:mm' for datetime-local input
+    // Default controlled clock to today at 10:15 PKT (Pakistan Standard Time, UTC+5).
+    // PKT date may differ from UTC date when UTC is after 19:00 (midnight PKT).
+    const pktNow = new Date(now.getTime() + 5 * 60 * 60 * 1000);
+    const defaultPkt = new Date(Date.UTC(pktNow.getUTCFullYear(), pktNow.getUTCMonth(), pktNow.getUTCDate(), 10, 15, 0));
+    this.controlledClockPkt = defaultPkt.toISOString().slice(0, 16); // 'YYYY-MM-DDTHH:mm' PKT for datetime-local input
 
     this.areasLoading = true;
     this.areaService.getAll().subscribe({
@@ -193,11 +195,21 @@ export class SystemTestsComponent implements OnInit {
     }));
   }
 
+  // PKT = UTC+5; UTC = PKT − 5 hours. The API header X-Test-Clock-Override-Utc expects UTC.
   get effectiveClockUtcIso(): string {
-    if (!this.controlledClockUtc) return new Date().toISOString();
-    const base = new Date(this.controlledClockUtc + ':00Z');
+    if (!this.controlledClockPkt) return new Date().toISOString();
+    const pktMs = new Date(this.controlledClockPkt + ':00Z').getTime();
+    const utcMs = pktMs - 5 * 60 * 60 * 1000;
     const offset = this.selectedScenario.clockOffsetMinutes * 60 * 1000;
-    return new Date(base.getTime() + offset).toISOString();
+    return new Date(utcMs + offset).toISOString();
+  }
+
+  // PKT display string for UI — does NOT subtract 5h; offset is applied in PKT space.
+  get effectiveClockPktDisplay(): string {
+    if (!this.controlledClockPkt) return '';
+    const pktMs = new Date(this.controlledClockPkt + ':00Z').getTime();
+    const offset = this.selectedScenario.clockOffsetMinutes * 60 * 1000;
+    return new Date(pktMs + offset).toISOString().slice(0, 16) + ' PKT';
   }
 
   get expectedBatchLabel(): string {
@@ -222,14 +234,15 @@ export class SystemTestsComponent implements OnInit {
   }
 
   runTest(): void {
-    if (this.running || !this.areaId || !this.controlledClockUtc) return;
+    if (this.running || !this.areaId || !this.controlledClockPkt) return;
 
     this.running = true;
     this.runResult = null;
     this.lastCreatedOrderIds = [];
 
     const testRunId = this.systemTestsService.generateTestRunId();
-    const clockIso = this.effectiveClockUtcIso;
+    const clockIso = this.effectiveClockUtcIso;         // UTC — sent in X-Test-Clock-Override-Utc header
+    const clockPktDisplay = this.effectiveClockPktDisplay; // PKT — shown in UI results
     const orderCount = this.selectedScenario.orderCount;
     const expectedBatch = this.expectedBatchLabel;
     const startMs = Date.now();
@@ -298,7 +311,7 @@ export class SystemTestsComponent implements OnInit {
         this.runResult = {
           testRunId,
           scenario: this.selectedScenario.label,
-          clockUtc: clockIso,
+          clockPkt: clockPktDisplay,
           areaId: this.areaId,
           orderResults,
           overallResult: allPass ? 'PASS' : 'FAIL',
@@ -313,7 +326,7 @@ export class SystemTestsComponent implements OnInit {
         this.runResult = {
           testRunId,
           scenario: this.selectedScenario.label,
-          clockUtc: clockIso,
+          clockPkt: clockPktDisplay,
           areaId: this.areaId,
           orderResults: [],
           overallResult: 'FAIL',
